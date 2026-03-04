@@ -15,7 +15,7 @@ interface CrossValidatedMatch {
   oddsAway: number;
   status: string;
   sources: string[]; // Nouveau: liste des sources
-  timeSlot?: 'morning' | 'afternoon' | 'evening'; // Créneau horaire
+  timeSlot?: 'day' | 'night'; // Créneau: day (Foot) ou night (NBA)
   insight: {
     riskPercentage: number;
     valueBetDetected: boolean;
@@ -85,6 +85,10 @@ const PRIORITY_LEAGUES: Record<string, { priority: number; name: string; dataQua
   'soccer_uefa_euro': { priority: 1, name: 'Euro', dataQuality: 'high' },
 };
 
+// ===== NBA - BASKETBALL =====
+const NBA_LEAGUE_KEY = 'basketball_nba';
+const NBA_LEAGUE_NAME = 'NBA';
+
 /**
  * Vérifie si un match est aujourd'hui
  */
@@ -129,77 +133,59 @@ function formatMatchDate(dateString: string): string {
 }
 
 /**
- * Détermine le créneau horaire d'un match basé sur son heure de FIN
- * Matin: fin avant 12h, Midi: fin avant 20h, Nuit: fin après 20h
+ * Détermine le créneau horaire d'un match basé sur son heure GMT
+ * NOUVEAU PLAN:
+ * - 00h-20h GMT = Journée (Foot uniquement)
+ * - 20h-00h GMT = Nuit (NBA uniquement)
  */
-function getTimeSlot(dateString: string, sport: string): 'morning' | 'afternoon' | 'evening' {
+function getTimeSlot(dateString: string, sport: string): 'day' | 'night' {
   const date = new Date(dateString);
-  const startHour = date.getHours();
+  const startHour = date.getUTCHours(); // Utiliser UTC/GMT
   
-  // Durée moyenne par sport (en heures)
-  const sportDuration: Record<string, number> = {
-    'Foot': 2,        // 90min + arrêts
-    'Basket': 2.5,    // 48min + arrêts (NBA)
-    'Hockey': 2.5,    // 60min + pauses
-    'Tennis': 2,      // Variable
-    'MMA': 1.5,       // Variable selon les combats
-  };
+  // NBA = toujours nuit (20h-00h GMT typiquement 01h-04h en Europe)
+  if (sport === 'Basket') {
+    return 'night';
+  }
   
-  const duration = sportDuration[sport] || 2;
-  const endHour = startHour + duration;
-  
-  // Classer par heure de fin
-  if (endHour < 12) {
-    return 'morning';
-  } else if (endHour < 20) {
-    return 'afternoon';
+  // Football = journée (00h-20h GMT)
+  // Matchs européens typiquement 12h-22h GMT
+  if (startHour < 20) {
+    return 'day';
   } else {
-    return 'evening';
+    return 'night';
   }
 }
 
 /**
  * Calcule les infos de timing pour la gestion du refresh
- * Règles simplifiées:
- * - 0h-11h: Afficher tous les matchs disponibles
- * - 12h-14h: Transition, refresh limité
- * - Après 14h: Refresh autorisé
+ * NOUVEAU PLAN:
+ * - 00h-20h GMT: Football (10 matchs)
+ * - 20h-00h GMT: NBA (5 matchs)
  */
 function getTimingInfo(): TimingInfo {
   const now = new Date();
-  const currentHour = now.getHours();
+  const currentHour = now.getUTCHours(); // Utiliser GMT/UTC
   
-  let canRefresh = true; // Par défaut, refresh autorisé
+  let canRefresh = true;
   let nextRefreshTime = 'Maintenant';
   let currentPhase: 'morning' | 'afternoon' | 'evening';
   let message = '';
   
-  if (currentHour < 6) {
-    // Nuit/Early morning: tout afficher, refresh OK
-    currentPhase = 'evening';
-    canRefresh = true;
-    message = '🌙 Matchs de la nuit disponibles';
-  } else if (currentHour < 12) {
-    // Matin: matchs du matin affichés, refresh OK
+  if (currentHour < 12) {
+    // Matinée GMT: Football
     currentPhase = 'morning';
     canRefresh = true;
-    message = '🕐 Matchs du matin disponibles';
-  } else if (currentHour < 14) {
-    // Transition: matchs en cours, refresh limité
-    currentPhase = 'afternoon';
-    canRefresh = false;
-    nextRefreshTime = '14h00';
-    message = '⏳ Matchs en cours - Attendez 14h';
-  } else if (currentHour < 18) {
-    // Après-midi: refresh autorisé
+    message = '⚽ Matchs Football disponibles (journée)';
+  } else if (currentHour < 20) {
+    // Après-midi GMT: Football
     currentPhase = 'afternoon';
     canRefresh = true;
-    message = '✅ Actualisation disponible';
+    message = '⚽ Matchs Football disponibles (soirée)';
   } else {
-    // Soir: refresh autorisé
+    // Nuit GMT: NBA
     currentPhase = 'evening';
     canRefresh = true;
-    message = '✅ Matchs du soir disponibles';
+    message = '🏀 Matchs NBA disponibles (nuit)';
   }
   
   return {
@@ -212,8 +198,9 @@ function getTimingInfo(): TimingInfo {
 }
 
 /**
- * Filtre et répartit les matchs par créneau (4 par créneau = 12 total)
- * Matin: 4 matchs, Midi: 4 matchs, Nuit: 4 matchs
+ * Filtre et répartit les matchs selon le NOUVEAU PLAN:
+ * - Journée (00h-20h GMT): 10 matchs Football
+ * - Nuit (20h-00h GMT): 5 matchs NBA
  */
 function distributeMatchesByTimeSlot(
   matches: CrossValidatedMatch[], 
@@ -225,27 +212,27 @@ function distributeMatchesByTimeSlot(
     timeSlot: getTimeSlot(m.date, m.sport)
   }));
   
-  // Grouper par créneau
-  const morningMatches = matchesWithSlot.filter(m => m.timeSlot === 'morning');
-  const afternoonMatches = matchesWithSlot.filter(m => m.timeSlot === 'afternoon');
-  const eveningMatches = matchesWithSlot.filter(m => m.timeSlot === 'evening');
+  // Séparer Football et NBA
+  const footballMatches = matchesWithSlot.filter(m => m.sport === 'Foot');
+  const nbaMatches = matchesWithSlot.filter(m => m.sport === 'Basket');
   
-  // Prendre 4 matchs par créneau (triés par qualité)
-  const selectedMorning = morningMatches.slice(0, 4);
-  const selectedAfternoon = afternoonMatches.slice(0, 4);
-  const selectedEvening = eveningMatches.slice(0, 4);
+  // Football: 10 matchs pour la journée (00h-20h GMT)
+  const selectedFootball = footballMatches.slice(0, 10);
   
-  // Combiner dans l'ordre chronologique
-  const result = [...selectedMorning, ...selectedAfternoon, ...selectedEvening];
+  // NBA: 5 matchs pour la nuit (20h-00h GMT)
+  const selectedNBA = nbaMatches.slice(0, 5);
   
-  console.log(`📊 Répartition: Matin(${selectedMorning.length}) + Midi(${selectedAfternoon.length}) + Nuit(${selectedEvening.length}) = ${result.length} matchs`);
+  // Combiner: Football d'abord, puis NBA
+  const result = [...selectedFootball, ...selectedNBA];
+  
+  console.log(`📊 Répartition: Football(${selectedFootball.length}) + NBA(${selectedNBA.length}) = ${result.length} matchs`);
   
   return result;
 }
 
 /**
- * Récupère les matchs depuis The Odds API (Football uniquement)
- * STRATÉGIE: 3 ligues aléatoires par jour pour économiser les crédits
+ * Récupère les matchs depuis The Odds API
+ * NOUVEAU PLAN: 3 ligues Football + 1 NBA = 4 appels API
  */
 async function fetchOddsApiMatches(): Promise<any[]> {
   const apiKey = process.env.THE_ODDS_API_KEY;
@@ -255,7 +242,7 @@ async function fetchOddsApiMatches(): Promise<any[]> {
   }
 
   try {
-    // Récupérer les sports disponibles
+    // Récupérer les sports disponibles (1 crédit)
     const sportsResponse = await fetch(
       `https://api.the-odds-api.com/v4/sports/?apiKey=${apiKey}`
     );
@@ -267,49 +254,58 @@ async function fetchOddsApiMatches(): Promise<any[]> {
     
     const sports = await sportsResponse.json();
     
-    // ===== FOOTBALL UNIQUEMENT =====
+    // ===== FOOTBALL: 3 ligues aléatoires =====
     const soccerSports = sports.filter((s: any) => s.group?.toLowerCase() === 'soccer');
-    
-    // Ligues disponibles dans PRIORITY_LEAGUES
     const availableLeagues = soccerSports.filter((s: any) => PRIORITY_LEAGUES[s.key]);
     
-    // ===== SÉLECTION ALÉATOIRE DE 3 LIGUES PAR JOUR =====
-    // Utiliser la date comme seed pour avoir la même sélection toute la journée
     const today = new Date().toISOString().split('T')[0];
-    const seed = today.split('-').join('') ; // ex: "20260304"
+    const seed = today.split('-').join('');
     
-    // Mélanger avec le seed (même mélange pour toute la journée)
     const shuffled = [...availableLeagues].sort((a, b) => {
       const hashA = (seed + a.key).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
       const hashB = (seed + b.key).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
       return hashA - hashB;
     });
     
-    // Prendre 3 ligues (ou moins si pas assez)
     const selectedLeagues = shuffled.slice(0, 3);
-
-    console.log(`📋 3 ligues sélectionnées pour ${today}: ${selectedLeagues.map((s: any) => PRIORITY_LEAGUES[s.key]?.name || s.key).join(', ')}`);
+    console.log(`📋 Football: 3 ligues sélectionnées pour ${today}: ${selectedLeagues.map((s: any) => PRIORITY_LEAGUES[s.key]?.name || s.key).join(', ')}`);
 
     const allMatches: any[] = [];
 
-    // Récupérer les matchs pour ces 3 ligues uniquement
+    // Récupérer les matchs Football (3 crédits)
     for (const sport of selectedLeagues) {
       try {
         const oddsResponse = await fetch(
           `https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${apiKey}&regions=eu&markets=h2h,totals&oddsFormat=decimal&dateFormat=iso`,
-          { next: { revalidate: 21600 } } // 6 heures de cache
+          { next: { revalidate: 21600 } }
         );
         
         if (oddsResponse.ok) {
           const matches = await oddsResponse.json();
-          allMatches.push(...matches.map((m: any) => ({ ...m, source: 'odds-api' })));
+          allMatches.push(...matches.map((m: any) => ({ ...m, source: 'odds-api', sport_type: 'football' })));
         }
       } catch (e) {
-        // Continuer si une ligue échoue
+        console.error(`Erreur ligue ${sport.key}:`, e);
       }
     }
     
-    console.log(`✅ Odds API: ${allMatches.length} matchs récupérés (3 ligues)`);
+    // ===== NBA: 1 appel (1 crédit) =====
+    try {
+      const nbaResponse = await fetch(
+        `https://api.the-odds-api.com/v4/sports/${NBA_LEAGUE_KEY}/odds/?apiKey=${apiKey}&regions=us&markets=h2h,totals&oddsFormat=decimal&dateFormat=iso`,
+        { next: { revalidate: 21600 } }
+      );
+      
+      if (nbaResponse.ok) {
+        const nbaMatches = await nbaResponse.json();
+        allMatches.push(...nbaMatches.map((m: any) => ({ ...m, source: 'odds-api', sport_type: 'nba' })));
+        console.log(`🏀 NBA: ${nbaMatches.length} matchs récupérés`);
+      }
+    } catch (e) {
+      console.error('Erreur NBA:', e);
+    }
+    
+    console.log(`✅ Odds API: ${allMatches.length} matchs (Football + NBA) - 5 crédits consommés`);
     return allMatches;
     
   } catch (error) {
@@ -672,13 +668,19 @@ function crossValidateMatches(
       confidence = 'low';
     }
     
-    // Sport et ligue
+    // Sport et ligue - Utiliser sport_type si disponible
     const sportKey = oddsMatch.sport_key || '';
+    const sportType = oddsMatch.sport_type; // 'football' ou 'nba'
     const leagueInfo = PRIORITY_LEAGUES[sportKey];
-    const sport = sportKey.includes('basketball') ? 'Basket' : 
+    
+    // Déterminer le sport: NBA en priorité si sport_type='nba'
+    const sport = sportType === 'nba' || sportKey.includes('basketball') ? 'Basket' : 
                   sportKey.includes('icehockey') ? 'Hockey' : 
                   sportKey.includes('tennis') ? 'Tennis' : 'Foot';
-    const leagueName = leagueInfo?.name || oddsMatch.sport_title || 'Autre';
+    
+    // Nom de la ligue
+    const leagueName = sport === 'Basket' ? NBA_LEAGUE_NAME : 
+                       (leagueInfo?.name || oddsMatch.sport_title || 'Autre');
     
     // Récupérer le marché totals pour les buts
     const totalsMarket = bookmaker?.markets?.find((m: any) => m.key === 'totals');
@@ -722,28 +724,54 @@ function crossValidateMatches(
 
 /**
  * Trie les matchs par qualité des données, priorité de ligue, et risque
+ * NBA est considérée comme haute qualité
  */
 function sortMatchesByQuality(matches: CrossValidatedMatch[]): CrossValidatedMatch[] {
   return matches.sort((a, b) => {
-    // 1. Qualité des données de la ligue (high > medium > low)
-    const aLeagueKey = Object.keys(PRIORITY_LEAGUES).find(k => 
-      a.league.includes(PRIORITY_LEAGUES[k].name)
-    );
-    const bLeagueKey = Object.keys(PRIORITY_LEAGUES).find(k => 
-      b.league.includes(PRIORITY_LEAGUES[k].name)
-    );
+    // NBA = haute qualité par défaut
+    const isNBA_a = a.sport === 'Basket' && a.league === 'NBA';
+    const isNBA_b = b.sport === 'Basket' && b.league === 'NBA';
     
-    const aDataQuality = aLeagueKey ? PRIORITY_LEAGUES[aLeagueKey].dataQuality : 'low';
-    const bDataQuality = bLeagueKey ? PRIORITY_LEAGUES[bLeagueKey].dataQuality : 'low';
+    // 1. Qualité des données de la ligue (high > medium > low)
+    let aDataQuality: 'high' | 'medium' | 'low' = isNBA_a ? 'high' : 'low';
+    let bDataQuality: 'high' | 'medium' | 'low' = isNBA_b ? 'high' : 'low';
+    
+    if (!isNBA_a) {
+      const aLeagueKey = Object.keys(PRIORITY_LEAGUES).find(k => 
+        a.league.includes(PRIORITY_LEAGUES[k].name)
+      );
+      aDataQuality = aLeagueKey ? PRIORITY_LEAGUES[aLeagueKey].dataQuality : 'low';
+    }
+    
+    if (!isNBA_b) {
+      const bLeagueKey = Object.keys(PRIORITY_LEAGUES).find(k => 
+        b.league.includes(PRIORITY_LEAGUES[k].name)
+      );
+      bDataQuality = bLeagueKey ? PRIORITY_LEAGUES[bLeagueKey].dataQuality : 'low';
+    }
     
     const qualityOrder = { 'high': 1, 'medium': 2, 'low': 3 };
     if (qualityOrder[aDataQuality] !== qualityOrder[bDataQuality]) {
       return qualityOrder[aDataQuality] - qualityOrder[bDataQuality];
     }
     
-    // 2. Priorité de ligue
-    const aLeaguePriority = aLeagueKey ? PRIORITY_LEAGUES[aLeagueKey].priority : 99;
-    const bLeaguePriority = bLeagueKey ? PRIORITY_LEAGUES[bLeagueKey].priority : 99;
+    // 2. Priorité de ligue (NBA = priorité 1)
+    let aLeaguePriority = isNBA_a ? 1 : 99;
+    let bLeaguePriority = isNBA_b ? 1 : 99;
+    
+    if (!isNBA_a) {
+      const aLeagueKey = Object.keys(PRIORITY_LEAGUES).find(k => 
+        a.league.includes(PRIORITY_LEAGUES[k].name)
+      );
+      aLeaguePriority = aLeagueKey ? PRIORITY_LEAGUES[aLeagueKey].priority : 99;
+    }
+    
+    if (!isNBA_b) {
+      const bLeagueKey = Object.keys(PRIORITY_LEAGUES).find(k => 
+        b.league.includes(PRIORITY_LEAGUES[k].name)
+      );
+      bLeaguePriority = bLeagueKey ? PRIORITY_LEAGUES[bLeagueKey].priority : 99;
+    }
     
     if (aLeaguePriority !== bLeaguePriority) {
       return aLeaguePriority - bLeaguePriority;
@@ -772,8 +800,8 @@ function sortMatchesByQuality(matches: CrossValidatedMatch[]): CrossValidatedMat
 
 /**
  * Fonction principale : récupère et croise les données
- * 12 PARIS/JOUR: 4 matin + 4 midi + 4 nuit
- * PRIORISATION: Grands championnats + données multiples
+ * NOUVEAU PLAN: 10 Football (journée) + 5 NBA (nuit) = 15 matchs/jour
+ * Consommation: ~5 crédits API/jour
  */
 export async function getCrossValidatedMatches(): Promise<{
   matches: CrossValidatedMatch[];
@@ -810,10 +838,13 @@ export async function getCrossValidatedMatches(): Promise<{
   // Trier par qualité (ligues prioritaires + données multiples)
   const sortedMatches = sortMatchesByQuality(todayMatches);
   
-  // Répartir 12 matchs: 4 matin + 4 midi + 4 nuit
+  // Répartir selon le NOUVEAU PLAN: 10 Foot + 5 NBA
   const distributedMatches = distributeMatchesByTimeSlot(sortedMatches, timing);
   
-  console.log(`✅ ${distributedMatches.length} matchs sélectionnés (4 matin + 4 midi + 4 nuit)`);
+  // Stats détaillées par sport
+  const footballCount = distributedMatches.filter(m => m.sport === 'Foot').length;
+  const nbaCount = distributedMatches.filter(m => m.sport === 'Basket').length;
+  console.log(`✅ ${distributedMatches.length} matchs sélectionnés: ${footballCount} Football + ${nbaCount} NBA`);
   
   // Stats
   const safes = distributedMatches.filter(m => m.insight.riskPercentage <= 40).length;
