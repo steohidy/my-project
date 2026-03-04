@@ -2268,13 +2268,15 @@ interface AdminUser {
 function AdminPanel() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [stats, setStats] = useState({ total: 0, active: 0, expired: 0, admin: 0, demo: 0, regular: 0 });
+  const [logs, setLogs] = useState<{id: string; timestamp: string; action: string; actor: string; target: string; details: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showLogs, setShowLogs] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [newUser, setNewUser] = useState({ login: '', password: '', role: 'user' as 'admin' | 'demo' | 'user' });
 
-  // Charger les utilisateurs
+  // Charger les utilisateurs et logs
   const loadUsers = async () => {
     try {
       const res = await fetch('/api/admin/users');
@@ -2282,6 +2284,7 @@ function AdminPanel() {
         const data = await res.json();
         setUsers(data.users);
         setStats(data.stats);
+        setLogs(data.logs || []);
       }
     } catch (e) {
       console.error('Erreur chargement utilisateurs:', e);
@@ -2387,23 +2390,60 @@ function AdminPanel() {
         </div>
       </div>
 
-      {/* Bouton Ajouter */}
-      <button
-        onClick={() => setShowAddForm(true)}
-        style={{
-          width: '100%',
-          padding: '10px',
-          background: '#eab308',
-          color: '#000',
-          border: 'none',
-          borderRadius: '8px',
-          fontWeight: 'bold',
-          cursor: 'pointer',
-          marginBottom: '16px'
-        }}
-      >
-        ➕ Ajouter un utilisateur
-      </button>
+      {/* Boutons */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+        <button
+          onClick={() => setShowAddForm(true)}
+          style={{
+            flex: 1,
+            padding: '10px',
+            background: '#eab308',
+            color: '#000',
+            border: 'none',
+            borderRadius: '8px',
+            fontWeight: 'bold',
+            cursor: 'pointer'
+          }}
+        >
+          ➕ Ajouter
+        </button>
+        <button
+          onClick={() => setShowLogs(!showLogs)}
+          style={{
+            flex: 1,
+            padding: '10px',
+            background: showLogs ? '#8b5cf6' : '#333',
+            color: showLogs ? '#fff' : '#888',
+            border: 'none',
+            borderRadius: '8px',
+            fontWeight: 'bold',
+            cursor: 'pointer'
+          }}
+        >
+          📋 Logs ({logs.length})
+        </button>
+      </div>
+
+      {/* Section Logs */}
+      {showLogs && (
+        <div style={{ background: '#1a1a1a', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
+          <h4 style={{ margin: '0 0 12px 0', color: '#8b5cf6' }}>📋 Dernières activités</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '200px', overflowY: 'auto' }}>
+            {logs.length === 0 ? (
+              <div style={{ color: '#666', fontSize: '12px', textAlign: 'center', padding: '10px' }}>Aucune activité</div>
+            ) : (
+              logs.map(log => (
+                <div key={log.id} style={{ display: 'flex', gap: '8px', fontSize: '10px', padding: '6px', background: '#0a0a0a', borderRadius: '4px' }}>
+                  <span style={{ color: '#666', minWidth: '80px' }}>{new Date(log.timestamp).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                  <span style={{ color: log.action === 'LOGIN' ? '#22c55e' : log.action === 'DELETE' ? '#ef4444' : log.action === 'CREATE' ? '#3b82f6' : '#eab308', fontWeight: 'bold', minWidth: '70px' }}>{log.action}</span>
+                  <span style={{ color: '#fff' }}>{log.target}</span>
+                  <span style={{ color: '#888', flex: 1 }}>{log.details}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Formulaire d'ajout */}
       {showAddForm && (
