@@ -267,13 +267,17 @@ async function fetchOddsApiMatches(): Promise<any[]> {
       return hashA - hashB;
     });
     
-    const selectedLeagues = shuffled.slice(0, 3);
-    console.log(`📋 Football: 3 ligues sélectionnées pour ${today}: ${selectedLeagues.map((s: any) => PRIORITY_LEAGUES[s.key]?.name || s.key).join(', ')}`);
-
     const allMatches: any[] = [];
+    const MIN_FOOTBALL_MATCHES = 10;
+    let creditsUsed = 0;
 
-    // Récupérer les matchs Football (3 crédits)
-    for (const sport of selectedLeagues) {
+    // ===== FOOTBALL: Récupérer jusqu'à 10 matchs =====
+    // Commencer par 3 ligues, ajouter si nécessaire
+    for (const sport of shuffled) {
+      if (allMatches.filter(m => m.sport_type === 'football').length >= MIN_FOOTBALL_MATCHES) {
+        break; // On a assez de matchs
+      }
+      
       try {
         const oddsResponse = await fetch(
           `https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${apiKey}&regions=eu&markets=h2h,totals&oddsFormat=decimal&dateFormat=iso`,
@@ -283,11 +287,16 @@ async function fetchOddsApiMatches(): Promise<any[]> {
         if (oddsResponse.ok) {
           const matches = await oddsResponse.json();
           allMatches.push(...matches.map((m: any) => ({ ...m, source: 'odds-api', sport_type: 'football' })));
+          creditsUsed++;
+          console.log(`⚽ ${PRIORITY_LEAGUES[sport.key]?.name || sport.key}: ${matches.length} matchs`);
         }
       } catch (e) {
         console.error(`Erreur ligue ${sport.key}:`, e);
       }
     }
+    
+    const footballCount = allMatches.filter(m => m.sport_type === 'football').length;
+    console.log(`📋 Football: ${footballCount} matchs récupérés (${creditsUsed} ligues utilisées)`);
     
     // ===== NBA: 1 appel (1 crédit) =====
     try {
@@ -300,12 +309,13 @@ async function fetchOddsApiMatches(): Promise<any[]> {
         const nbaMatches = await nbaResponse.json();
         allMatches.push(...nbaMatches.map((m: any) => ({ ...m, source: 'odds-api', sport_type: 'nba' })));
         console.log(`🏀 NBA: ${nbaMatches.length} matchs récupérés`);
+        creditsUsed++;
       }
     } catch (e) {
       console.error('Erreur NBA:', e);
     }
     
-    console.log(`✅ Odds API: ${allMatches.length} matchs (Football + NBA) - 5 crédits consommés`);
+    console.log(`✅ Odds API: ${allMatches.length} matchs (Football + NBA) - ${creditsUsed + 1} crédits consommés`);
     return allMatches;
     
   } catch (error) {
