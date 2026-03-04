@@ -256,6 +256,40 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
     message: ''
   });
 
+  // Fonction pour sauvegarder les pronostics en base (déclarée avant utilisation)
+  const savePredictionsToDB = async (matchList: Match[]) => {
+    try {
+      const predictions = matchList.map(m => ({
+        matchId: m.id,
+        homeTeam: m.homeTeam,
+        awayTeam: m.awayTeam,
+        league: m.league,
+        sport: m.sport,
+        matchDate: m.date,
+        oddsHome: m.oddsHome,
+        oddsDraw: m.oddsDraw,
+        oddsAway: m.oddsAway,
+        predictedResult: m.oddsHome < m.oddsAway ? 'home' : 'away',
+        predictedGoals: m.goalsPrediction?.prediction || null,
+        confidence: m.insight.confidence,
+        riskPercentage: m.insight.riskPercentage
+      }));
+      
+      await fetch('/api/results', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'save_predictions', 
+          predictions 
+        })
+      });
+      
+      console.log('💾 Pronostics sauvegardés en base');
+    } catch (error) {
+      console.error('Erreur sauvegarde pronostics:', error);
+    }
+  };
+
   // Charger les matchs
   useEffect(() => {
     let isMounted = true;
@@ -270,12 +304,18 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
       })
       .then(data => {
         if (isMounted) {
-          setMatches(data.matches || data);
+          const matchList = data.matches || data;
+          setMatches(matchList);
           if (data.timing) {
             setTiming(data.timing);
           }
           setLastUpdate(new Date());
           setLoading(false);
+          
+          // Sauvegarder automatiquement les pronostics au chargement initial
+          if (matchList && matchList.length > 0) {
+            savePredictionsToDB(matchList);
+          }
         }
       })
       .catch(() => {
@@ -308,40 +348,6 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
         }
       })
       .catch(() => setLoading(false));
-  };
-
-  // Fonction pour sauvegarder les pronostics en base
-  const savePredictionsToDB = async (matchList: Match[]) => {
-    try {
-      const predictions = matchList.map(m => ({
-        matchId: m.id,
-        homeTeam: m.homeTeam,
-        awayTeam: m.awayTeam,
-        league: m.league,
-        sport: m.sport,
-        matchDate: m.date,
-        oddsHome: m.oddsHome,
-        oddsDraw: m.oddsDraw,
-        oddsAway: m.oddsAway,
-        predictedResult: m.oddsHome < m.oddsAway ? 'home' : 'away',
-        predictedGoals: m.goalsPrediction?.prediction || null,
-        confidence: m.insight.confidence,
-        riskPercentage: m.insight.riskPercentage
-      }));
-      
-      await fetch('/api/results', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action: 'save_predictions', 
-          predictions 
-        })
-      });
-      
-      console.log('💾 Pronostics sauvegardés en base');
-    } catch (error) {
-      console.error('Erreur sauvegarde pronostics:', error);
-    }
   };
 
   // Filtrer les matchs
@@ -384,28 +390,38 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
             <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: '#f97316', margin: 0 }}>
               Steo Élite Predictor
             </h1>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '11px', color: '#666' }}>Sports Predictor</span>
-              {/* API Status Indicator */}
+            <span style={{ fontSize: '11px', color: '#666', display: 'block', marginTop: '2px' }}>
+              Sports Predictor
+            </span>
+          </div>
+          {/* API Status Indicator - Affichage séparé et bien visible */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            gap: '4px'
+          }}>
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 12px',
+              borderRadius: '16px',
+              fontSize: '12px',
+              fontWeight: '600',
+              background: apiStatus === 'online' ? '#22c55e20' : apiStatus === 'offline' ? '#ef444420' : '#66620',
+              color: apiStatus === 'online' ? '#22c55e' : apiStatus === 'offline' ? '#ef4444' : '#666',
+              border: `1px solid ${apiStatus === 'online' ? '#22c55e40' : apiStatus === 'offline' ? '#ef444440' : '#66640'}`
+            }}>
               <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '2px 8px',
-                borderRadius: '12px',
-                fontSize: '10px',
-                background: apiStatus === 'online' ? '#22c55e20' : apiStatus === 'offline' ? '#ef444420' : '#66620',
-                color: apiStatus === 'online' ? '#22c55e' : apiStatus === 'offline' ? '#ef4444' : '#666'
-              }}>
-                <span style={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  background: apiStatus === 'online' ? '#22c55e' : apiStatus === 'offline' ? '#ef4444' : '#666'
-                }}></span>
-                API: {apiStatus === 'online' ? 'En ligne' : apiStatus === 'offline' ? 'Hors ligne' : 'Connexion...'}
-              </span>
-            </div>
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: apiStatus === 'online' ? '#22c55e' : apiStatus === 'offline' ? '#ef4444' : '#666',
+                animation: apiStatus === 'online' ? 'pulse 2s infinite' : 'none'
+              }}></span>
+              API {apiStatus === 'online' ? 'En ligne' : apiStatus === 'offline' ? 'Hors ligne' : 'Connexion...'}
+            </span>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -1368,6 +1384,61 @@ function ResultsSection() {
     losses: 0,
     winRate: 0
   };
+
+  // Vérifier s'il y a des données
+  const hasData = stats?.overall?.totalPredictions > 0 || currentStats.totalPredictions > 0 || history.length > 0;
+
+  // Si aucune donnée, afficher un message explicatif
+  if (!hasData && !loading) {
+    return (
+      <div style={{
+        background: '#111',
+        borderRadius: '12px',
+        padding: '30px',
+        border: '1px solid #8b5cf630',
+        textAlign: 'center'
+      }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>📊</div>
+        <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#8b5cf6', marginBottom: '12px' }}>
+          Aucune statistique disponible
+        </h3>
+        <p style={{ color: '#888', fontSize: '14px', marginBottom: '20px', lineHeight: '1.6' }}>
+          Les pronostics seront automatiquement enregistrés lorsque vous consultez les matchs du jour.
+          <br />Revenez ici après avoir consulté les pronostics !
+        </p>
+        <div style={{
+          background: '#1a1a1a',
+          borderRadius: '8px',
+          padding: '16px',
+          marginBottom: '20px'
+        }}>
+          <p style={{ color: '#eab308', fontSize: '13px', fontWeight: 'bold', marginBottom: '8px' }}>
+            💡 Comment ça marche ?
+          </p>
+          <ul style={{ color: '#888', fontSize: '12px', textAlign: 'left', listStyle: 'none', padding: 0 }}>
+            <li style={{ marginBottom: '6px' }}>1️⃣ Allez dans l'onglet <strong style={{ color: '#f97316' }}>Pronostics</strong></li>
+            <li style={{ marginBottom: '6px' }}>2️⃣ Les matchs du jour sont automatiquement sauvegardés</li>
+            <li style={{ marginBottom: '6px' }}>3️⃣ Cliquez sur <strong style={{ color: '#8b5cf6' }}>Vérifier les résultats</strong> après les matchs</li>
+          </ul>
+        </div>
+        <button
+          onClick={() => loadData()}
+          style={{
+            padding: '12px 24px',
+            borderRadius: '8px',
+            border: 'none',
+            background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
+            color: '#fff',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+        >
+          🔄 Actualiser les statistiques
+        </button>
+      </div>
+    );
+  }
 
   // Noms des périodes pour l'affichage
   const periodLabels: Record<string, string> = {
