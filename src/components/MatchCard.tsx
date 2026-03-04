@@ -59,14 +59,16 @@ export function MatchCard({ match, onAnalyze, compact = false }: MatchCardProps)
 
   if (compact) {
     return (
-      <Card className="group hover:border-orange-500/30 hover:shadow-lg hover:shadow-orange-500/5 transition-all cursor-pointer bg-card">
+      <Card className="group hover:border-orange-500/30 hover:shadow-lg hover:shadow-orange-500/5 transition-all cursor-pointer bg-card min-w-0">
         <CardContent className="p-4">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
               <span className="text-xl shrink-0">{config.icon}</span>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-base">
-                  {match.homeTeam} vs {match.awayTeam}
+                  <span className="inline">{match.homeTeam}</span>
+                  <span className="inline mx-1">vs</span>
+                  <span className="inline">{match.awayTeam}</span>
                 </p>
                 <p className="text-sm text-muted-foreground">
                   @{favoriteOdds.toFixed(2)} • {formattedDate}
