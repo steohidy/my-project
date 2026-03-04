@@ -42,7 +42,8 @@ export function Multisports() {
     try {
       const response = await fetch('/api/matches');
       const data = await response.json();
-      setMatches(data);
+      // L'API retourne { matches: [...], timing: {...} }
+      setMatches(data.matches || data || []);
     } catch (error) {
       console.error('Error fetching matches:', error);
     } finally {

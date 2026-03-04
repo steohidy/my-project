@@ -12,6 +12,7 @@ interface SafeMatch {
   homeTeam: string;
   awayTeam: string;
   sport: string;
+  league?: string;
   date: string;
   oddsHome: number;
   oddsDraw: number | null;
@@ -35,13 +36,16 @@ export function SafesDuJour() {
       const response = await fetch('/api/matches?status=upcoming');
       const data = await response.json();
       
+      // L'API retourne { matches: [...], timing: {...} }
+      const allMatches = data.matches || data || [];
+      
       // Filtrer et trier par risque le plus bas
-      const safeMatches = data
+      const safeMatches = allMatches
         .filter((m: SafeMatch) => m.insight && m.insight.riskPercentage <= 40)
         .sort((a: SafeMatch, b: SafeMatch) => 
           (a.insight?.riskPercentage || 50) - (b.insight?.riskPercentage || 50)
         )
-        .slice(0, 5);
+        .slice(0, 10); // 10 matchs sûrs max
       
       setMatches(safeMatches);
     } catch (error) {

@@ -60,15 +60,15 @@ export function MatchCard({ match, onAnalyze, compact = false }: MatchCardProps)
   if (compact) {
     return (
       <Card className="group hover:border-orange-500/30 hover:shadow-lg hover:shadow-orange-500/5 transition-all cursor-pointer bg-card">
-        <CardContent className="p-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-              <span className="text-lg shrink-0">{config.icon}</span>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <span className="text-xl shrink-0">{config.icon}</span>
               <div className="min-w-0 flex-1">
-                <p className="font-medium text-sm truncate">
+                <p className="font-semibold text-base">
                   {match.homeTeam} vs {match.awayTeam}
                 </p>
-                <p className="text-xs text-muted-foreground truncate">
+                <p className="text-sm text-muted-foreground">
                   @{favoriteOdds.toFixed(2)} • {formattedDate}
                 </p>
               </div>
@@ -97,13 +97,13 @@ export function MatchCard({ match, onAnalyze, compact = false }: MatchCardProps)
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 p-5">
         {/* Teams */}
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {/* Home Team */}
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <span className={`font-semibold truncate ${favorite === 'home' ? 'text-orange-500' : 'text-foreground'}`}>
+              <span className={`font-bold text-base ${favorite === 'home' ? 'text-orange-500' : 'text-foreground'}`}>
                 {match.homeTeam}
               </span>
               {favorite === 'home' && (
@@ -113,23 +113,23 @@ export function MatchCard({ match, onAnalyze, compact = false }: MatchCardProps)
                 </Badge>
               )}
             </div>
-            <span className={`font-mono font-bold text-base sm:text-lg shrink-0 ${favorite === 'home' ? 'text-orange-500' : 'text-foreground'}`}>
+            <span className={`font-mono font-bold text-lg shrink-0 ${favorite === 'home' ? 'text-orange-500' : 'text-foreground'}`}>
               {match.oddsHome.toFixed(2)}
             </span>
           </div>
           
           {/* Draw */}
           {match.oddsDraw && (
-            <div className="flex items-center justify-between text-sm text-muted-foreground py-1.5 border-y border-dashed border-border/50 gap-2">
+            <div className="flex items-center justify-between text-sm text-muted-foreground py-2 border-y border-dashed border-border/50 gap-3">
               <span className="font-medium">Nul</span>
               <span className="font-mono font-semibold shrink-0">{match.oddsDraw.toFixed(2)}</span>
             </div>
           )}
           
           {/* Away Team */}
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <span className={`font-semibold truncate ${favorite === 'away' ? 'text-orange-500' : 'text-foreground'}`}>
+              <span className={`font-bold text-base ${favorite === 'away' ? 'text-orange-500' : 'text-foreground'}`}>
                 {match.awayTeam}
               </span>
               {favorite === 'away' && (
@@ -139,7 +139,7 @@ export function MatchCard({ match, onAnalyze, compact = false }: MatchCardProps)
                 </Badge>
               )}
             </div>
-            <span className={`font-mono font-bold text-base sm:text-lg shrink-0 ${favorite === 'away' ? 'text-orange-500' : 'text-foreground'}`}>
+            <span className={`font-mono font-bold text-lg shrink-0 ${favorite === 'away' ? 'text-orange-500' : 'text-foreground'}`}>
               {match.oddsAway.toFixed(2)}
             </span>
           </div>

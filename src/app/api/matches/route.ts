@@ -1,124 +1,110 @@
 import { NextResponse } from 'next/server';
 
-/**
- * API MATCHS - Cache Intelligent pour Vercel Serverless
- *
- * STRATÉGIE D'ÉCONOMIE DE CRÉDITS:
- * 1. Réduire les sports à 5 prioritaires (au lieu de 15)
- * 2. Cache HTTP Edge avec s-maxage
- * 3. Cache instance avec reset à minuit
- *
- * CONSOMMATION: ~5 crédits/jour au lieu de 1600+
- */
-
-// Cache global instance (persiste pendant la vie de l'instance serverless)
-let globalCache: {
-  matches: any[];
-  timing: any;
+// Type local pour éviter les imports problématiques
+interface MatchData {
+  id: string;
+  homeTeam: string;
+  awayTeam: string;
+  sport: string;
+  league: string;
   date: string;
-  timestamp: number;
-} | null = null;
+  oddsHome: number;
+  oddsDraw: number | null;
+  oddsAway: number;
+  status: string;
+  timeSlot?: 'day' | 'night';
+  insight: {
+    riskPercentage: number;
+    valueBetDetected: boolean;
+    valueBetType: string | null;
+    confidence: string;
+    crossValidation?: {
+      sourcesCount: number;
+      oddsConsensus: boolean;
+      dataQuality: 'high' | 'medium' | 'low';
+    };
+  };
+  goalsPrediction?: {
+    total: number;
+    over25: number;
+    under25: number;
+    over15: number;
+    bothTeamsScore: number;
+    prediction: string;
+  };
+  cardsPrediction?: {
+    total: number;
+    over45: number;
+    under45: number;
+    redCardRisk: number;
+    prediction: string;
+  };
+}
 
-const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 heures
+interface TimingInfo {
+  currentHour: number;
+  canRefresh: boolean;
+  nextRefreshTime: string;
+  currentPhase: 'morning' | 'afternoon' | 'evening';
+  message: string;
+}
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const forceRefresh = searchParams.get('refresh') === 'true';
-  const today = new Date().toISOString().split('T')[0];
-  const now = Date.now();
+// Cache partagé
+let cachedData: { matches: MatchData[]; timing: TimingInfo } | null = null;
+let lastFetchTime = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-  // 1. Vérifier reset quotidien (nouveau jour)
-  if (globalCache && globalCache.date !== today) {
-    console.log(`🌅 Nouveau jour: ${globalCache.date} → ${today}, reset cache`);
-    globalCache = null;
-  }
-
-  // 2. Vérifier cache instance valide (même jour + pas expiré)
-  if (!forceRefresh && globalCache && (now - globalCache.timestamp) < CACHE_TTL) {
-    console.log(`📦 Cache instance: ${globalCache.matches.length} matchs`);
-
-    const response = NextResponse.json({
-      matches: globalCache.matches,
-      timing: globalCache.timing,
-      source: 'instance-cache',
-      cachedDate: globalCache.date
-    });
-
-    // Cache Edge Vercel
-    response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=1800');
-    return response;
-  }
-
-  // 3. Fetch des données
-  console.log('🔄 Récupération des matchs...');
-
+/**
+ * GET - Récupérer les matchs avec croisement multi-sources
+ * DONNÉES RÉELLES UNIQUEMENT
+ * GESTION INTELLIGENTE DU TIMING
+ */
+export async function GET() {
   try {
-    const { getCrossValidatedMatches } = await import('@/lib/crossValidation');
-    const result = await getCrossValidatedMatches();
-
-    if (result.matches && result.matches.length > 0) {
-      // Mise en cache
-      globalCache = {
-        matches: result.matches,
-        timing: result.timing,
-        date: today,
-        timestamp: now
-      };
-
-      console.log(`✅ ${result.matches.length} matchs mis en cache pour ${today}`);
-
-      const response = NextResponse.json({
-        matches: result.matches,
-        timing: result.timing,
-        source: 'fresh-fetch',
-        cachedDate: today
-      });
-
-      response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=1800');
-      response.headers.set('X-Cache-Date', today);
-
-      return response;
-    }
-
-    // Si pas de matchs mais cache existant, l'utiliser
-    if (globalCache) {
-      console.log('⚠️ Pas de nouveaux matchs, utilisation du cache');
+    const now = Date.now();
+    
+    // Vérifier le cache
+    if (cachedData && (now - lastFetchTime) < CACHE_TTL) {
+      console.log('📦 Utilisation du cache');
+      // Mais mettre à jour le timing (car l'heure change)
+      const { getTimingInfo } = await import('@/lib/crossValidation');
+      const currentTiming = getTimingInfo();
       return NextResponse.json({
-        matches: globalCache.matches,
-        timing: globalCache.timing,
-        source: 'fallback-cache',
-        cachedDate: globalCache.date
+        ...cachedData,
+        timing: currentTiming
       });
     }
 
-    return NextResponse.json({
-      error: 'Aucun match disponible',
+    // Import dynamique pour éviter les erreurs de build
+    const { getCrossValidatedMatches } = await import('@/lib/crossValidation');
+    
+    const result = await getCrossValidatedMatches();
+    
+    if (result.matches && result.matches.length > 0) {
+      cachedData = result;
+      lastFetchTime = now;
+      return NextResponse.json(result);
+    }
+    
+    // Aucun match - retourner un message d'erreur clair
+    console.error('❌ Aucune donnée réelle disponible');
+    return NextResponse.json({ 
+      error: 'Aucun match disponible actuellement',
+      message: 'Veuillez réessayer dans quelques minutes',
       matches: [],
-      timing: result.timing,
-      source: 'empty'
+      timing: result.timing
     });
 
   } catch (error) {
-    console.error('Erreur:', error);
-
-    // Fallback sur le cache si disponible
-    if (globalCache) {
-      return NextResponse.json({
-        matches: globalCache.matches,
-        timing: globalCache.timing,
-        source: 'error-fallback',
-        cachedDate: globalCache.date,
-        error: 'Données de cache (erreur API)'
-      });
-    }
-
-    return NextResponse.json({
-      error: 'Erreur de connexion',
+    console.error('Erreur API matches:', error);
+    return NextResponse.json({ 
+      error: 'Erreur de connexion aux APIs',
+      message: 'Vérifiez votre connexion et réessayez',
       matches: [],
       timing: {
         currentHour: new Date().getHours(),
         canRefresh: false,
-        nextRefreshTime: '--:--',
+        nextRefreshTime: '14h00',
         currentPhase: 'morning',
         message: 'Erreur de connexion'
       }
