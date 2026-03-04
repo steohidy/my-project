@@ -864,6 +864,33 @@ function TabButtonCompact({ active, onClick, icon, label, count }: { active: boo
 // Composant MatchCardCompact
 function MatchCardCompact({ match, index }: { match: Match; index: number }) {
   const [showAllOptions, setShowAllOptions] = useState(false);
+  const [enrichment, setEnrichment] = useState<{
+    homeTeam?: { injuryCount: number; keyInjuries?: string[] };
+    awayTeam?: { injuryCount: number; keyInjuries?: string[] };
+    totalInjuries?: number;
+  } | null>(null);
+  const [loadingEnrichment, setLoadingEnrichment] = useState(true);
+  
+  // Charger les données d'enrichissement (blessures)
+  useEffect(() => {
+    const fetchEnrichment = async () => {
+      try {
+        const response = await fetch(
+          `/api/pronos-enrichment?homeTeam=${encodeURIComponent(match.homeTeam)}&awayTeam=${encodeURIComponent(match.awayTeam)}`
+        );
+        const data = await response.json();
+        if (data.success && data.data) {
+          setEnrichment(data.data);
+        }
+      } catch (e) {
+        // Silencieux si échec
+      } finally {
+        setLoadingEnrichment(false);
+      }
+    };
+    
+    fetchEnrichment();
+  }, [match.homeTeam, match.awayTeam]);
   
   const riskColor = match.insight.riskPercentage <= 40 ? '#22c55e' : match.insight.riskPercentage <= 50 ? '#f97316' : '#ef4444';
   const riskLabel = match.insight.riskPercentage <= 40 ? 'Sûr' : match.insight.riskPercentage <= 50 ? 'Modéré' : 'Audacieux';
@@ -947,6 +974,22 @@ function MatchCardCompact({ match, index }: { match: Match; index: number }) {
           <div style={{ color: '#666', fontSize: '10px' }}>
             {match.league} • {match.sport}
           </div>
+          {/* Indicateur blessures */}
+          {!loadingEnrichment && enrichment && enrichment.totalInjuries && enrichment.totalInjuries > 0 && (
+            <div style={{ 
+              color: '#ef4444', 
+              fontSize: '9px', 
+              marginTop: '2px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              🏥 {enrichment.totalInjuries} joueur{enrichment.totalInjuries > 1 ? 's' : ''} blessé{enrichment.totalInjuries > 1 ? 's' : ''}
+              {enrichment.homeTeam?.keyInjuries && enrichment.homeTeam.keyInjuries.length > 0 && (
+                <span style={{ color: '#888' }}>({enrichment.homeTeam.keyInjuries[0].slice(0, 12)}...)</span>
+              )}
+            </div>
+          )}
         </div>
         
         {/* Odds */}
