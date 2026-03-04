@@ -290,42 +290,52 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
     }
   };
 
-  // Charger les matchs
+  // Charger les matchs + Auto-refresh toutes les 5 minutes
   useEffect(() => {
     let isMounted = true;
     
-    // Vérifier le statut de l'API
-    fetch('/api/matches')
-      .then(res => {
-        if (isMounted) {
-          setApiStatus(res.ok ? 'online' : 'offline');
-        }
-        return res.json();
-      })
-      .then(data => {
-        if (isMounted) {
-          const matchList = data.matches || data;
-          setMatches(matchList);
-          if (data.timing) {
-            setTiming(data.timing);
+    const fetchMatches = () => {
+      fetch('/api/matches')
+        .then(res => {
+          if (isMounted) {
+            setApiStatus(res.ok ? 'online' : 'offline');
           }
-          setLastUpdate(new Date());
-          setLoading(false);
-          
-          // Sauvegarder automatiquement les pronostics au chargement initial
-          if (matchList && matchList.length > 0) {
-            savePredictionsToDB(matchList);
+          return res.json();
+        })
+        .then(data => {
+          if (isMounted) {
+            const matchList = data.matches || data;
+            setMatches(matchList);
+            if (data.timing) {
+              setTiming(data.timing);
+            }
+            setLastUpdate(new Date());
+            setLoading(false);
+            
+            // Sauvegarder automatiquement les pronostics
+            if (matchList && matchList.length > 0) {
+              savePredictionsToDB(matchList);
+            }
           }
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setApiStatus('offline');
-          setLoading(false);
-        }
-      });
+        })
+        .catch(() => {
+          if (isMounted) {
+            setApiStatus('offline');
+            setLoading(false);
+          }
+        });
+    };
+    
+    // Chargement initial
+    fetchMatches();
+    
+    // Auto-refresh toutes les 5 minutes
+    const interval = setInterval(fetchMatches, 5 * 60 * 1000);
 
-    return () => { isMounted = false; };
+    return () => { 
+      isMounted = false; 
+      clearInterval(interval);
+    };
   }, []);
 
   const handleRefresh = () => {
@@ -366,77 +376,59 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
     <div style={{
       minHeight: '100vh',
       background: '#0a0a0a',
-      color: '#fff'
+      color: '#fff',
+      display: 'flex'
     }}>
-      {/* Header */}
-      <header style={{
+      {/* Sidebar - Menu Vertical */}
+      <aside style={{
+        width: '60px',
+        minWidth: '60px',
         background: '#111',
-        borderBottom: '1px solid #222',
-        padding: '16px 24px',
+        borderRight: '1px solid #222',
         display: 'flex',
-        justifyContent: 'space-between',
+        flexDirection: 'column',
         alignItems: 'center',
+        padding: '12px 0',
+        gap: '4px',
         position: 'sticky',
         top: 0,
-        zIndex: 100,
-        gap: '16px'
+        height: '100vh'
       }}>
-        {/* Logo et Titre */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            padding: '8px',
-            borderRadius: '8px',
-            background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
-          }}>
-            <span style={{ fontSize: '20px' }}>👑</span>
-          </div>
-          <div>
-            <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: '#f97316', margin: 0 }}>
-              Steo Élite Predictor
-            </h1>
-            <span style={{ fontSize: '11px', color: '#666', display: 'block', marginTop: '2px' }}>
-              Sports Predictor
-            </span>
-          </div>
-        </div>
-        
-        {/* API Status - Bien séparé au centre */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center',
-          justifyContent: 'center'
+        {/* Logo */}
+        <div style={{
+          padding: '6px',
+          borderRadius: '8px',
+          background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+          marginBottom: '12px'
         }}>
-          <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '6px 16px',
-            borderRadius: '20px',
-            fontSize: '13px',
-            fontWeight: '600',
-            background: apiStatus === 'online' ? '#22c55e15' : apiStatus === 'offline' ? '#ef444415' : '#66615',
-            color: apiStatus === 'online' ? '#22c55e' : apiStatus === 'offline' ? '#ef4444' : '#888',
-            border: `1px solid ${apiStatus === 'online' ? '#22c55e30' : apiStatus === 'offline' ? '#ef444430' : '#66630'}`,
-            whiteSpace: 'nowrap'
-          }}>
-            <span style={{
-              width: '10px',
-              height: '10px',
-              borderRadius: '50%',
-              background: apiStatus === 'online' ? '#22c55e' : apiStatus === 'offline' ? '#ef4444' : '#888',
-              boxShadow: apiStatus === 'online' ? '0 0 8px #22c55e' : 'none'
-            }}></span>
-            {apiStatus === 'online' ? 'API En ligne' : apiStatus === 'offline' ? 'API Hors ligne' : 'Connexion...'}
-          </span>
+          <span style={{ fontSize: '18px' }}>👑</span>
         </div>
         
-        {/* Bouton Déconnexion */}
+        {/* Menu Items */}
+        <NavButton icon="⚽" active={activeSection === 'matches'} onClick={() => setActiveSection('matches')} color="#f97316" />
+        <NavButton icon="🛡️" active={activeSection === 'antitrap'} onClick={() => setActiveSection('antitrap')} color="#ef4444" />
+        <NavButton icon="💰" active={activeSection === 'bankroll'} onClick={() => setActiveSection('bankroll')} color="#22c55e" />
+        <NavButton icon="📊" active={activeSection === 'results'} onClick={() => setActiveSection('results')} color="#8b5cf6" />
+        
+        {/* Spacer */}
+        <div style={{ flex: 1 }}></div>
+        
+        {/* API Status */}
+        <div style={{
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          background: apiStatus === 'online' ? '#22c55e' : '#ef4444',
+          boxShadow: apiStatus === 'online' ? '0 0 6px #22c55e' : 'none'
+        }} title={apiStatus === 'online' ? 'API En ligne' : 'API Hors ligne'}></div>
+        
+        {/* Logout */}
         <button
           onClick={onLogout}
           style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '10px',
+            width: '36px',
+            height: '36px',
+            borderRadius: '8px',
             border: '1px solid #ef444440',
             background: 'transparent',
             color: '#ef4444',
@@ -444,305 +436,90 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '18px',
-            transition: 'all 0.2s ease'
+            fontSize: '14px'
           }}
           title="Se déconnecter"
         >
           🚪
         </button>
-      </header>
+      </aside>
 
-      {/* Navigation rapide */}
-      <nav style={{
-        background: '#0d0d0d',
-        borderBottom: '1px solid #222',
-        padding: '12px 24px',
-        display: 'flex',
-        gap: '8px',
-        overflowX: 'auto'
-      }}>
-        <button
-          onClick={() => setActiveSection('matches')}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '6px',
-            border: 'none',
-            background: activeSection === 'matches' ? '#f97316' : 'transparent',
-            color: activeSection === 'matches' ? '#fff' : '#888',
-            cursor: 'pointer',
-            fontSize: '13px',
-            fontWeight: activeSection === 'matches' ? 'bold' : 'normal',
-            whiteSpace: 'nowrap',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}
-        >
-          <span>⚽</span> Pronostics
-        </button>
-        <button
-          onClick={() => setActiveSection('antitrap')}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '6px',
-            border: 'none',
-            background: activeSection === 'antitrap' ? '#ef4444' : 'transparent',
-            color: activeSection === 'antitrap' ? '#fff' : '#888',
-            cursor: 'pointer',
-            fontSize: '13px',
-            fontWeight: activeSection === 'antitrap' ? 'bold' : 'normal',
-            whiteSpace: 'nowrap',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}
-        >
-          <span>🛡️</span> Anti-Trap
-        </button>
-        <button
-          onClick={() => setActiveSection('bankroll')}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '6px',
-            border: 'none',
-            background: activeSection === 'bankroll' ? '#22c55e' : 'transparent',
-            color: activeSection === 'bankroll' ? '#fff' : '#888',
-            cursor: 'pointer',
-            fontSize: '13px',
-            fontWeight: activeSection === 'bankroll' ? 'bold' : 'normal',
-            whiteSpace: 'nowrap',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}
-        >
-          <span>💰</span> Bankroll
-        </button>
-        <button
-          onClick={() => setActiveSection('results')}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '6px',
-            border: 'none',
-            background: activeSection === 'results' ? '#8b5cf6' : 'transparent',
-            color: activeSection === 'results' ? '#fff' : '#888',
-            cursor: 'pointer',
-            fontSize: '13px',
-            fontWeight: activeSection === 'results' ? 'bold' : 'normal',
-            whiteSpace: 'nowrap',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}
-        >
-          <span>📊</span> Résultats
-        </button>
-      </nav>
+      {/* Main Content */}
+      <main style={{ flex: 1, overflow: 'auto', padding: '12px' }}>
+        {/* Header compact */}
+        <header style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '12px',
+          flexWrap: 'wrap',
+          gap: '8px'
+        }}>
+          <div>
+            <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: '#f97316', margin: 0 }}>
+              Steo Élite Predictor
+            </h1>
+            <span style={{ fontSize: '11px', color: '#666' }}>
+              {timing.currentPhase === 'morning' ? '🌅' : timing.currentPhase === 'afternoon' ? '☀️' : '🌙'} {matches.length} matchs
+            </span>
+          </div>
+          <span style={{
+            fontSize: '11px',
+            color: apiStatus === 'online' ? '#22c55e' : '#ef4444'
+          }}>
+            {apiStatus === 'online' ? '✓ API' : '✗ Offline'}
+          </span>
+        </header>
 
-      {/* Content */}
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
         {/* Section Pronostics */}
         {activeSection === 'matches' && (
           <>
-            {/* Hero */}
-            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+            {/* Hero compact */}
+            <div style={{ marginBottom: '12px' }}>
               <h2 style={{
-                fontSize: '28px',
+                fontSize: '16px',
                 fontWeight: 'bold',
-                background: 'linear-gradient(90deg, #fb923c, #f97316)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                marginBottom: '8px'
+                color: '#f97316',
+                marginBottom: '4px'
               }}>
                 Pronostics du {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
               </h2>
-              <p style={{ color: '#888', fontSize: '14px' }}>
-                Dernière mise à jour : {lastUpdate.toLocaleTimeString('fr-FR')} • {matches.length} matchs du jour
+              <p style={{ color: '#666', fontSize: '11px' }}>
+                Mise à jour: {lastUpdate.toLocaleTimeString('fr-FR')} • {safes.length} sûrs, {moderate.length} modérés, {risky.length} audacieux
               </p>
             </div>
 
-            {/* Barre d'infos sur une seule ligne */}
-            <div style={{
-              background: '#111',
-              borderRadius: '8px',
-              padding: '12px 16px',
-              marginBottom: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              flexWrap: 'wrap'
-            }}>
-              {/* Sources */}
-              <span style={{ fontSize: '12px', color: '#888' }}>📡 Sources:</span>
-              <span style={{
-                padding: '4px 10px',
-                background: apiStatus === 'online' ? '#22c55e' : '#ef4444',
-                borderRadius: '12px',
-                fontSize: '11px',
-                fontWeight: 'bold',
-                color: '#fff'
-              }}>
-                {apiStatus === 'online' ? '✅' : '❌'} Odds API
-              </span>
-              <span style={{
-                padding: '4px 10px',
-                background: '#3b82f6',
-                borderRadius: '12px',
-                fontSize: '11px',
-                fontWeight: 'bold',
-                color: '#fff'
-              }}>
-                ✅ Football-Data
-              </span>
-              
-              <span style={{ color: '#333', fontSize: '14px' }}>|</span>
-              
-              {/* Stats */}
-              <span style={{ fontSize: '13px' }}>🛡️ <b style={{ color: '#22c55e' }}>{safes.length}</b> sûrs</span>
-              <span style={{ fontSize: '13px' }}>⚠️ <b style={{ color: '#f97316' }}>{moderate.length}</b> modérés</span>
-              <span style={{ fontSize: '13px' }}>💰 <b style={{ color: '#3b82f6' }}>{valueBets.length}</b> value</span>
-              
-              <span style={{ color: '#333', fontSize: '14px' }}>|</span>
-              
-              {/* Validation date */}
-              <span style={{ 
-                fontSize: '11px',
-                color: '#22c55e',
-                fontWeight: '500'
-              }}>
-                ✅ Matchs du {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-              </span>
-              
-              <span style={{ color: '#333', fontSize: '14px' }}>|</span>
-              
-              {/* Timing indicator */}
-              <span style={{ 
-                fontSize: '11px',
-                color: timing.canRefresh ? '#22c55e' : '#eab308',
-                fontWeight: '500',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}>
-                {timing.currentPhase === 'morning' && '🌅 Matin'}
-                {timing.currentPhase === 'afternoon' && '☀️ Après-midi'}
-                {timing.currentPhase === 'evening' && '🌙 Soir'}
-                <span style={{ fontSize: '10px', color: '#666' }}>
-                  ({timing.currentHour}h)
-                </span>
-              </span>
-            </div>
-
-            {/* Tabs */}
+            {/* Tabs compacts */}
             <div style={{
               display: 'flex',
-              gap: '8px',
-              marginBottom: '24px',
-              borderBottom: '1px solid #222',
-              paddingBottom: '16px'
+              gap: '4px',
+              marginBottom: '12px',
+              flexWrap: 'nowrap',
+              overflowX: 'auto'
             }}>
-              <TabButton 
-                active={activeTab === 'safes'} 
-                onClick={() => setActiveTab('safes')}
-                icon="🛡️"
-                label={`Safes (${safes.length})`}
-              />
-              <TabButton 
-                active={activeTab === 'moderate'} 
-                onClick={() => setActiveTab('moderate')}
-                icon="⚠️"
-                label={`Modérés (${moderate.length})`}
-              />
-              <TabButton 
-                active={activeTab === 'risky'} 
-                onClick={() => setActiveTab('risky')}
-                icon="🎯"
-                label={`Audacieux (${risky.length})`}
-              />
-              <TabButton 
-                active={activeTab === 'all'} 
-                onClick={() => setActiveTab('all')}
-                icon="📋"
-                label={`Tous (${matches.length})`}
-              />
+              <TabButtonCompact active={activeTab === 'safes'} onClick={() => setActiveTab('safes')} icon="🛡️" count={safes.length} />
+              <TabButtonCompact active={activeTab === 'moderate'} onClick={() => setActiveTab('moderate')} icon="⚠️" count={moderate.length} />
+              <TabButtonCompact active={activeTab === 'risky'} onClick={() => setActiveTab('risky')} icon="🎯" count={risky.length} />
+              <TabButtonCompact active={activeTab === 'all'} onClick={() => setActiveTab('all')} icon="📋" count={matches.length} />
             </div>
 
             {/* Loading State */}
             {loading ? (
-              <div style={{ textAlign: 'center', padding: '60px', color: '#666' }}>
-                <div style={{ fontSize: '40px', marginBottom: '16px' }}>⏳</div>
-                Chargement des matchs...
+              <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                <div style={{ fontSize: '24px', marginBottom: '8px' }}>⏳</div>
+                <span style={{ fontSize: '12px' }}>Chargement...</span>
               </div>
             ) : displayedMatches.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '60px', color: '#666' }}>
-                <div style={{ fontSize: '40px', marginBottom: '16px' }}>📭</div>
-                Aucun match dans cette catégorie
+              <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                <div style={{ fontSize: '24px', marginBottom: '8px' }}>📭</div>
+                <span style={{ fontSize: '12px' }}>Aucun match</span>
               </div>
             ) : (
               /* Match List */
-              <div style={{ display: 'grid', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {displayedMatches.map((match, index) => (
-                  <MatchCard key={match.id} match={match} index={index + 1} />
+                  <MatchCardCompact key={match.id} match={match} index={index + 1} />
                 ))}
-              </div>
-            )}
-
-            {/* Value Bets Section */}
-            {valueBets.length > 0 && activeTab === 'safes' && (
-              <div style={{ marginTop: '40px' }}>
-                <h3 style={{
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  marginBottom: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  <span style={{
-                    background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                    color: '#fff',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}>💰</span>
-                  Top Value Bets du Jour
-                </h3>
-                <div style={{ display: 'grid', gap: '12px' }}>
-                  {valueBets.slice(0, 3).map((match, index) => (
-                    <div key={match.id} style={{
-                      background: 'linear-gradient(135deg, #111 0%, #1a1a2e 100%)',
-                      borderRadius: '12px',
-                      padding: '16px 20px',
-                      border: '1px solid #3b82f6',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                      gap: '12px'
-                    }}>
-                      <div style={{ flex: '1', minWidth: '200px' }}>
-                        <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#3b82f6' }}>
-                          💎 {match.homeTeam} vs {match.awayTeam}
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#888' }}>
-                          {match.league} • Value sur {match.insight.valueBetType === 'home' ? match.homeTeam : match.insight.valueBetType === 'away' ? match.awayTeam : 'Nul'}
-                        </div>
-                      </div>
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '11px', color: '#666' }}>Meilleure cote</div>
-                        <div style={{ 
-                          fontFamily: 'monospace', 
-                          fontWeight: 'bold', 
-                          fontSize: '18px',
-                          color: '#3b82f6'
-                        }}>
-                          @{match.insight.valueBetType === 'home' ? match.oddsHome.toFixed(2) : match.insight.valueBetType === 'away' ? match.oddsAway.toFixed(2) : match.oddsDraw?.toFixed(2)}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
             )}
           </>
@@ -750,103 +527,145 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
 
         {/* Section Anti-Trap */}
         {activeSection === 'antitrap' && (
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <h2 style={{
-              fontSize: '28px',
-              fontWeight: 'bold',
-              background: 'linear-gradient(90deg, #ef4444, #f97316)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              marginBottom: '8px'
-            }}>
-              🛡️ Système Anti-Trap
+          <div style={{ marginBottom: '12px' }}>
+            <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ef4444', marginBottom: '8px' }}>
+              🛡️ Anti-Trap
             </h2>
-            <p style={{ color: '#888', fontSize: '14px', marginBottom: '24px' }}>
-              Détectez et évitez les pièges des bookmakers
-            </p>
             <AntiTrapSection matches={matches} />
           </div>
         )}
 
         {/* Section Bankroll */}
         {activeSection === 'bankroll' && (
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <h2 style={{
-              fontSize: '28px',
-              fontWeight: 'bold',
-              background: 'linear-gradient(90deg, #22c55e, #10b981)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              marginBottom: '8px'
-            }}>
-              💰 Gestion de Bankroll
+          <div style={{ marginBottom: '12px' }}>
+            <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#22c55e', marginBottom: '8px' }}>
+              💰 Bankroll
             </h2>
-            <p style={{ color: '#888', fontSize: '14px', marginBottom: '24px' }}>
-              Optimisez votre capital de paris sportifs
-            </p>
             <BankrollSection />
           </div>
         )}
 
         {/* Section Résultats */}
         {activeSection === 'results' && (
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <h2 style={{
-              fontSize: '28px',
-              fontWeight: 'bold',
-              background: 'linear-gradient(90deg, #8b5cf6, #6366f1)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              marginBottom: '8px'
-            }}>
-              📊 Taux de Réussite
+          <div style={{ marginBottom: '12px' }}>
+            <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#8b5cf6', marginBottom: '8px' }}>
+              📊 Résultats
             </h2>
-            <p style={{ color: '#888', fontSize: '14px', marginBottom: '24px' }}>
-              Suivi des performances du modèle
-            </p>
             <ResultsSection />
           </div>
         )}
       </main>
-
-      {/* Footer */}
-      <footer style={{
-        textAlign: 'center',
-        padding: '24px',
-        borderTop: '1px solid #222',
-        marginTop: '40px',
-        color: '#666',
-        fontSize: '12px'
-      }}>
-        Steo Élite Predictor © 2026 • Données en temps réel via The Odds API
-      </footer>
     </div>
   );
 }
 
-// Composant TabButton
-function TabButton({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: string; label: string }) {
+// Composant NavButton (menu vertical)
+function NavButton({ icon, active, onClick, color }: { icon: string; active: boolean; onClick: () => void; color: string }) {
   return (
     <button
       onClick={onClick}
       style={{
-        padding: '10px 16px',
+        width: '40px',
+        height: '40px',
         borderRadius: '8px',
         border: 'none',
+        background: active ? color : 'transparent',
+        color: active ? '#fff' : '#666',
+        cursor: 'pointer',
+        fontSize: '18px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'all 0.2s'
+      }}
+      title={icon}
+    >
+      {icon}
+    </button>
+  );
+}
+
+// Composant TabButtonCompact
+function TabButtonCompact({ active, onClick, icon, count }: { active: boolean; onClick: () => void; icon: string; count: number }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: '6px 10px',
+        borderRadius: '6px',
+        border: active ? '1px solid #f97316' : '1px solid #333',
         background: active ? '#f97316' : 'transparent',
         color: active ? '#fff' : '#888',
         cursor: 'pointer',
-        fontSize: '14px',
+        fontSize: '12px',
         fontWeight: active ? 'bold' : 'normal',
         display: 'flex',
         alignItems: 'center',
-        gap: '6px',
-        transition: 'all 0.2s'
+        gap: '4px',
+        whiteSpace: 'nowrap'
       }}
     >
       <span>{icon}</span>
-      {label}
+      <span>{count}</span>
     </button>
+  );
+}
+
+// Composant MatchCardCompact
+function MatchCardCompact({ match, index }: { match: Match; index: number }) {
+  const riskColor = match.insight.riskPercentage <= 40 ? '#22c55e' : match.insight.riskPercentage <= 50 ? '#f97316' : '#ef4444';
+  
+  return (
+    <div style={{
+      background: '#111',
+      borderRadius: '8px',
+      padding: '10px 12px',
+      border: `1px solid ${riskColor}30`,
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      fontSize: '12px'
+    }}>
+      {/* Index */}
+      <span style={{ 
+        background: riskColor, 
+        color: '#fff', 
+        width: '20px', 
+        height: '20px', 
+        borderRadius: '4px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '10px',
+        fontWeight: 'bold'
+      }}>{index}</span>
+      
+      {/* Teams */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 'bold', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {match.homeTeam} vs {match.awayTeam}
+        </div>
+        <div style={{ color: '#666', fontSize: '10px' }}>
+          {match.league} • {match.sport}
+        </div>
+      </div>
+      
+      {/* Odds */}
+      <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+        <span style={{ padding: '2px 6px', background: '#1a1a1a', borderRadius: '4px', fontSize: '11px' }}>{match.oddsHome.toFixed(2)}</span>
+        {match.oddsDraw && <span style={{ padding: '2px 6px', background: '#1a1a1a', borderRadius: '4px', fontSize: '11px' }}>{match.oddsDraw.toFixed(2)}</span>}
+        <span style={{ padding: '2px 6px', background: '#1a1a1a', borderRadius: '4px', fontSize: '11px' }}>{match.oddsAway.toFixed(2)}</span>
+      </div>
+      
+      {/* Risk */}
+      <span style={{ 
+        color: riskColor, 
+        fontSize: '11px', 
+        fontWeight: 'bold',
+        minWidth: '35px',
+        textAlign: 'right'
+      }}>{match.insight.riskPercentage}%</span>
+    </div>
   );
 }
 
