@@ -668,10 +668,10 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
               flexWrap: 'nowrap',
               overflowX: 'auto'
             }}>
-              <TabButtonCompact active={activeTab === 'safes'} onClick={() => setActiveTab('safes')} icon="🛡️" count={safes.length} />
-              <TabButtonCompact active={activeTab === 'moderate'} onClick={() => setActiveTab('moderate')} icon="⚠️" count={moderate.length} />
-              <TabButtonCompact active={activeTab === 'risky'} onClick={() => setActiveTab('risky')} icon="🎯" count={risky.length} />
-              <TabButtonCompact active={activeTab === 'all'} onClick={() => setActiveTab('all')} icon="📋" count={matches.length} />
+              <TabButtonCompact active={activeTab === 'safes'} onClick={() => setActiveTab('safes')} icon="🛡️" label="Sûrs" count={safes.length} />
+              <TabButtonCompact active={activeTab === 'moderate'} onClick={() => setActiveTab('moderate')} icon="⚠️" label="Modérés" count={moderate.length} />
+              <TabButtonCompact active={activeTab === 'risky'} onClick={() => setActiveTab('risky')} icon="🎯" label="Risqués" count={risky.length} />
+              <TabButtonCompact active={activeTab === 'all'} onClick={() => setActiveTab('all')} icon="📋" label="Tous" count={matches.length} />
             </div>
 
             {/* Loading State */}
@@ -802,27 +802,32 @@ function NavButton({ icon, label, active, onClick, color }: { icon: string; labe
 }
 
 // Composant TabButtonCompact
-function TabButtonCompact({ active, onClick, icon, count }: { active: boolean; onClick: () => void; icon: string; count: number }) {
+function TabButtonCompact({ active, onClick, icon, label, count }: { active: boolean; onClick: () => void; icon: string; label: string; count: number }) {
   return (
     <button
       onClick={onClick}
       style={{
-        padding: '6px 10px',
-        borderRadius: '6px',
+        padding: '8px 12px',
+        borderRadius: '8px',
         border: active ? '1px solid #f97316' : '1px solid #333',
         background: active ? '#f97316' : 'transparent',
         color: active ? '#fff' : '#888',
         cursor: 'pointer',
-        fontSize: '12px',
+        fontSize: '11px',
         fontWeight: active ? 'bold' : 'normal',
         display: 'flex',
         alignItems: 'center',
-        gap: '4px',
-        whiteSpace: 'nowrap'
+        gap: '6px',
+        whiteSpace: 'nowrap',
+        flexDirection: 'column',
+        minWidth: '60px'
       }}
     >
-      <span>{icon}</span>
-      <span>{count}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <span>{icon}</span>
+        <span style={{ fontWeight: 'bold' }}>{count}</span>
+      </div>
+      <span style={{ fontSize: '9px', opacity: 0.9 }}>{label}</span>
     </button>
   );
 }
@@ -832,20 +837,40 @@ function MatchCardCompact({ match, index }: { match: Match; index: number }) {
   const riskColor = match.insight.riskPercentage <= 40 ? '#22c55e' : match.insight.riskPercentage <= 50 ? '#f97316' : '#ef4444';
   const riskLabel = match.insight.riskPercentage <= 40 ? 'Sûr' : match.insight.riskPercentage <= 50 ? 'Modéré' : 'Audacieux';
   
-  // Générer les prédictions basées sur les cotes
-  const totalOdds = match.oddsHome + (match.oddsDraw || 3.5) + match.oddsAway;
-  const avgGoals = totalOdds < 8 ? 2.8 : totalOdds < 10 ? 2.5 : 2.2;
-  const over25Prob = Math.round(45 + (avgGoals - 2.2) * 15);
-  const bttsProb = Math.round(40 + Math.abs(match.oddsHome - match.oddsAway) * 5);
+  // Calcul des probabilités implicites
+  const homeProb = Math.round((1 / match.oddsHome) / ((1 / match.oddsHome) + (1 / match.oddsAway) + (match.oddsDraw ? 1 / match.oddsDraw : 0)) * 100);
+  const awayProb = Math.round((1 / match.oddsAway) / ((1 / match.oddsHome) + (1 / match.oddsAway) + (match.oddsDraw ? 1 / match.oddsDraw : 0)) * 100);
+  const drawProb = match.oddsDraw ? Math.round((1 / match.oddsDraw) / ((1 / match.oddsHome) + (1 / match.oddsAway) + (1 / match.oddsDraw)) * 100) : 0;
   
-  // Cartons estimés
-  const cardsEstimate = match.league.includes('Liga') || match.league.includes('Serie') ? 5.5 : 4.5;
+  // Déterminer le favori et la recommandation
+  const favorite = match.oddsHome < match.oddsAway ? 'home' : 'away';
+  const favoriteTeam = favorite === 'home' ? match.homeTeam : match.awayTeam;
+  const favoriteProb = favorite === 'home' ? homeProb : awayProb;
+  const favoriteOdds = favorite === 'home' ? match.oddsHome : match.oddsAway;
   
-  // Corners estimés
-  const cornersEstimate = match.league.includes('Premier') ? 10.5 : 9.5;
-
+  // Victoire ou Nul (Double Chance)
+  const homeOrDrawProb = homeProb + drawProb;
+  const awayOrDrawProb = awayProb + drawProb;
+  
+  // Recommandation intelligente
+  let recommendation = '';
+  let recColor = '#22c55e';
+  if (favoriteOdds < 1.5 && favoriteProb >= 65) {
+    recommendation = `✅ Victoire ${favoriteTeam}`;
+    recColor = '#22c55e';
+  } else if (favoriteOdds < 2.0 && favoriteProb >= 50) {
+    recommendation = `✅ ${favoriteTeam} ou Nul`;
+    recColor = '#22c55e';
+  } else if (drawProb >= 30) {
+    recommendation = `⚠️ Risque de Nul`;
+    recColor = '#f97316';
+  } else {
+    recommendation = `⏳ Match serré`;
+    recColor = '#f97316';
+  }
+  
   // Taux de réussite basé sur la confiance
-  const baseSuccessRate = match.insight.confidence === 'high' ? 72 : match.insight.confidence === 'medium' ? 58 : 45;
+  const baseSuccessRate = match.insight.confidence === 'high' ? 75 : match.insight.confidence === 'medium' ? 60 : 45;
   const successColor = baseSuccessRate >= 70 ? '#22c55e' : baseSuccessRate >= 55 ? '#f97316' : '#ef4444';
   
   return (
@@ -895,9 +920,9 @@ function MatchCardCompact({ match, index }: { match: Match; index: number }) {
         
         {/* Odds */}
         <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
-          <span style={{ padding: '3px 6px', background: '#1a1a1a', borderRadius: '4px', fontSize: '10px', color: '#fff' }}>{match.oddsHome.toFixed(2)}</span>
+          <span style={{ padding: '3px 6px', background: favorite === 'home' ? '#f97316' : '#1a1a1a', borderRadius: '4px', fontSize: '10px', color: '#fff' }}>{match.oddsHome.toFixed(2)}</span>
           {match.oddsDraw && <span style={{ padding: '3px 6px', background: '#1a1a1a', borderRadius: '4px', fontSize: '10px', color: '#888' }}>{match.oddsDraw.toFixed(2)}</span>}
-          <span style={{ padding: '3px 6px', background: '#1a1a1a', borderRadius: '4px', fontSize: '10px', color: '#fff' }}>{match.oddsAway.toFixed(2)}</span>
+          <span style={{ padding: '3px 6px', background: favorite === 'away' ? '#f97316' : '#1a1a1a', borderRadius: '4px', fontSize: '10px', color: '#fff' }}>{match.oddsAway.toFixed(2)}</span>
         </div>
         
         {/* Risk Percentage */}
@@ -907,101 +932,87 @@ function MatchCardCompact({ match, index }: { match: Match; index: number }) {
         </div>
       </div>
       
-      {/* Ligne des prédictions */}
+      {/* RECOMMANDATION PRINCIPALE */}
+      <div style={{
+        background: '#1a1a1a',
+        borderRadius: '8px',
+        padding: '10px',
+        marginBottom: '8px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <div>
+          <div style={{ color: recColor, fontSize: '14px', fontWeight: 'bold' }}>
+            {recommendation}
+          </div>
+          <div style={{ color: '#888', fontSize: '10px', marginTop: '2px' }}>
+            Taux de réussite estimé: <span style={{ color: successColor, fontWeight: 'bold' }}>{baseSuccessRate}%</span>
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px' }}>Probabilités</div>
+          <div style={{ display: 'flex', gap: '8px', fontSize: '10px' }}>
+            <span style={{ color: favorite === 'home' ? '#f97316' : '#888' }}>🏠{homeProb}%</span>
+            <span style={{ color: '#666' }}>🤝{drawProb}%</span>
+            <span style={{ color: favorite === 'away' ? '#f97316' : '#888' }}>✈️{awayProb}%</span>
+          </div>
+        </div>
+      </div>
+      
+      {/* Ligne des stats détaillées */}
       <div style={{
         display: 'flex',
-        gap: '6px',
+        gap: '8px',
         flexWrap: 'wrap',
         marginTop: '6px',
         paddingTop: '8px',
         borderTop: '1px solid #222'
       }}>
-        {/* Buts */}
+        {/* Double Chance */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: '4px',
-          padding: '5px 8px',
+          padding: '6px 10px',
           background: '#1a1a1a',
           borderRadius: '6px',
           fontSize: '10px'
         }}>
-          <span>⚽</span>
+          <span>🎲</span>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ color: avgGoals >= 2.5 ? '#22c55e' : '#f97316', fontWeight: 'bold' }}>
-              {avgGoals >= 2.5 ? `+${avgGoals.toFixed(1)} buts` : `-${(5 - avgGoals).toFixed(1)} buts`}
+            <span style={{ color: '#22c55e', fontWeight: 'bold' }}>
+              Double Chance
             </span>
-            <span style={{ color: avgGoals >= 2.5 ? '#22c55e' : '#f97316', fontSize: '8px' }}>
-              {avgGoals >= 2.5 ? 'Plus de buts' : 'Moins de buts'}
-            </span>
-            <span style={{ color: successColor, fontSize: '8px' }}>
-              Réussite: {baseSuccessRate}%
+            <span style={{ color: '#888', fontSize: '8px' }}>
+              {favoriteTeam} ou Nul: {Math.round(favoriteProb + drawProb)}%
             </span>
           </div>
         </div>
         
-        {/* Cartons */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px',
-          padding: '5px 8px',
-          background: '#1a1a1a',
-          borderRadius: '6px',
-          fontSize: '10px'
-        }}>
-          <span>🟨</span>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ color: '#f97316', fontWeight: 'bold' }}>
-              {cardsEstimate.toFixed(1)} cartons
-            </span>
-            <span style={{ color: '#f97316', fontSize: '8px' }}>
-              Réussite: {Math.round(baseSuccessRate * 0.85)}%
-            </span>
+        {/* Value Bet */}
+        {match.insight.valueBetDetected && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            padding: '6px 10px',
+            background: '#22c55e20',
+            borderRadius: '6px',
+            fontSize: '10px',
+            border: '1px solid #22c55e40'
+          }}>
+            <span>💎</span>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ color: '#22c55e', fontWeight: 'bold' }}>
+                Value Bet
+              </span>
+              <span style={{ color: '#22c55e', fontSize: '8px' }}>
+                Cote surévaluée détectée
+              </span>
+            </div>
           </div>
-        </div>
-        
-        {/* Corners */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px',
-          padding: '5px 8px',
-          background: '#1a1a1a',
-          borderRadius: '6px',
-          fontSize: '10px'
-        }}>
-          <span>🚩</span>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>
-              {cornersEstimate.toFixed(1)} corners
-            </span>
-            <span style={{ color: '#3b82f6', fontSize: '8px' }}>
-              Réussite: {Math.round(baseSuccessRate * 0.9)}%
-            </span>
-          </div>
-        </div>
-        
-        {/* BTTS */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px',
-          padding: '5px 8px',
-          background: '#1a1a1a',
-          borderRadius: '6px',
-          fontSize: '10px'
-        }}>
-          <span>🔄</span>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ color: bttsProb >= 50 ? '#22c55e' : '#888', fontWeight: 'bold' }}>
-              Les 2 marquent
-            </span>
-            <span style={{ color: bttsProb >= 50 ? '#22c55e' : '#666', fontSize: '8px' }}>
-              Probabilité: {bttsProb}%
-            </span>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
