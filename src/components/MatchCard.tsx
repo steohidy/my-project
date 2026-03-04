@@ -85,7 +85,7 @@ export function MatchCard({ match, onAnalyze, compact = false }: MatchCardProps)
   }
 
   return (
-    <Card className="group hover:border-orange-500/30 hover:shadow-lg hover:shadow-orange-500/5 transition-all overflow-hidden bg-card border-border/50">
+    <Card className="group hover:border-orange-500/30 hover:shadow-lg hover:shadow-orange-500/5 transition-all bg-card border-border/50">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <Badge variant="outline" className={config.color}>
