@@ -565,17 +565,23 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
         {/* Section Pronostics */}
         {activeSection === 'matches' && (
           <>
-            {/* Hero compact */}
+            {/* Hero avec description */}
             <div style={{ marginBottom: '12px' }}>
               <h2 style={{
                 fontSize: '16px',
                 fontWeight: 'bold',
                 color: '#f97316',
-                marginBottom: '4px'
+                marginBottom: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
               }}>
-                Pronostics du {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+                ⚽ Pronostics du jour
               </h2>
-              <p style={{ color: '#666', fontSize: '11px' }}>
+              <p style={{ color: '#888', fontSize: '11px', marginBottom: '4px' }}>
+                Paris recommandés basés sur l'analyse des cotes et statistiques
+              </p>
+              <p style={{ color: '#666', fontSize: '10px' }}>
                 Mise à jour: {lastUpdate.toLocaleTimeString('fr-FR')} • {safes.length} sûrs, {moderate.length} modérés, {risky.length} audacieux
               </p>
             </div>
@@ -619,9 +625,17 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
         {/* Section Anti-Trap */}
         {activeSection === 'antitrap' && (
           <div style={{ marginBottom: '12px' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ef4444', marginBottom: '8px' }}>
-              🛡️ Anti-Trap
-            </h2>
+            <div style={{ marginBottom: '12px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#ef4444', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🛡️ Détection des Pièges
+              </h2>
+              <p style={{ color: '#888', fontSize: '11px', marginBottom: '4px' }}>
+                Identifie les paris risqués avec cotes trompeuses
+              </p>
+              <p style={{ color: '#666', fontSize: '10px' }}>
+                Évitez les favoris à cotes ultra-basses et les matchs déséquilibrés
+              </p>
+            </div>
             <AntiTrapSection matches={matches} />
           </div>
         )}
@@ -629,9 +643,17 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
         {/* Section Bankroll */}
         {activeSection === 'bankroll' && (
           <div style={{ marginBottom: '12px' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#22c55e', marginBottom: '8px' }}>
-              💰 Bankroll
-            </h2>
+            <div style={{ marginBottom: '12px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#22c55e', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                💰 Gestion de Bankroll
+              </h2>
+              <p style={{ color: '#888', fontSize: '11px', marginBottom: '4px' }}>
+                Optimisez vos mises selon votre capital
+              </p>
+              <p style={{ color: '#666', fontSize: '10px' }}>
+                Méthode Kelly • Mise recommandée: 1-3% du capital
+              </p>
+            </div>
             <BankrollSection />
           </div>
         )}
@@ -639,9 +661,17 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
         {/* Section Résultats */}
         {activeSection === 'results' && (
           <div style={{ marginBottom: '12px' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#8b5cf6', marginBottom: '8px' }}>
-              📊 Résultats
-            </h2>
+            <div style={{ marginBottom: '12px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#8b5cf6', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                📊 Historique & Stats
+              </h2>
+              <p style={{ color: '#888', fontSize: '11px', marginBottom: '4px' }}>
+                Suivez vos performances et taux de réussite
+              </p>
+              <p style={{ color: '#666', fontSize: '10px' }}>
+                Objectif: Maintenir un ROI positif sur le long terme
+              </p>
+            </div>
             <ResultsSection />
           </div>
         )}
@@ -711,6 +741,7 @@ function TabButtonCompact({ active, onClick, icon, count }: { active: boolean; o
 // Composant MatchCardCompact
 function MatchCardCompact({ match, index }: { match: Match; index: number }) {
   const riskColor = match.insight.riskPercentage <= 40 ? '#22c55e' : match.insight.riskPercentage <= 50 ? '#f97316' : '#ef4444';
+  const riskLabel = match.insight.riskPercentage <= 40 ? 'Sûr' : match.insight.riskPercentage <= 50 ? 'Modéré' : 'Audacieux';
   
   // Générer les prédictions basées sur les cotes
   const totalOdds = match.oddsHome + (match.oddsDraw || 3.5) + match.oddsAway;
@@ -720,14 +751,13 @@ function MatchCardCompact({ match, index }: { match: Match; index: number }) {
   
   // Cartons estimés
   const cardsEstimate = match.league.includes('Liga') || match.league.includes('Serie') ? 5.5 : 4.5;
-  const cardsProb = Math.round(50 + (cardsEstimate - 4) * 10);
   
   // Corners estimés
   const cornersEstimate = match.league.includes('Premier') ? 10.5 : 9.5;
-  const cornersProb = Math.round(55 + (cornersEstimate - 9) * 5);
 
   // Taux de réussite basé sur la confiance
   const baseSuccessRate = match.insight.confidence === 'high' ? 72 : match.insight.confidence === 'medium' ? 58 : 45;
+  const successColor = baseSuccessRate >= 70 ? '#22c55e' : baseSuccessRate >= 55 ? '#f97316' : '#ef4444';
   
   return (
     <div style={{
@@ -744,20 +774,25 @@ function MatchCardCompact({ match, index }: { match: Match; index: number }) {
         gap: '10px',
         marginBottom: '8px'
       }}>
-        {/* Index */}
-        <span style={{ 
-          background: riskColor, 
-          color: '#fff', 
-          width: '22px', 
-          height: '22px',
-          borderRadius: '6px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '11px',
-          fontWeight: 'bold',
-          flexShrink: 0
-        }}>{index}</span>
+        {/* Index + Risk Label */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+          <span style={{ 
+            background: riskColor, 
+            color: '#fff', 
+            width: '24px', 
+            height: '24px',
+            borderRadius: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '11px',
+            fontWeight: 'bold',
+            flexShrink: 0
+          }}>{index}</span>
+          <span style={{ fontSize: '7px', color: riskColor, fontWeight: 'bold', textTransform: 'uppercase' }}>
+            {riskLabel}
+          </span>
+        </div>
         
         {/* Teams */}
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -776,14 +811,11 @@ function MatchCardCompact({ match, index }: { match: Match; index: number }) {
           <span style={{ padding: '3px 6px', background: '#1a1a1a', borderRadius: '4px', fontSize: '10px', color: '#fff' }}>{match.oddsAway.toFixed(2)}</span>
         </div>
         
-        {/* Risk */}
-        <span style={{ 
-          color: riskColor, 
-          fontSize: '11px', 
-          fontWeight: 'bold',
-          minWidth: '32px',
-          textAlign: 'right'
-        }}>{match.insight.riskPercentage}%</span>
+        {/* Risk Percentage */}
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ color: riskColor, fontSize: '12px', fontWeight: 'bold' }}>{match.insight.riskPercentage}%</div>
+          <div style={{ color: '#666', fontSize: '8px' }}>Risque</div>
+        </div>
       </div>
       
       {/* Ligne des prédictions */}
@@ -800,22 +832,20 @@ function MatchCardCompact({ match, index }: { match: Match; index: number }) {
           display: 'flex',
           alignItems: 'center',
           gap: '4px',
-          padding: '4px 8px',
+          padding: '5px 8px',
           background: '#1a1a1a',
           borderRadius: '6px',
           fontSize: '10px'
         }}>
           <span>⚽</span>
-          <span style={{ color: over25Prob >= 55 ? '#22c55e' : '#888' }}>
-            {over25Prob >= 55 ? 'Over 2.5' : avgGoals.toFixed(1)} 
-          </span>
-          <span style={{ 
-            color: over25Prob >= 55 ? '#22c55e' : '#666',
-            fontWeight: 'bold',
-            fontSize: '9px'
-          }}>
-            {baseSuccessRate}%
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ color: over25Prob >= 55 ? '#22c55e' : '#888', fontWeight: 'bold' }}>
+              {over25Prob >= 55 ? 'Over 2.5' : `~${avgGoals.toFixed(1)} buts`}
+            </span>
+            <span style={{ color: successColor, fontSize: '8px' }}>
+              Réussite: {baseSuccessRate}%
+            </span>
+          </div>
         </div>
         
         {/* Cartons */}
@@ -823,22 +853,20 @@ function MatchCardCompact({ match, index }: { match: Match; index: number }) {
           display: 'flex',
           alignItems: 'center',
           gap: '4px',
-          padding: '4px 8px',
+          padding: '5px 8px',
           background: '#1a1a1a',
           borderRadius: '6px',
           fontSize: '10px'
         }}>
           <span>🟨</span>
-          <span style={{ color: '#f97316' }}>
-            {cardsEstimate.toFixed(1)}
-          </span>
-          <span style={{ 
-            color: '#f97316',
-            fontWeight: 'bold',
-            fontSize: '9px'
-          }}>
-            {Math.round(baseSuccessRate * 0.85)}%
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ color: '#f97316', fontWeight: 'bold' }}>
+              {cardsEstimate.toFixed(1)} cartons
+            </span>
+            <span style={{ color: '#f97316', fontSize: '8px' }}>
+              Réussite: {Math.round(baseSuccessRate * 0.85)}%
+            </span>
+          </div>
         </div>
         
         {/* Corners */}
@@ -846,22 +874,20 @@ function MatchCardCompact({ match, index }: { match: Match; index: number }) {
           display: 'flex',
           alignItems: 'center',
           gap: '4px',
-          padding: '4px 8px',
+          padding: '5px 8px',
           background: '#1a1a1a',
           borderRadius: '6px',
           fontSize: '10px'
         }}>
           <span>🚩</span>
-          <span style={{ color: '#3b82f6' }}>
-            {cornersEstimate.toFixed(1)}
-          </span>
-          <span style={{ 
-            color: '#3b82f6',
-            fontWeight: 'bold',
-            fontSize: '9px'
-          }}>
-            {Math.round(baseSuccessRate * 0.9)}%
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>
+              {cornersEstimate.toFixed(1)} corners
+            </span>
+            <span style={{ color: '#3b82f6', fontSize: '8px' }}>
+              Réussite: {Math.round(baseSuccessRate * 0.9)}%
+            </span>
+          </div>
         </div>
         
         {/* BTTS */}
@@ -869,22 +895,20 @@ function MatchCardCompact({ match, index }: { match: Match; index: number }) {
           display: 'flex',
           alignItems: 'center',
           gap: '4px',
-          padding: '4px 8px',
+          padding: '5px 8px',
           background: '#1a1a1a',
           borderRadius: '6px',
           fontSize: '10px'
         }}>
           <span>🔄</span>
-          <span style={{ color: bttsProb >= 50 ? '#22c55e' : '#888' }}>
-            BTTS
-          </span>
-          <span style={{ 
-            color: bttsProb >= 50 ? '#22c55e' : '#666',
-            fontWeight: 'bold',
-            fontSize: '9px'
-          }}>
-            {bttsProb}%
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ color: bttsProb >= 50 ? '#22c55e' : '#888', fontWeight: 'bold' }}>
+              Les 2 marquent
+            </span>
+            <span style={{ color: bttsProb >= 50 ? '#22c55e' : '#666', fontSize: '8px' }}>
+              Probabilité: {bttsProb}%
+            </span>
+          </div>
         </div>
       </div>
     </div>
