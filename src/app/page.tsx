@@ -376,8 +376,10 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
         alignItems: 'center',
         position: 'sticky',
         top: 0,
-        zIndex: 100
+        zIndex: 100,
+        gap: '16px'
       }}>
+        {/* Logo et Titre */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
             padding: '8px',
@@ -394,36 +396,39 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
               Sports Predictor
             </span>
           </div>
-          {/* API Status Indicator - Affichage séparé et bien visible */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-end',
-            gap: '4px'
+        </div>
+        
+        {/* API Status - Bien séparé au centre */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 16px',
+            borderRadius: '20px',
+            fontSize: '13px',
+            fontWeight: '600',
+            background: apiStatus === 'online' ? '#22c55e15' : apiStatus === 'offline' ? '#ef444415' : '#66615',
+            color: apiStatus === 'online' ? '#22c55e' : apiStatus === 'offline' ? '#ef4444' : '#888',
+            border: `1px solid ${apiStatus === 'online' ? '#22c55e30' : apiStatus === 'offline' ? '#ef444430' : '#66630'}`,
+            whiteSpace: 'nowrap'
           }}>
             <span style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '4px 12px',
-              borderRadius: '16px',
-              fontSize: '12px',
-              fontWeight: '600',
-              background: apiStatus === 'online' ? '#22c55e20' : apiStatus === 'offline' ? '#ef444420' : '#66620',
-              color: apiStatus === 'online' ? '#22c55e' : apiStatus === 'offline' ? '#ef4444' : '#666',
-              border: `1px solid ${apiStatus === 'online' ? '#22c55e40' : apiStatus === 'offline' ? '#ef444440' : '#66640'}`
-            }}>
-              <span style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: apiStatus === 'online' ? '#22c55e' : apiStatus === 'offline' ? '#ef4444' : '#666',
-                animation: apiStatus === 'online' ? 'pulse 2s infinite' : 'none'
-              }}></span>
-              API {apiStatus === 'online' ? 'En ligne' : apiStatus === 'offline' ? 'Hors ligne' : 'Connexion...'}
-            </span>
-          </div>
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              background: apiStatus === 'online' ? '#22c55e' : apiStatus === 'offline' ? '#ef4444' : '#888',
+              boxShadow: apiStatus === 'online' ? '0 0 8px #22c55e' : 'none'
+            }}></span>
+            {apiStatus === 'online' ? 'API En ligne' : apiStatus === 'offline' ? 'API Hors ligne' : 'Connexion...'}
+          </span>
         </div>
+        
+        {/* Boutons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {/* Bouton Actualiser */}
           <button
