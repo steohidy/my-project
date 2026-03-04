@@ -2,51 +2,63 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   getAllUsers,
   getUserStats,
-  extendUserValidity,
-  deactivateUser,
-  reactivateUser,
-  addUser,
   updateUser,
-  deleteUser
+  deleteUser,
+  addUser,
+  extendUserValidity,
+  getActivityLogs
 } from '@/lib/users';
 
 /**
- * Vérifie si l'utilisateur est admin
+ * Vérifie si l'utilisateur est admin via le cookie de session
  */
-function isAdmin(request: NextRequest): boolean {
+function isAdmin(request: NextRequest): { isAdmin: boolean; username?: string } {
   const sessionData = request.cookies.get('steo_elite_session_data');
-  if (!sessionData) return false;
+
+  if (!sessionData) {
+    return { isAdmin: false };
+  }
 
   try {
     const data = JSON.parse(decodeURIComponent(sessionData.value));
-    return data.role === 'admin';
+    return {
+      isAdmin: data.role === 'admin',
+      username: data.user
+    };
   } catch {
-    return false;
+    return { isAdmin: false };
   }
 }
 
 /**
- * GET - Récupérer tous les utilisateurs (admin uniquement)
+ * GET - Récupérer tous les utilisateurs et logs
  */
 export async function GET(request: NextRequest) {
-  if (!isAdmin(request)) {
+  const { isAdmin: admin } = isAdmin(request);
+
+  if (!admin) {
     return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 });
   }
 
-  const users = getAllUsers();
-  const stats = getUserStats();
+  try {
+    const users = await getAllUsers();
+    const stats = await getUserStats();
+    const logs = await getActivityLogs(50);
 
-  return NextResponse.json({
-    users,
-    stats
-  });
+    return NextResponse.json({ users, stats, logs });
+  } catch (error) {
+    console.error('Erreur GET admin/users:', error);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+  }
 }
 
 /**
- * POST - Actions sur les utilisateurs (admin uniquement)
+ * POST - Actions sur les utilisateurs
  */
 export async function POST(request: NextRequest) {
-  if (!isAdmin(request)) {
+  const { isAdmin: admin, username: actor } = isAdmin(request);
+
+  if (!admin) {
     return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 });
   }
 
@@ -55,105 +67,72 @@ export async function POST(request: NextRequest) {
     const { action, login, data } = body;
 
     switch (action) {
-      case 'extend':
-        // Prolonger la validité
+      case 'extend': {
         const months = data?.months || 1;
-        if (extendUserValidity(login, months)) {
-          return NextResponse.json({
-            success: true,
-            message: `Validité prolongée de ${months} mois pour ${login}`
-          });
-        }
+        const success = await extendUserValidity(login, months, actor || 'admin');
         return NextResponse.json({
-          success: false,
-          error: 'Impossible de prolonger ce compte'
-        }, { status: 400 });
+          success,
+          message: success ? `Validité prolongée de ${months} mois pour ${login}` : 'Impossible de prolonger ce compte'
+        }, { status: success ? 200 : 400 });
+      }
 
-      case 'deactivate':
-        if (deactivateUser(login)) {
-          return NextResponse.json({
-            success: true,
-            message: `Compte ${login} désactivé`
-          });
-        }
+      case 'deactivate': {
+        const success = await updateUser(login, { isActive: false }, actor || 'admin');
         return NextResponse.json({
-          success: false,
-          error: 'Impossible de désactiver ce compte'
-        }, { status: 400 });
+          success,
+          message: success ? `Compte ${login} désactivé` : 'Impossible de désactiver ce compte'
+        }, { status: success ? 200 : 400 });
+      }
 
-      case 'reactivate':
-        if (reactivateUser(login)) {
-          return NextResponse.json({
-            success: true,
-            message: `Compte ${login} réactivé`
-          });
-        }
+      case 'reactivate': {
+        const success = await updateUser(login, { isActive: true }, actor || 'admin');
         return NextResponse.json({
-          success: false,
-          error: 'Impossible de réactiver ce compte'
-        }, { status: 400 });
+          success,
+          message: success ? `Compte ${login} réactivé` : 'Impossible de réactiver ce compte'
+        }, { status: success ? 200 : 400 });
+      }
 
-      case 'add':
-        // Ajouter un nouvel utilisateur
+      case 'add': {
         if (!data?.login || !data?.password) {
-          return NextResponse.json({
-            success: false,
-            error: 'Login et mot de passe requis'
-          }, { status: 400 });
+          return NextResponse.json({ success: false, error: 'Login et mot de passe requis' }, { status: 400 });
         }
-        if (addUser({
+        const success = await addUser({
           login: data.login,
           password: data.password,
           role: data.role || 'user',
-          isActive: true
-        })) {
-          return NextResponse.json({
-            success: true,
-            message: `Utilisateur ${data.login} créé`
-          });
-        }
+          isActive: data.isActive ?? true
+        }, actor || 'admin');
         return NextResponse.json({
-          success: false,
-          error: 'Cet identifiant existe déjà'
-        }, { status: 400 });
+          success,
+          message: success ? `Utilisateur ${data.login} créé` : 'Cet identifiant existe déjà'
+        }, { status: success ? 200 : 400 });
+      }
 
-      case 'update':
-        // Modifier un utilisateur
-        if (updateUser(login, data)) {
-          return NextResponse.json({
-            success: true,
-            message: `Utilisateur ${login} modifié`
-          });
-        }
+      case 'update': {
+        const success = await updateUser(login, {
+          password: data?.password,
+          role: data?.role,
+          isActive: data?.isActive
+        }, actor || 'admin');
         return NextResponse.json({
-          success: false,
-          error: 'Impossible de modifier cet utilisateur'
-        }, { status: 400 });
+          success,
+          message: success ? `Utilisateur ${login} modifié` : 'Impossible de modifier cet utilisateur'
+        }, { status: success ? 200 : 400 });
+      }
 
-      case 'delete':
-        // Supprimer un utilisateur
-        if (deleteUser(login)) {
-          return NextResponse.json({
-            success: true,
-            message: `Utilisateur ${login} supprimé`
-          });
-        }
+      case 'delete': {
+        const success = await deleteUser(login, actor || 'admin');
         return NextResponse.json({
-          success: false,
-          error: 'Impossible de supprimer cet utilisateur'
-        }, { status: 400 });
+          success,
+          message: success ? `Utilisateur ${login} supprimé` : 'Impossible de supprimer cet utilisateur'
+        }, { status: success ? 200 : 400 });
+      }
 
       default:
-        return NextResponse.json({
-          success: false,
-          error: 'Action inconnue'
-        }, { status: 400 });
+        return NextResponse.json({ success: false, error: 'Action inconnue' }, { status: 400 });
     }
   } catch (error) {
-    console.error('Erreur admin:', error);
-    return NextResponse.json({
-      success: false,
-      error: 'Erreur serveur'
-    }, { status: 500 });
+    console.error('Erreur POST admin/users:', error);
+    return NextResponse.json({ success: false, error: 'Erreur serveur' }, { status: 500 });
   }
 }

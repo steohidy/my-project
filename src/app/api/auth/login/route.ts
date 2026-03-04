@@ -1,163 +1,77 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyCredentials, generateSessionToken, securityConfig, SESSION_DURATION, canCreateNewSession, registerSession } from '@/lib/auth';
+import { validateUser } from '@/lib/users';
 
-// Store simple pour le rate limiting (en production, utiliser Redis)
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 15 * 60 * 1000;
+const SESSION_MS = 20 * 60 * 1000;
 
-/**
- * Vérifie et nettoie les anciennes tentatives de connexion
- */
-function cleanOldAttempts() {
-  const now = Date.now();
-  for (const [ip, data] of loginAttempts.entries()) {
-    if (now - data.lastAttempt > securityConfig.lockoutDuration) {
-      loginAttempts.delete(ip);
-    }
-  }
-}
-
-/**
- * Vérifie si l'IP est bloquée par rate limiting
- */
 function isRateLimited(ip: string): boolean {
-  cleanOldAttempts();
-  const attempts = loginAttempts.get(ip);
-
-  if (!attempts) return false;
-
-  if (Date.now() - attempts.lastAttempt > securityConfig.lockoutDuration) {
-    loginAttempts.delete(ip);
-    return false;
-  }
-
-  return attempts.count >= securityConfig.maxLoginAttempts;
+  const a = loginAttempts.get(ip);
+  if (!a) return false;
+  if (Date.now() - a.lastAttempt > LOCKOUT_MS) { loginAttempts.delete(ip); return false; }
+  return a.count >= MAX_ATTEMPTS;
 }
 
-/**
- * Enregistre une tentative de connexion échouée
- */
-function recordFailedAttempt(ip: string) {
-  const existing = loginAttempts.get(ip);
-
-  if (existing) {
-    existing.count++;
-    existing.lastAttempt = Date.now();
-  } else {
-    loginAttempts.set(ip, { count: 1, lastAttempt: Date.now() });
-  }
+function recordAttempt(ip: string, success: boolean) {
+  if (success) { loginAttempts.delete(ip); return; }
+  const a = loginAttempts.get(ip);
+  a ? (a.count++, a.lastAttempt = Date.now()) : loginAttempts.set(ip, { count: 1, lastAttempt: Date.now() });
 }
 
-/**
- * Réinitialise les tentatives après une connexion réussie
- */
-function resetAttempts(ip: string) {
-  loginAttempts.delete(ip);
+function genToken() {
+  const arr = new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
 }
 
-/**
- * POST - Connexion avec vérification des identifiants et expiration
- */
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+
+  if (isRateLimited(ip)) {
+    return NextResponse.json({ success: false, error: 'Trop de tentatives. Réessayez dans 15 min.' }, { status: 429 });
+  }
+
   try {
-    const ip = request.headers.get('x-forwarded-for') ||
-               request.headers.get('x-real-ip') ||
-               'unknown';
-
-    if (isRateLimited(ip)) {
-      return NextResponse.json(
-        { success: false, error: 'Trop de tentatives. Réessayez dans 15 minutes.' },
-        { status: 429 }
-      );
-    }
-
-    const body = await request.json();
-    const { username, password } = body;
-
+    const { username, password } = await request.json();
     if (!username || !password) {
-      recordFailedAttempt(ip);
-      return NextResponse.json(
-        { success: false, error: 'Identifiant et mot de passe requis' },
-        { status: 400 }
-      );
+      recordAttempt(ip, false);
+      return NextResponse.json({ success: false, error: 'Identifiant et mot de passe requis' }, { status: 400 });
     }
 
-    const sanitizedUsername = username.trim().slice(0, 50);
-    const sanitizedPassword = password.slice(0, 100);
+    const result = await validateUser(username.trim(), password);
 
-    // Vérifier les identifiants avec le nouveau système
-    const result = verifyCredentials(sanitizedUsername, sanitizedPassword);
-
-    if (!result.valid || !result.user) {
-      recordFailedAttempt(ip);
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      return NextResponse.json(
-        { success: false, error: result.error || 'Identifiants incorrects' },
-        { status: 401 }
-      );
+    if (!result.success) {
+      recordAttempt(ip, false);
+      await new Promise(r => setTimeout(r, 500));
+      return NextResponse.json({ success: false, error: result.error }, { status: 401 });
     }
 
-    if (!canCreateNewSession(sanitizedUsername)) {
-      return NextResponse.json(
-        { success: false, error: 'Limite de connexions simultanées atteinte. Réessayez plus tard.' },
-        { status: 403 }
-      );
-    }
+    recordAttempt(ip, true);
 
-    resetAttempts(ip);
+    const token = genToken();
+    const expiry = Date.now() + SESSION_MS;
+    const subscription = result.user!.role === 'admin' || result.user!.role === 'demo' ? 'premium' : 'standard';
 
-    const sessionToken = generateSessionToken();
-    const sessionExpiry = Date.now() + SESSION_DURATION;
-
-    registerSession(sessionToken, sanitizedUsername);
-
-    // Déterminer le type d'abonnement
-    const subscription = result.user.role === 'admin' || result.user.role === 'demo'
-      ? 'premium'
-      : 'standard';
-
-    const response = NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       user: {
-        id: `${result.user.role}-user`,
-        username: result.user.username,
-        name: result.user.name,
-        role: result.user.role,
+        id: `${result.user!.role}-user`,
+        username: result.user!.login,
+        name: result.user!.login,
+        role: result.user!.role,
         subscription,
-        daysRemaining: result.user.daysRemaining,
-        expiresAt: result.user.expiresAt,
-      },
+        daysRemaining: result.daysRemaining,
+        expiresAt: result.user!.expiresAt
+      }
     });
 
-    response.cookies.set({
-      name: securityConfig.cookieName,
-      value: sessionToken,
-      ...securityConfig.cookieOptions,
-      expires: new Date(sessionExpiry),
-    });
+    res.cookies.set('steo_elite_session', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', expires: new Date(expiry) });
+    res.cookies.set('steo_elite_session_data', JSON.stringify({ expiry, user: result.user!.login, role: result.user!.role, daysRemaining: result.daysRemaining }), { httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: SESSION_MS / 1000 });
 
-    response.cookies.set({
-      name: 'steo_elite_session_data',
-      value: JSON.stringify({
-        expiry: sessionExpiry,
-        user: sanitizedUsername,
-        name: result.user.name,
-        role: result.user.role,
-        daysRemaining: result.user.daysRemaining,
-      }),
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      path: '/',
-      maxAge: SESSION_DURATION / 1000,
-    });
-
-    return response;
-  } catch (error) {
-    console.error('Erreur de connexion:', error);
-    return NextResponse.json(
-      { success: false, error: 'Erreur interne du serveur' },
-      { status: 500 }
-    );
+    return res;
+  } catch (e) {
+    console.error('Login error:', e);
+    return NextResponse.json({ success: false, error: 'Erreur serveur' }, { status: 500 });
   }
 }
