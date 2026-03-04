@@ -49,60 +49,103 @@ interface TimingInfo {
   message: string;
 }
 
-// Cache partagé
-let cachedData: { matches: MatchData[]; timing: TimingInfo } | null = null;
-let lastFetchTime = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+// Cache mémoire pour la requête (court terme)
+let memoryCache: { matches: MatchData[]; timing: TimingInfo } | null = null;
+let memoryCacheTime = 0;
+const MEMORY_CACHE_TTL = 60 * 1000; // 1 minute en mémoire
 
 /**
- * GET - Récupérer les matchs avec croisement multi-sources
- * DONNÉES RÉELLES UNIQUEMENT
- * GESTION INTELLIGENTE DU TIMING
+ * GET - Récupérer les matchs avec système de cache quotidien
+ * STRATÉGIE: 1 appel API par jour, stocké dans un fichier
+ * Le site lit le fichier au lieu d'appeler les APIs
  */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const forceRefresh = searchParams.get('refresh') === 'true';
     const now = Date.now();
-    
-    // Vérifier le cache (sauf si force refresh)
-    if (!forceRefresh && cachedData && (now - lastFetchTime) < CACHE_TTL) {
-      console.log('📦 Utilisation du cache');
+
+    // Import du système de cache
+    const {
+      isCacheValid,
+      readCache,
+      writeCache,
+      checkAndResetDaily
+    } = await import('@/lib/dailyCache');
+
+    // Vérifier et reset si nouveau jour
+    checkAndResetDaily();
+
+    // 1. Vérifier le cache mémoire (court terme - évite les lectures fichier)
+    if (!forceRefresh && memoryCache && (now - memoryCacheTime) < MEMORY_CACHE_TTL) {
+      console.log('⚡ Cache mémoire utilisé');
       const { getTimingInfo } = await import('@/lib/crossValidation');
-      const currentTiming = getTimingInfo();
       return NextResponse.json({
-        ...cachedData,
-        timing: currentTiming
+        ...memoryCache,
+        timing: getTimingInfo(),
+        source: 'memory-cache'
       });
     }
 
-    if (forceRefresh) {
-      console.log('🔄 Force refresh demandé - ignorage du cache');
+    // 2. Vérifier le cache fichier quotidien
+    if (!forceRefresh && isCacheValid()) {
+      const cachedData = readCache();
+      if (cachedData && cachedData.matches.length > 0) {
+        console.log('📦 Cache fichier quotidien utilisé');
+        const { getTimingInfo } = await import('@/lib/crossValidation');
+
+        // Mettre en cache mémoire aussi
+        memoryCache = {
+          matches: cachedData.matches,
+          timing: cachedData.timing
+        };
+        memoryCacheTime = now;
+
+        return NextResponse.json({
+          matches: cachedData.matches,
+          timing: getTimingInfo(),
+          source: 'daily-cache',
+          cachedAt: cachedData.lastFetchTime
+        });
+      }
     }
 
-    // Import dynamique pour éviter les erreurs de build
+    // 3. Aucun cache valide -> Fetch depuis les APIs (1 SEUL APPEL PAR JOUR)
+    console.log('🔄 Fetch des données depuis les APIs (quota journalier)...');
+
     const { getCrossValidatedMatches } = await import('@/lib/crossValidation');
-    
     const result = await getCrossValidatedMatches();
-    
+
     if (result.matches && result.matches.length > 0) {
-      cachedData = result;
-      lastFetchTime = now;
-      return NextResponse.json(result);
+      // Sauvegarder dans le cache fichier pour toute la journée
+      writeCache(result.matches, result.timing);
+
+      // Mettre en cache mémoire
+      memoryCache = result;
+      memoryCacheTime = now;
+
+      console.log(`✅ ${result.matches.length} matchs récupérés et mis en cache pour aujourd'hui`);
+
+      return NextResponse.json({
+        ...result,
+        source: 'fresh-fetch',
+        cachedAt: new Date().toISOString()
+      });
     }
-    
-    // Aucun match - retourner un message d'erreur clair
-    console.error('❌ Aucune donnée réelle disponible');
-    return NextResponse.json({ 
+
+    // Aucun match disponible
+    console.error('❌ Aucune donnée disponible');
+    return NextResponse.json({
       error: 'Aucun match disponible actuellement',
       message: 'Veuillez réessayer dans quelques minutes',
       matches: [],
-      timing: result.timing
+      timing: result.timing,
+      source: 'empty'
     });
 
   } catch (error) {
     console.error('Erreur API matches:', error);
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'Erreur de connexion aux APIs',
       message: 'Vérifiez votre connexion et réessayez',
       matches: [],
