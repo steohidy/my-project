@@ -289,16 +289,18 @@ async function fetchOddsApiMatches(): Promise<any[]> {
       s.group?.toLowerCase() === 'soccer'
     ).slice(0, 5);
     
-    const allSportsToFetch = [...prioritySports, ...otherSports].slice(0, 15);
-    
+    // LIMITER À 5 SPORTS PRIORITAIRES (économie de crédits API)
+    const allSportsToFetch = [...prioritySports].slice(0, 5);
+
     const allMatches: any[] = [];
-    
+
     // Récupérer les matchs pour chaque sport
+    // CACHE 6 HEURES pour limiter les appels API
     for (const sport of allSportsToFetch) {
       try {
         const oddsResponse = await fetch(
           `https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${apiKey}&regions=eu&markets=h2h,totals&oddsFormat=decimal&dateFormat=iso`,
-          { next: { revalidate: 300 } }
+          { next: { revalidate: 21600 } } // 6 heures de cache
         );
         
         if (oddsResponse.ok) {
@@ -342,7 +344,7 @@ async function fetchFootballDataMatches(): Promise<any[]> {
       `https://api.football-data.org/v4/matches?dateFrom=${dateFrom}&dateTo=${dateTo}`,
       {
         headers: { 'X-Auth-Token': apiKey },
-        next: { revalidate: 300 }
+        next: { revalidate: 21600 } // 6 heures de cache
       }
     );
     
