@@ -428,63 +428,59 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
           </span>
         </div>
         
-        {/* Boutons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* Bouton Actualiser */}
+        {/* Boutons icônes */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Bouton Actualiser - Icône seule */}
           <button
             onClick={handleRefresh}
             disabled={loading || !timing.canRefresh}
             style={{
-              padding: '10px 16px',
+              width: '40px',
+              height: '40px',
               borderRadius: '10px',
               border: 'none',
               background: !timing.canRefresh 
-                ? 'linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%)'
+                ? '#1a1a1a'
                 : loading 
                   ? '#333'
-                  : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-              color: !timing.canRefresh ? '#666' : '#fff',
+                  : '#3b82f6',
+              color: !timing.canRefresh ? '#444' : '#fff',
               cursor: !timing.canRefresh ? 'not-allowed' : loading ? 'wait' : 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              fontSize: '13px',
-              fontWeight: '600',
-              boxShadow: !timing.canRefresh ? 'none' : '0 4px 12px rgba(59,130,246,0.3)',
+              justifyContent: 'center',
+              fontSize: '18px',
               transition: 'all 0.2s ease',
-              transform: 'scale(1)'
+              opacity: loading ? 0.7 : 1
             }}
-            title={!timing.canRefresh ? `Actualisation disponible à ${timing.nextRefreshTime}` : 'Actualiser les matchs'}
+            title={!timing.canRefresh ? `Prochain rafraîchissement: ${timing.nextRefreshTime}` : 'Actualiser les matchs'}
           >
             <span style={{ 
               display: 'inline-block',
-              animation: loading ? 'spin 1s linear infinite' : 'none',
-              fontSize: '16px'
+              animation: loading ? 'spin 1s linear infinite' : 'none'
             }}>🔄</span>
-            <span>{timing.canRefresh ? 'Actualiser' : timing.nextRefreshTime}</span>
           </button>
           
-          {/* Bouton Déconnexion */}
+          {/* Bouton Déconnexion - Icône seule */}
           <button
             onClick={onLogout}
             style={{
-              padding: '10px 16px',
+              width: '40px',
+              height: '40px',
               borderRadius: '10px',
-              border: '1px solid #ef4444',
+              border: '1px solid #ef444440',
               background: 'transparent',
               color: '#ef4444',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              fontSize: '13px',
-              fontWeight: '600',
+              justifyContent: 'center',
+              fontSize: '18px',
               transition: 'all 0.2s ease'
             }}
             title="Se déconnecter"
           >
-            <span style={{ fontSize: '16px' }}>🚪</span>
-            <span>Quitter</span>
+            🚪
           </button>
         </div>
       </header>
