@@ -16,7 +16,12 @@ function isRateLimited(ip: string): boolean {
 function recordAttempt(ip: string, success: boolean) {
   if (success) { loginAttempts.delete(ip); return; }
   const a = loginAttempts.get(ip);
-  a ? (a.count++, a.lastAttempt = Date.now()) : loginAttempts.set(ip, { count: 1, lastAttempt: Date.now() });
+  if (a) {
+    a.count++;
+    a.lastAttempt = Date.now();
+  } else {
+    loginAttempts.set(ip, { count: 1, lastAttempt: Date.now() });
+  }
 }
 
 function genToken() {

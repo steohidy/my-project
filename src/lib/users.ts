@@ -62,7 +62,7 @@ async function logAction(action: string, actor: string, target: string, details:
   } catch {}
 }
 
-function getUserByLogin(login: string): User | undefined {
+export function getUserByLogin(login: string): User | undefined {
   return activeUsers.get(login.toLowerCase());
 }
 

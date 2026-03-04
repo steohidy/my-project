@@ -3,12 +3,7 @@
  * Support multi-utilisateurs avec expiration des comptes
  */
 
-import {
-  validateUser,
-  getUserByLogin,
-  isAccountExpired,
-  type User
-} from './users';
+import { validateUser } from './users';
 
 // Store pour les sessions actives (en production, utiliser Redis)
 const activeSessions = new Map<string, { username: string; createdAt: number }>();
@@ -31,12 +26,12 @@ interface VerifiedUser {
 /**
  * Vérifie les identifiants de connexion
  */
-export function verifyCredentials(username: string, password: string): {
+export async function verifyCredentials(username: string, password: string): Promise<{
   valid: boolean;
   user?: VerifiedUser;
   error?: string;
-} {
-  const result = validateUser(username, password);
+}> {
+  const result = await validateUser(username, password);
 
   if (!result.success) {
     return { valid: false, error: result.error };
@@ -58,8 +53,9 @@ export function verifyCredentials(username: string, password: string): {
 
 /**
  * Vérifie si de nouvelles connexions sont autorisées
+ * Note: Cette fonction doit être appelée après le chargement des données
  */
-export function canCreateNewSession(username: string): boolean {
+export function canCreateNewSession(username: string, user: { isActive: boolean } | null, isExpired: boolean): boolean {
   // Nettoyer les sessions expirées
   const now = Date.now();
   for (const [token, session] of activeSessions.entries()) {
@@ -77,8 +73,7 @@ export function canCreateNewSession(username: string): boolean {
   }
 
   // Vérifier que l'utilisateur existe toujours et n'est pas expiré
-  const user = getUserByLogin(username);
-  if (!user || !user.isActive || isAccountExpired(user)) {
+  if (!user || !user.isActive || isExpired) {
     return false;
   }
 
