@@ -93,16 +93,6 @@ GITHUB_TOKEN=ghp_votre_token_ici
 
 ## 🔄 Dernières Modifications
 
-### 2024-03-04 - Analyse de Combinés
-- ✅ Nouvelle section "Analyse Combiné" dans le menu
-- ✅ Limite de 3 analyses/jour/utilisateur
-- ✅ Maximum 3 matchs par combiné analysé
-- ✅ Affichage des championnats pris en charge
-- ✅ Indicateur de compatibilité bookmakers
-- ✅ Saisie assistée (équipes + type de pari)
-- ✅ Cross-check avec cache local (0 crédit)
-- ✅ API `/api/combi-analysis` créée
-
 ### 2024-03-03 (Suite)
 - ✅ Ajout prédictions de BUTS (Over/Under 2.5, 1.5, BTTS)
 - ✅ Ajout prédictions de CARTONS (Over/Under 4.5, Risque rouge)
