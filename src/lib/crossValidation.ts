@@ -65,27 +65,34 @@ interface SourceStats {
 
 // Ligues prioritaires pour le football (plus le chiffre est bas, plus c'est prioritaire)
 const PRIORITY_LEAGUES: Record<string, { priority: number; name: string; dataQuality: 'high' | 'medium' | 'low' }> = {
-  // Top 5 européennes - Données excellentes
+  // ===== ANGLETERRE =====
   'soccer_epl': { priority: 1, name: 'Premier League', dataQuality: 'high' },
-  'soccer_spain_la_liga': { priority: 1, name: 'La Liga', dataQuality: 'high' },
-  'soccer_germany_bundesliga': { priority: 1, name: 'Bundesliga', dataQuality: 'high' },
-  'soccer_italy_serie_a': { priority: 1, name: 'Serie A', dataQuality: 'high' },
+  'soccer_england_championship': { priority: 2, name: 'Championship', dataQuality: 'high' },
+  // ===== FRANCE =====
   'soccer_france_ligue_one': { priority: 1, name: 'Ligue 1', dataQuality: 'high' },
-  // Compétitions européennes
-  'soccer_uefa_champs_league': { priority: 2, name: 'Champions League', dataQuality: 'high' },
+  'soccer_france_ligue_two': { priority: 2, name: 'Ligue 2', dataQuality: 'high' },
+  // ===== ESPAGNE =====
+  'soccer_spain_la_liga': { priority: 1, name: 'La Liga', dataQuality: 'high' },
+  'soccer_spain_segunda_division': { priority: 2, name: 'La Liga 2', dataQuality: 'high' },
+  // ===== ALLEMAGNE =====
+  'soccer_germany_bundesliga': { priority: 1, name: 'Bundesliga', dataQuality: 'high' },
+  'soccer_germany_bundesliga2': { priority: 2, name: '2. Bundesliga', dataQuality: 'high' },
+  // ===== PORTUGAL =====
+  'soccer_portugal_primeira_liga': { priority: 2, name: 'Liga Portugal', dataQuality: 'high' },
+  // ===== BELGIQUE =====
+  'soccer_belgium_first_div': { priority: 2, name: 'Jupiler Pro League', dataQuality: 'high' },
+  // ===== COMPÉTITIONS EUROPÉENNES =====
+  'soccer_uefa_champs_league': { priority: 1, name: 'Champions League', dataQuality: 'high' },
   'soccer_uefa_europa_league': { priority: 2, name: 'Europa League', dataQuality: 'high' },
   'soccer_uefa_conference_league': { priority: 3, name: 'Conference League', dataQuality: 'medium' },
-  // Championnats secondaires
-  'soccer_portugal_primeira_liga': { priority: 3, name: 'Liga Portugal', dataQuality: 'medium' },
-  'soccer_netherlands_eredivisie': { priority: 3, name: 'Eredivisie', dataQuality: 'medium' },
-  'soccer_belgium_first_div': { priority: 3, name: 'Jupiler Pro League', dataQuality: 'medium' },
-  'soccer_turkey_super_league': { priority: 4, name: 'Süper Lig', dataQuality: 'medium' },
-  // Autres sports - Multi-sport
-  'basketball_nba': { priority: 2, name: 'NBA', dataQuality: 'high' },
-  'basketball_euroleague': { priority: 3, name: 'Euroleague', dataQuality: 'high' },
-  'icehockey_nhl': { priority: 3, name: 'NHL', dataQuality: 'high' },
-  'tennis_atp': { priority: 3, name: 'ATP Tour', dataQuality: 'high' },
-  'mma_ufc': { priority: 4, name: 'UFC', dataQuality: 'medium' },
+  // ===== COMPÉTITIONS INTERNATIONALES =====
+  'soccer_fifa_world_cup': { priority: 1, name: 'Coupe du Monde', dataQuality: 'high' },
+  'soccer_uefa_euro': { priority: 1, name: 'Euro', dataQuality: 'high' },
+  'soccer_uefa_euro_qualification': { priority: 2, name: 'Qualif. Euro', dataQuality: 'high' },
+  'soccer_fifa_world_cup_qualification_uefa': { priority: 2, name: 'Qualif. CM Europe', dataQuality: 'high' },
+  // ===== BASKET =====
+  'basketball_nba': { priority: 1, name: 'NBA', dataQuality: 'high' },
+  'basketball_euroleague': { priority: 2, name: 'Euroligue', dataQuality: 'high' },
 };
 
 /**
@@ -269,20 +276,22 @@ async function fetchOddsApiMatches(): Promise<any[]> {
     
     const sports = await sportsResponse.json();
     
-    // UNIQUEMENT FOOTBALL ET BASKET (économie maximale de crédits API)
+    // ===== FOOTBALL ET BASKET UNIQUEMENT =====
     const soccerSports = sports.filter((s: any) => s.group?.toLowerCase() === 'soccer');
     const basketballSports = sports.filter((s: any) => s.group?.toLowerCase() === 'basketball');
     
-    // Prendre les ligues prioritaires en premier
+    // Prendre toutes les ligues définies dans PRIORITY_LEAGUES
     const prioritySoccer = soccerSports.filter((s: any) => PRIORITY_LEAGUES[s.key]);
     const priorityBasket = basketballSports.filter((s: any) => PRIORITY_LEAGUES[s.key]);
     
-    // LIMITER À 3 LIGUES DE FOOT + 1 LIGUE DE BASKET = 4 APPELS API MAX
-    const allSportsToFetch = [...prioritySoccer.slice(0, 3), ...priorityBasket.slice(0, 1)];
+    // Toutes les ligues prioritaires (Foot + Basket)
+    const allSportsToFetch = [...prioritySoccer, ...priorityBasket];
+
+    console.log(`📋 ${allSportsToFetch.length} ligues à récupérer: ${allSportsToFetch.map((s: any) => PRIORITY_LEAGUES[s.key]?.name || s.key).join(', ')}`);
 
     const allMatches: any[] = [];
 
-    // Récupérer les matchs pour chaque sport
+    // Récupérer les matchs pour chaque ligue
     // CACHE 6 HEURES pour limiter les appels API
     for (const sport of allSportsToFetch) {
       try {
