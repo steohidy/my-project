@@ -262,6 +262,18 @@ interface Match {
     redCardRisk: number;
     prediction: string;
   };
+  cornersPrediction?: {
+    total: number;
+    over85: number;
+    under85: number;
+    over95: number;
+    prediction: string;
+  };
+  advancedPredictions?: {
+    btts: { yes: number; no: number };
+    correctScore: { home: number; away: number; prob: number }[];
+    halfTime: { home: number; draw: number; away: number };
+  };
 }
 
 // Interface pour les infos de timing
@@ -289,7 +301,7 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
   const [activeTab, setActiveTab] = useState<'safes' | 'moderate' | 'risky' | 'all'>('safes');
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [apiStatus, setApiStatus] = useState<'online' | 'offline' | 'loading'>('loading');
-  const [activeSection, setActiveSection] = useState<'matches' | 'antitrap' | 'bankroll' | 'results' | 'admin'>('matches');
+  const [activeSection, setActiveSection] = useState<'matches' | 'analyse' | 'antitrap' | 'bankroll' | 'results' | 'admin'>('matches');
   const [timing, setTiming] = useState<TimingInfo>({
     currentHour: new Date().getHours(),
     canRefresh: true,
@@ -357,7 +369,8 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [onLogout]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Formater le temps restant
   const formatTime = (seconds: number) => {
@@ -495,6 +508,7 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
         
         {/* Menu Items */}
         <NavButton icon="⚽" label="Pronos" active={activeSection === 'matches'} onClick={() => setActiveSection('matches')} color="#f97316" />
+        <NavButton icon="🔍" label="Analyse" active={activeSection === 'analyse'} onClick={() => setActiveSection('analyse')} color="#3b82f6" />
         <NavButton icon="🛡️" label="Trap" active={activeSection === 'antitrap'} onClick={() => setActiveSection('antitrap')} color="#ef4444" />
         <NavButton icon="💰" label="Bank" active={activeSection === 'bankroll'} onClick={() => setActiveSection('bankroll')} color="#22c55e" />
         <NavButton icon="📊" label="Stats" active={activeSection === 'results'} onClick={() => setActiveSection('results')} color="#8b5cf6" />
@@ -696,6 +710,21 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
           </>
         )}
 
+        {/* Section Analyse de Match */}
+        {activeSection === 'analyse' && (
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ marginBottom: '12px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#3b82f6', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🔍 Analyse de Match
+              </h2>
+              <p style={{ color: '#888', fontSize: '11px', marginBottom: '4px' }}>
+                Analysez un match avec nos prédictions détaillées (3 analyses/jour)
+              </p>
+            </div>
+            <MatchAnalysisSection username={userInfo?.username || ''} matches={matches} />
+          </div>
+        )}
+
         {/* Section Anti-Trap */}
         {activeSection === 'antitrap' && (
           <div style={{ marginBottom: '12px' }}>
@@ -834,6 +863,8 @@ function TabButtonCompact({ active, onClick, icon, label, count }: { active: boo
 
 // Composant MatchCardCompact
 function MatchCardCompact({ match, index }: { match: Match; index: number }) {
+  const [showAllOptions, setShowAllOptions] = useState(false);
+  
   const riskColor = match.insight.riskPercentage <= 40 ? '#22c55e' : match.insight.riskPercentage <= 50 ? '#f97316' : '#ef4444';
   const riskLabel = match.insight.riskPercentage <= 40 ? 'Sûr' : match.insight.riskPercentage <= 50 ? 'Modéré' : 'Audacieux';
   
@@ -960,60 +991,245 @@ function MatchCardCompact({ match, index }: { match: Match; index: number }) {
         </div>
       </div>
       
-      {/* Ligne des stats détaillées */}
+      {/* OPTIONS DE PARIS - GRILLE */}
       <div style={{
-        display: 'flex',
-        gap: '8px',
-        flexWrap: 'wrap',
-        marginTop: '6px',
-        paddingTop: '8px',
-        borderTop: '1px solid #222'
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+        gap: '6px',
+        marginTop: '8px'
       }}>
         {/* Double Chance */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '4px',
-          padding: '6px 10px',
+          gap: '6px',
+          padding: '8px',
           background: '#1a1a1a',
           borderRadius: '6px',
           fontSize: '10px'
         }}>
-          <span>🎲</span>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ color: '#22c55e', fontWeight: 'bold' }}>
-              Double Chance
-            </span>
-            <span style={{ color: '#888', fontSize: '8px' }}>
-              {favoriteTeam} ou Nul: {Math.round(favoriteProb + drawProb)}%
-            </span>
+          <span style={{ fontSize: '14px' }}>🎲</span>
+          <div>
+            <div style={{ color: '#22c55e', fontWeight: 'bold' }}>Double Chance</div>
+            <div style={{ color: '#888', fontSize: '9px' }}>{favoriteTeam} ou Nul: {Math.round(favoriteProb + drawProb)}%</div>
           </div>
         </div>
+        
+        {/* BUTS - Over/Under 2.5 */}
+        {match.goalsPrediction && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px',
+            background: match.goalsPrediction.over25 >= 55 ? '#22c55e15' : '#1a1a1a',
+            borderRadius: '6px',
+            fontSize: '10px',
+            border: match.goalsPrediction.over25 >= 55 ? '1px solid #22c55e30' : 'none'
+          }}>
+            <span style={{ fontSize: '14px' }}>⚽</span>
+            <div>
+              <div style={{ color: match.goalsPrediction.over25 >= 55 ? '#22c55e' : '#f97316', fontWeight: 'bold' }}>
+                {match.goalsPrediction.over25 >= 55 ? 'Over 2.5' : 'Under 2.5'}
+              </div>
+              <div style={{ color: '#888', fontSize: '9px' }}>
+                {match.goalsPrediction.over25 >= 55 ? match.goalsPrediction.over25 : match.goalsPrediction.under25}% • {match.goalsPrediction.total} buts attendus
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* BTTS - Les deux marquent */}
+        {match.advancedPredictions && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px',
+            background: match.advancedPredictions.btts.yes >= 55 ? '#22c55e15' : '#1a1a1a',
+            borderRadius: '6px',
+            fontSize: '10px',
+            border: match.advancedPredictions.btts.yes >= 55 ? '1px solid #22c55e30' : 'none'
+          }}>
+            <span style={{ fontSize: '14px' }}>🥅</span>
+            <div>
+              <div style={{ color: match.advancedPredictions.btts.yes >= 55 ? '#22c55e' : '#ef4444', fontWeight: 'bold' }}>
+                BTTS: {match.advancedPredictions.btts.yes >= 55 ? 'Oui' : 'Non'}
+              </div>
+              <div style={{ color: '#888', fontSize: '9px' }}>
+                Oui: {match.advancedPredictions.btts.yes}% | Non: {match.advancedPredictions.btts.no}%
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* CARTONS */}
+        {match.cardsPrediction && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px',
+            background: '#1a1a1a',
+            borderRadius: '6px',
+            fontSize: '10px'
+          }}>
+            <span style={{ fontSize: '14px' }}>🟨</span>
+            <div>
+              <div style={{ color: '#eab308', fontWeight: 'bold' }}>
+                {match.cardsPrediction.over45 >= 55 ? 'Over 4.5' : 'Under 4.5'} cartons
+              </div>
+              <div style={{ color: '#888', fontSize: '9px' }}>
+                {match.cardsPrediction.total} attendus • Rouge: {match.cardsPrediction.redCardRisk}%
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* CORNERS */}
+        {match.cornersPrediction && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px',
+            background: '#1a1a1a',
+            borderRadius: '6px',
+            fontSize: '10px'
+          }}>
+            <span style={{ fontSize: '14px' }}>🚩</span>
+            <div>
+              <div style={{ color: '#3b82f6', fontWeight: 'bold' }}>
+                {match.cornersPrediction.over85 >= 55 ? 'Over 8.5' : 'Under 8.5'} corners
+              </div>
+              <div style={{ color: '#888', fontSize: '9px' }}>
+                {match.cornersPrediction.total} attendus • {match.cornersPrediction.over85}% Over
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Value Bet */}
         {match.insight.valueBetDetected && (
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '4px',
-            padding: '6px 10px',
-            background: '#22c55e20',
+            gap: '6px',
+            padding: '8px',
+            background: '#22c55e15',
             borderRadius: '6px',
             fontSize: '10px',
-            border: '1px solid #22c55e40'
+            border: '1px solid #22c55e30'
           }}>
-            <span>💎</span>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ color: '#22c55e', fontWeight: 'bold' }}>
-                Value Bet
-              </span>
-              <span style={{ color: '#22c55e', fontSize: '8px' }}>
-                Cote surévaluée détectée
-              </span>
+            <span style={{ fontSize: '14px' }}>💎</span>
+            <div>
+              <div style={{ color: '#22c55e', fontWeight: 'bold' }}>Value Bet</div>
+              <div style={{ color: '#22c55e', fontSize: '9px' }}>Cote surévaluée</div>
             </div>
           </div>
         )}
       </div>
+      
+      {/* BOUTON VOIR PLUS D'OPTIONS */}
+      {match.advancedPredictions && (
+        <button
+          onClick={() => setShowAllOptions(!showAllOptions)}
+          style={{
+            width: '100%',
+            marginTop: '8px',
+            padding: '8px',
+            background: 'transparent',
+            border: '1px solid #333',
+            borderRadius: '6px',
+            color: '#888',
+            fontSize: '11px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '4px'
+          }}
+        >
+          {showAllOptions ? '▲ Moins d\'options' : '▼ Plus d\'options avancées'}
+        </button>
+      )}
+      
+      {/* OPTIONS AVANCÉES (dépliable) */}
+      {showAllOptions && match.advancedPredictions && (
+        <div style={{
+          marginTop: '8px',
+          padding: '10px',
+          background: '#0a0a0a',
+          borderRadius: '8px',
+          border: '1px solid #222'
+        }}>
+          {/* Score Exact */}
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ color: '#f97316', fontSize: '11px', fontWeight: 'bold', marginBottom: '6px' }}>
+              📊 Scores Exacts Probables
+            </div>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {match.advancedPredictions.correctScore.map((score, idx) => (
+                <div key={idx} style={{
+                  padding: '6px 10px',
+                  background: '#1a1a1a',
+                  borderRadius: '4px',
+                  fontSize: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}>
+                  <span style={{ fontWeight: 'bold', color: '#fff' }}>{score.home}-{score.away}</span>
+                  <span style={{ color: '#888' }}>({score.prob}%)</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Résultat MT */}
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ color: '#8b5cf6', fontSize: '11px', fontWeight: 'bold', marginBottom: '6px' }}>
+              ⏱️ Résultat Mi-Temps
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ flex: 1, padding: '8px', background: '#1a1a1a', borderRadius: '4px', textAlign: 'center' }}>
+                <div style={{ fontSize: '10px', color: '#888' }}>Domicile</div>
+                <div style={{ fontWeight: 'bold', color: '#f97316' }}>{match.advancedPredictions.halfTime.home}%</div>
+              </div>
+              <div style={{ flex: 1, padding: '8px', background: '#1a1a1a', borderRadius: '4px', textAlign: 'center' }}>
+                <div style={{ fontSize: '10px', color: '#888' }}>Nul</div>
+                <div style={{ fontWeight: 'bold', color: '#eab308' }}>{match.advancedPredictions.halfTime.draw}%</div>
+              </div>
+              <div style={{ flex: 1, padding: '8px', background: '#1a1a1a', borderRadius: '4px', textAlign: 'center' }}>
+                <div style={{ fontSize: '10px', color: '#888' }}>Extérieur</div>
+                <div style={{ fontWeight: 'bold', color: '#3b82f6' }}>{match.advancedPredictions.halfTime.away}%</div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Over 1.5 */}
+          {match.goalsPrediction && (
+            <div>
+              <div style={{ color: '#22c55e', fontSize: '11px', fontWeight: 'bold', marginBottom: '6px' }}>
+                ⚡ Over 1.5 Buts
+              </div>
+              <div style={{
+                padding: '8px',
+                background: match.goalsPrediction.over15 >= 70 ? '#22c55e15' : '#1a1a1a',
+                borderRadius: '4px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <span style={{ fontSize: '11px', color: match.goalsPrediction.over15 >= 70 ? '#22c55e' : '#888' }}>
+                  {match.goalsPrediction.over15 >= 70 ? '✅ Recommandé' : 'ℹ️ Probabilité'}
+                </span>
+                <span style={{ fontWeight: 'bold', color: '#fff' }}>{match.goalsPrediction.over15}%</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -2697,6 +2913,826 @@ function AdminPanel() {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// Types pour l'enrichissement API-Football
+interface InjuryData {
+  player: string;
+  team: string;
+  type: string;
+  reason: string;
+}
+
+interface H2HMatch {
+  date: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number;
+  awayScore: number;
+  competition: string;
+}
+
+interface EnrichmentData {
+  homeInjuries: InjuryData[];
+  awayInjuries: InjuryData[];
+  homeForm: { form: string; goalsScored: number; goalsConceded: number } | null;
+  awayForm: { form: string; goalsScored: number; goalsConceded: number } | null;
+  h2h: H2HMatch[];
+}
+
+// Section Analyse de Match
+function MatchAnalysisSection({ username, matches }: { username: string; matches: Match[] }) {
+  const [homeTeam, setHomeTeam] = useState('');
+  const [awayTeam, setAwayTeam] = useState('');
+  const [analyzing, setAnalyzing] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState('');
+  const [remainingAnalyses, setRemainingAnalyses] = useState(3);
+  const [suggestions, setSuggestions] = useState<{ home: string[], away: string[] }>({ home: [], away: [] });
+  const [enrichment, setEnrichment] = useState<EnrichmentData | null>(null);
+  const [loadingEnrichment, setLoadingEnrichment] = useState(false);
+
+  // Charger le nombre d'analyses restantes
+  useEffect(() => {
+    if (username) {
+      fetch(`/api/combi-analysis?username=${username}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setRemainingAnalyses(data.remainingAnalyses);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [username]);
+
+  // Fuzzy matching - calcul de similarité
+  const calculateSimilarity = (str1: string, str2: string): number => {
+    const s1 = str1.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+    const s2 = str2.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+    
+    if (s1 === s2) return 100;
+    if (s1.includes(s2) || s2.includes(s1)) return 85;
+    
+    // Distance de Levenshtein simplifiée
+    const matrix: number[][] = [];
+    for (let i = 0; i <= s1.length; i++) {
+      matrix[i] = [i];
+    }
+    for (let j = 0; j <= s2.length; j++) {
+      matrix[0][j] = j;
+    }
+    for (let i = 1; i <= s1.length; i++) {
+      for (let j = 1; j <= s2.length; j++) {
+        const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j - 1] + cost
+        );
+      }
+    }
+    const maxLen = Math.max(s1.length, s2.length);
+    return Math.round((1 - matrix[s1.length][s2.length] / maxLen) * 100);
+  };
+
+  // Trouver le meilleur match avec fuzzy matching
+  const findBestMatch = (homeInput: string, awayInput: string): {
+    match: Match | null;
+    similarity: number;
+    isToday: boolean;
+    matchDate: string | null;
+  } => {
+    let bestMatch: Match | null = null;
+    let bestSimilarity = 0;
+    let isToday = false;
+    let matchDate: string | null = null;
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    for (const m of matches) {
+      const homeSim = calculateSimilarity(homeInput, m.homeTeam);
+      const awaySim = calculateSimilarity(awayInput, m.awayTeam);
+      const totalSim = (homeSim + awaySim) / 2;
+      
+      // Vérifier aussi l'inverse (domicile/extérieur inversés)
+      const homeSimInv = calculateSimilarity(homeInput, m.awayTeam);
+      const awaySimInv = calculateSimilarity(awayInput, m.homeTeam);
+      const totalSimInv = (homeSimInv + awaySimInv) / 2;
+      
+      const finalSim = Math.max(totalSim, totalSimInv);
+      
+      if (finalSim > bestSimilarity && finalSim >= 50) {
+        bestSimilarity = finalSim;
+        bestMatch = m;
+        isToday = m.date?.startsWith(today) || false;
+        matchDate = m.date;
+      }
+    }
+    
+    return { match: bestMatch, similarity: bestSimilarity, isToday, matchDate };
+  };
+
+  // Générer les suggestions d'équipes
+  const generateSuggestions = (input: string, type: 'home' | 'away') => {
+    if (input.length < 2) {
+      setSuggestions(prev => ({ ...prev, [type]: [] }));
+      return;
+    }
+    
+    const allTeams = new Set<string>();
+    matches.forEach(m => {
+      allTeams.add(m.homeTeam);
+      allTeams.add(m.awayTeam);
+    });
+    
+    const matched = Array.from(allTeams).filter(team => {
+      const sim = calculateSimilarity(input, team);
+      return sim >= 40;
+    }).slice(0, 5);
+    
+    setSuggestions(prev => ({ ...prev, [type]: matched }));
+  };
+
+  // Analyser le match
+  const analyzeMatch = async () => {
+    if (!username) {
+      setError('Utilisateur non connecté');
+      return;
+    }
+
+    if (!homeTeam || !awayTeam) {
+      setError('Veuillez saisir les deux équipes');
+      return;
+    }
+
+    if (remainingAnalyses <= 0) {
+      setError('Limite quotidienne atteinte (3 analyses/jour)');
+      return;
+    }
+
+    setAnalyzing(true);
+    setError('');
+    setResult(null);
+
+    try {
+      // Trouver le meilleur match correspondant
+      const { match, similarity, isToday, matchDate } = findBestMatch(homeTeam, awayTeam);
+      
+      if (!match) {
+        setError('❌ Match non trouvé. Vérifiez les noms des équipes ou consultez les pronostics du jour.');
+        setAnalyzing(false);
+        return;
+      }
+      
+      if (!isToday) {
+        setError(`⚠️ Attention: Ce match n'est pas prévu aujourd'hui. Date: ${matchDate ? new Date(matchDate).toLocaleDateString('fr-FR') : 'Non disponible'}`);
+      }
+      
+      if (similarity < 80) {
+        setError(`⚠️ Correspondance approximative (${similarity}%). Match trouvé: ${match.homeTeam} vs ${match.awayTeam}`);
+      }
+
+      // Calculer les probabilités
+      const homeProb = Math.round((1 / match.oddsHome) / ((1 / match.oddsHome) + (1 / match.oddsAway) + (match.oddsDraw ? 1 / match.oddsDraw : 0)) * 100);
+      const awayProb = Math.round((1 / match.oddsAway) / ((1 / match.oddsHome) + (1 / match.oddsAway) + (match.oddsDraw ? 1 / match.oddsDraw : 0)) * 100);
+      const drawProb = match.oddsDraw ? Math.round((1 / match.oddsDraw) / ((1 / match.oddsHome) + (1 / match.oddsAway) + (1 / match.oddsDraw)) * 100) : 0;
+
+      // Déterminer le favori
+      const favorite = match.oddsHome < match.oddsAway ? 'home' : 'away';
+      const favoriteTeam = favorite === 'home' ? match.homeTeam : match.awayTeam;
+      const favoriteProb = favorite === 'home' ? homeProb : awayProb;
+      const favoriteOdds = favorite === 'home' ? match.oddsHome : match.oddsAway;
+
+      // Recommandation principale
+      let recommendation = '';
+      let betType = '';
+      if (favoriteOdds < 1.5 && favoriteProb >= 65) {
+        recommendation = `VICTOIRE ${favoriteTeam.toUpperCase()}`;
+        betType = '1N2 - Victoire simple';
+      } else if (favoriteOdds < 2.0 && favoriteProb >= 50) {
+        recommendation = `VICTOIRE ou NUL - ${favoriteTeam.toUpperCase()}`;
+        betType = 'Double Chance (1X ou X2)';
+      } else if (drawProb >= 30) {
+        recommendation = `RISQUE DE NUL ÉLEVÉ`;
+        betType = 'Considérer le Nul ou Double Chance';
+      } else {
+        recommendation = `MATCH SERRÉ - ANALYSE APPROFONDIE`;
+        betType = 'Plusieurs scénarios possibles';
+      }
+
+      // Calculer le résumé
+      const analysisResult = {
+        match: match,
+        similarity,
+        isToday,
+        matchDate,
+        probability: {
+          home: homeProb,
+          draw: drawProb,
+          away: awayProb
+        },
+        favorite: {
+          team: favoriteTeam,
+          probability: favoriteProb,
+          odds: favoriteOdds
+        },
+        recommendation,
+        betType,
+        goals: match.goalsPrediction ? {
+          total: match.goalsPrediction.total,
+          over25: match.goalsPrediction.over25,
+          under25: match.goalsPrediction.under25,
+          prediction: match.goalsPrediction.over25 >= 55 ? 'Over 2.5' : 'Under 2.5'
+        } : null,
+        cards: match.cardsPrediction ? {
+          total: match.cardsPrediction.total,
+          over45: match.cardsPrediction.over45,
+          prediction: match.cardsPrediction.over45 >= 55 ? 'Over 4.5' : 'Under 4.5'
+        } : null,
+        corners: match.cornersPrediction ? {
+          total: match.cornersPrediction.total,
+          over85: match.cornersPrediction.over85,
+          prediction: match.cornersPrediction.over85 >= 55 ? 'Over 8.5' : 'Under 8.5'
+        } : null,
+        risk: match.insight.riskPercentage,
+        confidence: match.insight.confidence
+      };
+
+      setResult(analysisResult);
+      setRemainingAnalyses(prev => prev - 1);
+
+      // Enregistrer l'analyse et récupérer l'enrichissement API-Football
+      setLoadingEnrichment(true);
+      try {
+        const response = await fetch('/api/combi-analysis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username,
+            matches: [{ homeTeam: match.homeTeam, awayTeam: match.awayTeam, betType: 'analyse' }]
+          })
+        });
+        
+        const apiResult = await response.json();
+        
+        // Si l'API a retourné des données d'enrichissement
+        if (apiResult.results && apiResult.results[0]?.enrichment) {
+          setEnrichment(apiResult.results[0].enrichment);
+        }
+      } catch (e) {
+        console.log('Enrichissement non disponible');
+      } finally {
+        setLoadingEnrichment(false);
+      }
+
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors de l\'analyse');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  return (
+    <div style={{
+      background: '#111',
+      borderRadius: '12px',
+      padding: '16px',
+      border: '1px solid #3b82f630'
+    }}>
+      {/* Compteur d'analyses */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '16px',
+        padding: '10px',
+        background: '#1a1a1a',
+        borderRadius: '8px'
+      }}>
+        <div>
+          <span style={{ color: '#888', fontSize: '12px' }}>Analyses disponibles aujourd'hui</span>
+          <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '4px',
+                background: i <= remainingAnalyses ? '#3b82f6' : '#333',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '12px',
+                color: i <= remainingAnalyses ? '#fff' : '#666'
+              }}>{i}</div>
+            ))}
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <span style={{ fontSize: '24px' }}>🔍</span>
+        </div>
+      </div>
+
+      {/* Championnats supportés */}
+      <div style={{
+        marginBottom: '16px',
+        padding: '10px',
+        background: '#0a0a0a',
+        borderRadius: '8px',
+        border: '1px solid #222'
+      }}>
+        <div style={{ color: '#666', fontSize: '11px', marginBottom: '8px' }}>
+          📋 Championnats pris en charge:
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+          {['Premier League', 'Ligue 1', 'La Liga', 'Bundesliga', 'Serie A', 'Champions League', 'NBA'].map((league, i) => (
+            <span key={i} style={{
+              padding: '3px 8px',
+              background: '#1a1a1a',
+              borderRadius: '4px',
+              fontSize: '10px',
+              color: '#888'
+            }}>{league}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* Formulaire de saisie */}
+      <div style={{ marginBottom: '16px' }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '10px'
+        }}>
+          <span style={{ color: '#f97316', fontSize: '13px', fontWeight: 'bold' }}>
+            ⚽ Saisissez le match à analyser
+          </span>
+        </div>
+
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          alignItems: 'center',
+          padding: '12px',
+          background: '#1a1a1a',
+          borderRadius: '8px'
+        }}>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <input
+              type="text"
+              placeholder="Équipe domicile"
+              value={homeTeam}
+              onChange={(e) => {
+                setHomeTeam(e.target.value);
+                generateSuggestions(e.target.value, 'home');
+              }}
+              style={{
+                width: '100%',
+                padding: '10px',
+                background: '#0a0a0a',
+                border: '1px solid #333',
+                borderRadius: '4px',
+                color: '#fff',
+                fontSize: '13px',
+                boxSizing: 'border-box'
+              }}
+            />
+            {suggestions.home.length > 0 && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                background: '#1a1a1a',
+                border: '1px solid #333',
+                borderRadius: '4px',
+                zIndex: 10,
+                marginTop: '2px'
+              }}>
+                {suggestions.home.map((team, i) => (
+                  <div
+                    key={i}
+                    onClick={() => {
+                      setHomeTeam(team);
+                      setSuggestions(prev => ({ ...prev, home: [] }));
+                    }}
+                    style={{
+                      padding: '8px 10px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      color: '#fff',
+                      borderBottom: i < suggestions.home.length - 1 ? '1px solid #222' : 'none'
+                    }}
+                  >
+                    {team}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          <span style={{ color: '#666', fontWeight: 'bold' }}>VS</span>
+          
+          <div style={{ flex: 1, position: 'relative' }}>
+            <input
+              type="text"
+              placeholder="Équipe extérieur"
+              value={awayTeam}
+              onChange={(e) => {
+                setAwayTeam(e.target.value);
+                generateSuggestions(e.target.value, 'away');
+              }}
+              style={{
+                width: '100%',
+                padding: '10px',
+                background: '#0a0a0a',
+                border: '1px solid #333',
+                borderRadius: '4px',
+                color: '#fff',
+                fontSize: '13px',
+                boxSizing: 'border-box'
+              }}
+            />
+            {suggestions.away.length > 0 && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                background: '#1a1a1a',
+                border: '1px solid #333',
+                borderRadius: '4px',
+                zIndex: 10,
+                marginTop: '2px'
+              }}>
+                {suggestions.away.map((team, i) => (
+                  <div
+                    key={i}
+                    onClick={() => {
+                      setAwayTeam(team);
+                      setSuggestions(prev => ({ ...prev, away: [] }));
+                    }}
+                    style={{
+                      padding: '8px 10px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      color: '#fff',
+                      borderBottom: i < suggestions.away.length - 1 ? '1px solid #222' : 'none'
+                    }}
+                  >
+                    {team}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <p style={{ color: '#666', fontSize: '10px', marginTop: '8px', textAlign: 'center' }}>
+          💡 Tapez les premières lettres pour voir les suggestions
+        </p>
+      </div>
+
+      {/* Erreur */}
+      {error && (
+        <div style={{
+          padding: '10px',
+          background: '#ef444420',
+          border: '1px solid #ef444440',
+          borderRadius: '8px',
+          color: '#ef4444',
+          fontSize: '12px',
+          marginBottom: '12px'
+        }}>
+          {error}
+        </div>
+      )}
+
+      {/* Bouton d'analyse */}
+      <button
+        onClick={analyzeMatch}
+        disabled={analyzing || remainingAnalyses <= 0}
+        style={{
+          width: '100%',
+          padding: '14px',
+          background: analyzing || remainingAnalyses <= 0 ? '#333' : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '8px',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          cursor: analyzing || remainingAnalyses <= 0 ? 'not-allowed' : 'pointer',
+          marginBottom: '16px'
+        }}
+      >
+        {analyzing ? '⏳ Analyse en cours...' : `🔍 Analyser le match (${remainingAnalyses} restant${remainingAnalyses > 1 ? 's' : ''})`}
+      </button>
+
+      {/* Résultats */}
+      {result && (
+        <div style={{
+          marginTop: '16px',
+          padding: '16px',
+          background: '#0a0a0a',
+          borderRadius: '12px',
+          border: '1px solid #22c55e30'
+        }}>
+          {/* En-tête du match */}
+          <div style={{
+            textAlign: 'center',
+            marginBottom: '16px',
+            paddingBottom: '12px',
+            borderBottom: '1px solid #222'
+          }}>
+            <div style={{ fontSize: '11px', color: '#666', marginBottom: '4px' }}>
+              {result.match.league} • {result.matchDate ? new Date(result.matchDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+            </div>
+            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff' }}>
+              {result.match.homeTeam} vs {result.match.awayTeam}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '8px' }}>
+              <span style={{ padding: '4px 10px', background: result.match.oddsHome < result.match.oddsAway ? '#f97316' : '#1a1a1a', borderRadius: '4px', fontSize: '12px', color: '#fff' }}>
+                {result.match.oddsHome.toFixed(2)}
+              </span>
+              {result.match.oddsDraw && (
+                <span style={{ padding: '4px 10px', background: '#1a1a1a', borderRadius: '4px', fontSize: '12px', color: '#888' }}>
+                  {result.match.oddsDraw.toFixed(2)}
+                </span>
+              )}
+              <span style={{ padding: '4px 10px', background: result.match.oddsAway < result.match.oddsHome ? '#f97316' : '#1a1a1a', borderRadius: '4px', fontSize: '12px', color: '#fff' }}>
+                {result.match.oddsAway.toFixed(2)}
+              </span>
+            </div>
+          </div>
+
+          {/* Résumé principal */}
+          <div style={{
+            background: 'linear-gradient(135deg, #22c55e20 0%, #16a34a20 100%)',
+            borderRadius: '8px',
+            padding: '14px',
+            marginBottom: '12px',
+            border: '1px solid #22c55e40'
+          }}>
+            <div style={{ color: '#22c55e', fontSize: '11px', marginBottom: '4px' }}>
+              📊 RÉSUMÉ DE L'ANALYSE
+            </div>
+            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', marginBottom: '6px' }}>
+              {result.recommendation}
+            </div>
+            <div style={{ fontSize: '12px', color: '#888' }}>
+              Type de pari: <span style={{ color: '#f97316' }}>{result.betType}</span>
+            </div>
+          </div>
+
+          {/* Grille des stats */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '8px',
+            marginBottom: '12px'
+          }}>
+            {/* Probabilités */}
+            <div style={{
+              padding: '10px',
+              background: '#1a1a1a',
+              borderRadius: '8px'
+            }}>
+              <div style={{ color: '#666', fontSize: '10px', marginBottom: '6px' }}>📈 Probabilités</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                <span style={{ color: result.favorite.team === result.match.homeTeam ? '#f97316' : '#888' }}>🏠 {result.probability.home}%</span>
+                <span style={{ color: '#eab308' }}>🤝 {result.probability.draw}%</span>
+                <span style={{ color: result.favorite.team === result.match.awayTeam ? '#f97316' : '#888' }}>✈️ {result.probability.away}%</span>
+              </div>
+            </div>
+
+            {/* Risque */}
+            <div style={{
+              padding: '10px',
+              background: '#1a1a1a',
+              borderRadius: '8px'
+            }}>
+              <div style={{ color: '#666', fontSize: '10px', marginBottom: '6px' }}>⚠️ Niveau de risque</div>
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: result.risk <= 40 ? '#22c55e' : result.risk <= 50 ? '#f97316' : '#ef4444'
+              }}>
+                {result.risk}% - {result.risk <= 40 ? 'Faible' : result.risk <= 50 ? 'Modéré' : 'Élevé'}
+              </div>
+            </div>
+          </div>
+
+          {/* Prédictions détaillées */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '8px'
+          }}>
+            {/* Buts */}
+            {result.goals && (
+              <div style={{
+                padding: '10px',
+                background: '#1a1a1a',
+                borderRadius: '8px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '18px', marginBottom: '4px' }}>⚽</div>
+                <div style={{ color: '#666', fontSize: '10px' }}>Buts attendus</div>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff' }}>{result.goals.total}</div>
+                <div style={{ fontSize: '10px', color: result.goals.over25 >= 55 ? '#22c55e' : '#888', marginTop: '4px' }}>
+                  {result.goals.prediction} ({Math.max(result.goals.over25, result.goals.under25)}%)
+                </div>
+              </div>
+            )}
+
+            {/* Corners */}
+            {result.corners && (
+              <div style={{
+                padding: '10px',
+                background: '#1a1a1a',
+                borderRadius: '8px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '18px', marginBottom: '4px' }}>🚩</div>
+                <div style={{ color: '#666', fontSize: '10px' }}>Corners attendus</div>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff' }}>{result.corners.total}</div>
+                <div style={{ fontSize: '10px', color: result.corners.over85 >= 55 ? '#22c55e' : '#888', marginTop: '4px' }}>
+                  {result.corners.prediction} ({Math.max(result.corners.over85, 100 - result.corners.over85)}%)
+                </div>
+              </div>
+            )}
+
+            {/* Cartons */}
+            {result.cards && (
+              <div style={{
+                padding: '10px',
+                background: '#1a1a1a',
+                borderRadius: '8px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '18px', marginBottom: '4px' }}>🟨</div>
+                <div style={{ color: '#666', fontSize: '10px' }}>Cartons attendus</div>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff' }}>{result.cards.total}</div>
+                <div style={{ fontSize: '10px', color: result.cards.over45 >= 55 ? '#eab308' : '#888', marginTop: '4px' }}>
+                  {result.cards.prediction} ({Math.max(result.cards.over45, 100 - result.cards.over45)}%)
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section Enrichissement API-Football */}
+          {loadingEnrichment && (
+            <div style={{
+              marginTop: '12px',
+              padding: '12px',
+              background: '#1a1a1a',
+              borderRadius: '8px',
+              textAlign: 'center',
+              color: '#888',
+              fontSize: '12px'
+            }}>
+              ⏳ Chargement des données supplémentaires (blessures, forme, H2H)...
+            </div>
+          )}
+
+          {enrichment && !loadingEnrichment && (
+            <div style={{ marginTop: '12px' }}>
+              {/* Blessures et Suspensions */}
+              {(enrichment.homeInjuries?.length > 0 || enrichment.awayInjuries?.length > 0) && (
+                <div style={{
+                  background: '#2a1a1a',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  marginBottom: '8px',
+                  border: '1px solid #ef444430'
+                }}>
+                  <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>
+                    🏥 Blessures & Suspensions
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '10px' }}>
+                    <div>
+                      <div style={{ color: '#888', marginBottom: '4px' }}>{result.match.homeTeam}</div>
+                      {enrichment.homeInjuries?.slice(0, 3).map((inj, i) => (
+                        <div key={i} style={{ color: '#ef4444', marginBottom: '2px' }}>
+                          • {inj.player} ({inj.type})
+                        </div>
+                      ))}
+                      {enrichment.homeInjuries?.length === 0 && <div style={{ color: '#22c55e' }}>✓ Aucune blessure signalée</div>}
+                    </div>
+                    <div>
+                      <div style={{ color: '#888', marginBottom: '4px' }}>{result.match.awayTeam}</div>
+                      {enrichment.awayInjuries?.slice(0, 3).map((inj, i) => (
+                        <div key={i} style={{ color: '#ef4444', marginBottom: '2px' }}>
+                          • {inj.player} ({inj.type})
+                        </div>
+                      ))}
+                      {enrichment.awayInjuries?.length === 0 && <div style={{ color: '#22c55e' }}>✓ Aucune blessure signalée</div>}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Forme récente */}
+              {(enrichment.homeForm || enrichment.awayForm) && (
+                <div style={{
+                  background: '#1a2a1a',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  marginBottom: '8px',
+                  border: '1px solid #22c55e30'
+                }}>
+                  <div style={{ color: '#22c55e', fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>
+                    📊 Forme Récente
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '10px' }}>
+                    <div>
+                      <div style={{ color: '#888', marginBottom: '4px' }}>{result.match.homeTeam}</div>
+                      {enrichment.homeForm ? (
+                        <>
+                          <div style={{ color: '#fff', marginBottom: '2px' }}>Forme: {enrichment.homeForm.form}</div>
+                          <div style={{ color: '#888' }}>Buts: {enrichment.homeForm.goalsScored} marqués, {enrichment.homeForm.goalsConceded} encaissés</div>
+                        </>
+                      ) : (
+                        <div style={{ color: '#666' }}>Non disponible</div>
+                      )}
+                    </div>
+                    <div>
+                      <div style={{ color: '#888', marginBottom: '4px' }}>{result.match.awayTeam}</div>
+                      {enrichment.awayForm ? (
+                        <>
+                          <div style={{ color: '#fff', marginBottom: '2px' }}>Forme: {enrichment.awayForm.form}</div>
+                          <div style={{ color: '#888' }}>Buts: {enrichment.awayForm.goalsScored} marqués, {enrichment.awayForm.goalsConceded} encaissés</div>
+                        </>
+                      ) : (
+                        <div style={{ color: '#666' }}>Non disponible</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Historique H2H */}
+              {enrichment.h2h && enrichment.h2h.length > 0 && (
+                <div style={{
+                  background: '#1a1a2a',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  marginBottom: '8px',
+                  border: '1px solid #3b82f630'
+                }}>
+                  <div style={{ color: '#3b82f6', fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>
+                    ⚔️ Historique des Confrontations
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '10px' }}>
+                    {enrichment.h2h.slice(0, 5).map((h2hMatch, i) => (
+                      <div key={i} style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        padding: '6px',
+                        background: '#0a0a0a',
+                        borderRadius: '4px'
+                      }}>
+                        <span style={{ color: '#888' }}>
+                          {new Date(h2hMatch.date).toLocaleDateString('fr-FR')}
+                        </span>
+                        <span style={{ color: '#fff' }}>
+                          {h2hMatch.homeTeam} {h2hMatch.homeScore} - {h2hMatch.awayScore} {h2hMatch.awayTeam}
+                        </span>
+                        <span style={{ color: '#666', fontSize: '9px' }}>
+                          {h2hMatch.competition}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Note de confiance */}
+          <div style={{
+            marginTop: '12px',
+            padding: '10px',
+            background: '#1a1a1a',
+            borderRadius: '8px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <span style={{ color: '#666', fontSize: '11px' }}>Confiance de l'analyse:</span>
+            <span style={{
+              fontSize: '13px',
+              fontWeight: 'bold',
+              color: result.confidence === 'high' ? '#22c55e' : result.confidence === 'medium' ? '#f97316' : '#ef4444'
+            }}>
+              {result.confidence === 'high' ? '✅ Haute' : result.confidence === 'medium' ? '⚠️ Moyenne' : '❌ Faible'}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

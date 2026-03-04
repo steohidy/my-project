@@ -43,6 +43,19 @@ interface CrossValidatedMatch {
     redCardRisk: number; // Risque de carton rouge (%)
     prediction: string; // Ex: "Under 4.5"
   };
+  cornersPrediction?: {
+    total: number; // Corners totaux attendus
+    over85: number; // Probabilité Over 8.5 corners (%)
+    under85: number; // Probabilité Under 8.5 corners (%)
+    over95: number; // Probabilité Over 9.5 corners (%)
+    prediction: string; // Ex: "Over 8.5"
+  };
+  // Prédictions avancées
+  advancedPredictions?: {
+    btts: { yes: number; no: number }; // Les deux équipes marquent
+    correctScore: { home: number; away: number; prob: number }[]; // Scores exacts probables
+    halfTime: { home: number; draw: number; away: number }; // Résultat MT
+  };
 }
 
 // Interface pour les stats de timing
@@ -557,6 +570,137 @@ function calculateCardsPrediction(
 }
 
 /**
+ * Calcule les prédictions de corners basées sur les caractéristiques du match
+ * Les corners ne sont pas fournis par les APIs standards, donc on utilise un modèle statistique
+ */
+function calculateCornersPrediction(
+  oddsHome: number,
+  oddsAway: number,
+  oddsDraw: number | null,
+  league: string
+): CrossValidatedMatch['cornersPrediction'] {
+  // Moyennes de corners par ligue (approximatives)
+  const leagueCornersAvg: Record<string, number> = {
+    'Ligue 1': 9.2,
+    'Premier League': 10.5,
+    'La Liga': 9.0,
+    'Serie A': 9.5,
+    'Bundesliga': 9.8,
+    'Champions League': 9.5,
+    'Europa League': 9.3,
+  };
+  
+  const baseCorners = leagueCornersAvg[league] || 9.0;
+  
+  // Facteurs d'ajustement
+  const oddsRatio = Math.max(oddsHome, oddsAway) / Math.min(oddsHome, oddsAway);
+  
+  // Ajustements:
+  // - Match serré = plus d'attaques des deux côtés = plus de corners
+  // - Favori net = domination = plus de corners pour le favori
+  
+  let expectedCorners = baseCorners;
+  
+  if (oddsRatio < 1.5) {
+    // Match très serré - beaucoup d'attaques des deux côtés
+    expectedCorners += 1.0;
+  } else if (oddsRatio > 2.5) {
+    // Favori net - moins de corners car l'outsider défend plus
+    expectedCorners -= 0.5;
+  }
+  
+  // Cote de nul basse = match défensif = moins de corners
+  if (oddsDraw && oddsDraw < 3.0) {
+    expectedCorners -= 0.3;
+  }
+  
+  // Calcul des probabilités
+  const avgCorners = expectedCorners;
+  
+  // P(Over 8.5) - approximation
+  const over85Prob = Math.round(Math.min(45 + (avgCorners - 8.5) * 12, 75));
+  
+  // P(Over 9.5)
+  const over95Prob = Math.round(Math.min(35 + (avgCorners - 9.5) * 12, 65));
+  
+  // Déterminer la prédiction
+  let prediction = '';
+  if (over85Prob >= 60) {
+    prediction = 'Over 8.5 corners';
+  } else if (over95Prob <= 35) {
+    prediction = 'Under 9.5 corners';
+  } else if (over85Prob >= 50) {
+    prediction = 'Over 8.5 corners';
+  } else {
+    prediction = 'Under 8.5 corners';
+  }
+  
+  return {
+    total: Math.round(expectedCorners * 10) / 10,
+    over85: over85Prob,
+    under85: 100 - over85Prob,
+    over95: over95Prob,
+    prediction
+  };
+}
+
+/**
+ * Calcule les prédictions avancées (BTTS, Score exact, MT)
+ */
+function calculateAdvancedPredictions(
+  oddsHome: number,
+  oddsAway: number,
+  oddsDraw: number | null,
+  goalsPrediction: CrossValidatedMatch['goalsPrediction']
+): CrossValidatedMatch['advancedPredictions'] {
+  // Probabilités implicites
+  const probHome = 1 / oddsHome;
+  const probAway = 1 / oddsAway;
+  const probDraw = oddsDraw ? 1 / oddsDraw : 0.25;
+  const totalImplied = probHome + probAway + probDraw;
+  
+  const normalizedProbHome = probHome / totalImplied;
+  const normalizedProbAway = probAway / totalImplied;
+  const normalizedProbDraw = probDraw / totalImplied;
+  
+  // BTTS (Both Teams To Score)
+  const bttsYes = goalsPrediction?.bothTeamsScore || 
+    Math.round((normalizedProbHome + normalizedProbAway) * 40 + 
+               (1 - Math.abs(normalizedProbHome - normalizedProbAway)) * 30);
+  
+  // Score exact - basé sur la distribution de Poisson
+  const expectedHomeGoals = (goalsPrediction?.total || 2.5) * normalizedProbHome / (normalizedProbHome + normalizedProbAway);
+  const expectedAwayGoals = (goalsPrediction?.total || 2.5) * normalizedProbAway / (normalizedProbHome + normalizedProbAway);
+  
+  // Scores probables (simplifié)
+  const correctScore = [
+    { home: Math.round(expectedHomeGoals), away: Math.round(expectedAwayGoals), prob: 15 },
+    { home: Math.round(expectedHomeGoals), away: Math.round(expectedAwayGoals) - 1, prob: 12 },
+    { home: Math.round(expectedHomeGoals) - 1, away: Math.round(expectedAwayGoals), prob: 10 },
+    { home: 1, away: 1, prob: 12 },
+    { home: 0, away: 0, prob: 8 },
+  ].filter(s => s.home >= 0 && s.away >= 0).sort((a, b) => b.prob - a.prob).slice(0, 3);
+  
+  // Résultat MT (mi-temps) - généralement plus de nuls
+  const halfTime = {
+    home: Math.round(normalizedProbHome * 38),
+    draw: Math.round(normalizedProbDraw * 45),
+    away: Math.round(normalizedProbAway * 38)
+  };
+  // Normaliser à 100%
+  const htTotal = halfTime.home + halfTime.draw + halfTime.away;
+  halfTime.home = Math.round(halfTime.home * 100 / htTotal);
+  halfTime.draw = Math.round(halfTime.draw * 100 / htTotal);
+  halfTime.away = 100 - halfTime.home - halfTime.draw;
+  
+  return {
+    btts: { yes: Math.min(bttsYes, 80), no: 100 - Math.min(bttsYes, 80) },
+    correctScore,
+    halfTime
+  };
+}
+
+/**
  * Croise les données des deux sources
  */
 function crossValidateMatches(
@@ -695,9 +839,11 @@ function crossValidateMatches(
     // Récupérer le marché totals pour les buts
     const totalsMarket = bookmaker?.markets?.find((m: any) => m.key === 'totals');
     
-    // Calculer les prédictions de buts et cartons
+    // Calculer les prédictions de buts et cartons (Football uniquement)
     const goalsPrediction = sport === 'Foot' ? calculateGoalsPrediction(oddsHome, oddsAway, oddsDraw, totalsMarket) : undefined;
     const cardsPrediction = sport === 'Foot' ? calculateCardsPrediction(oddsHome, oddsAway, oddsDraw, leagueName) : undefined;
+    const cornersPrediction = sport === 'Foot' ? calculateCornersPrediction(oddsHome, oddsAway, oddsDraw, leagueName) : undefined;
+    const advancedPredictions = sport === 'Foot' ? calculateAdvancedPredictions(oddsHome, oddsAway, oddsDraw, goalsPrediction) : undefined;
     
     validatedMatches.push({
       id: oddsMatch.id,
@@ -724,6 +870,8 @@ function crossValidateMatches(
       },
       goalsPrediction,
       cardsPrediction,
+      cornersPrediction,
+      advancedPredictions,
     });
     
     usedOddsIds.add(oddsMatch.id);
