@@ -274,6 +274,17 @@ interface Match {
     correctScore: { home: number; away: number; prob: number }[];
     halfTime: { home: number; draw: number; away: number };
   };
+  // Prédictions NBA spécifiques
+  nbaPredictions?: {
+    predictedWinner: 'home' | 'away';
+    winnerTeam: string;
+    winnerProb: number;
+    spread: { line: number; favorite: string; confidence: number };
+    totalPoints: { line: number; predicted: number; overProb: number; recommendation: string };
+    topScorer: { team: string; player: string; predictedPoints: number };
+    keyMatchup: string;
+    confidence: 'high' | 'medium' | 'low';
+  };
 }
 
 // Interface pour les infos de timing
@@ -861,8 +872,289 @@ function TabButtonCompact({ active, onClick, icon, label, count }: { active: boo
   );
 }
 
-// Composant MatchCardCompact
+// Composant NBAMatchCard - Affichage spécifique pour le basket
+function NBAMatchCard({ match, index }: { match: Match; index: number }) {
+  const riskColor = match.insight.riskPercentage <= 40 ? '#22c55e' : match.insight.riskPercentage <= 50 ? '#f97316' : '#ef4444';
+  const riskLabel = match.insight.riskPercentage <= 40 ? 'Sûr' : match.insight.riskPercentage <= 50 ? 'Modéré' : 'Audacieux';
+  
+  // Données NBA
+  const nba = match.nbaPredictions;
+  const isHomeFavorite = nba?.predictedWinner === 'home';
+  const winnerProb = nba?.winnerProb || 50;
+  const confidenceColor = nba?.confidence === 'high' ? '#22c55e' : nba?.confidence === 'medium' ? '#f97316' : '#ef4444';
+  
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%)',
+      borderRadius: '12px',
+      padding: '14px',
+      border: `1px solid ${isHomeFavorite ? '#f9731660' : '#3b82f660'}`,
+      marginBottom: '10px',
+      boxShadow: isHomeFavorite ? '0 4px 20px rgba(249, 115, 22, 0.15)' : '0 4px 20px rgba(59, 130, 246, 0.1)'
+    }}>
+      {/* Header avec index et league */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: '12px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ 
+            background: '#f97316', 
+            color: '#fff', 
+            width: '26px', 
+            height: '26px',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '12px',
+            fontWeight: 'bold'
+          }}>{index}</span>
+          <span style={{ fontSize: '11px', color: '#888' }}>🏀 {match.league}</span>
+        </div>
+        <div style={{
+          background: `${riskColor}20`,
+          padding: '4px 8px',
+          borderRadius: '4px',
+          fontSize: '9px',
+          color: riskColor,
+          fontWeight: 'bold',
+          textTransform: 'uppercase'
+        }}>
+          {riskLabel}
+        </div>
+      </div>
+      
+      {/* TEAMS - avec SURBRILLANCE du favori */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: '14px',
+        padding: '10px',
+        background: '#111',
+        borderRadius: '10px'
+      }}>
+        {/* Home Team */}
+        <div style={{
+          flex: 1,
+          textAlign: 'center',
+          padding: '8px',
+          borderRadius: '8px',
+          background: isHomeFavorite ? 'linear-gradient(135deg, #f9731620 0%, #f9731610 100%)' : 'transparent',
+          border: isHomeFavorite ? '2px solid #f97316' : '2px solid transparent'
+        }}>
+          <div style={{ 
+            fontSize: '13px', 
+            fontWeight: 'bold', 
+            color: isHomeFavorite ? '#f97316' : '#fff',
+            marginBottom: '4px'
+          }}>
+            {isHomeFavorite && '⭐ '}{match.homeTeam}
+          </div>
+          <div style={{ fontSize: '10px', color: '#888' }}>
+            🏠 Domicile
+          </div>
+          <div style={{ 
+            marginTop: '6px',
+            fontSize: '18px', 
+            fontWeight: 'bold',
+            color: isHomeFavorite ? '#f97316' : '#888'
+          }}>
+            {isHomeFavorite ? winnerProb : 100 - winnerProb}%
+          </div>
+        </div>
+        
+        {/* VS */}
+        <div style={{ padding: '0 10px' }}>
+          <div style={{ 
+            fontSize: '10px', 
+            color: '#666',
+            background: '#1a1a1a',
+            padding: '6px 10px',
+            borderRadius: '6px'
+          }}>
+            VS
+          </div>
+        </div>
+        
+        {/* Away Team */}
+        <div style={{
+          flex: 1,
+          textAlign: 'center',
+          padding: '8px',
+          borderRadius: '8px',
+          background: !isHomeFavorite ? 'linear-gradient(135deg, #3b82f620 0%, #3b82f610 100%)' : 'transparent',
+          border: !isHomeFavorite ? '2px solid #3b82f6' : '2px solid transparent'
+        }}>
+          <div style={{ 
+            fontSize: '13px', 
+            fontWeight: 'bold', 
+            color: !isHomeFavorite ? '#3b82f6' : '#fff',
+            marginBottom: '4px'
+          }}>
+            {!isHomeFavorite && '⭐ '}{match.awayTeam}
+          </div>
+          <div style={{ fontSize: '10px', color: '#888' }}>
+            ✈️ Extérieur
+          </div>
+          <div style={{ 
+            marginTop: '6px',
+            fontSize: '18px', 
+            fontWeight: 'bold',
+            color: !isHomeFavorite ? '#3b82f6' : '#888'
+          }}>
+            {!isHomeFavorite ? winnerProb : 100 - winnerProb}%
+          </div>
+        </div>
+      </div>
+      
+      {/* PRÉDICTION PRINCIPALE */}
+      <div style={{
+        background: `linear-gradient(135deg, ${isHomeFavorite ? '#f9731615' : '#3b82f615'} 0%, #0a0a0a 100%)`,
+        borderRadius: '10px',
+        padding: '12px',
+        marginBottom: '12px',
+        border: `1px solid ${isHomeFavorite ? '#f9731630' : '#3b82f630'}`
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: '11px', color: '#888', marginBottom: '4px' }}>🏆 VAINQUEUR PRÉDIT</div>
+            <div style={{ 
+              fontSize: '16px', 
+              fontWeight: 'bold', 
+              color: isHomeFavorite ? '#f97316' : '#3b82f6' 
+            }}>
+              ⭐ {nba?.winnerTeam}
+            </div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: confidenceColor }}>
+              {winnerProb}%
+            </div>
+            <div style={{ fontSize: '9px', color: '#888' }}>
+              Confiance: {nba?.confidence === 'high' ? 'Haute' : nba?.confidence === 'medium' ? 'Moyenne' : 'Faible'}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* GRILLE PRÉDICTIONS NBA */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gap: '8px'
+      }}>
+        {/* SPREAD */}
+        <div style={{
+          background: '#1a1a1a',
+          borderRadius: '8px',
+          padding: '10px'
+        }}>
+          <div style={{ fontSize: '10px', color: '#888', marginBottom: '4px' }}>📊 SPREAD</div>
+          <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#22c55e' }}>
+            {nba?.spread.favorite} ({nba?.spread.line > 0 ? '-' : '+'}{Math.abs(nba?.spread.line || 0)})
+          </div>
+          <div style={{ fontSize: '9px', color: '#666' }}>
+            Confiance: {nba?.spread.confidence}%
+          </div>
+        </div>
+        
+        {/* TOTAL POINTS */}
+        <div style={{
+          background: '#1a1a1a',
+          borderRadius: '8px',
+          padding: '10px'
+        }}>
+          <div style={{ fontSize: '10px', color: '#888', marginBottom: '4px' }}>📈 TOTAL POINTS</div>
+          <div style={{ fontSize: '14px', fontWeight: 'bold', color: nba?.totalPoints.overProb && nba.totalPoints.overProb >= 55 ? '#22c55e' : '#f97316' }}>
+            {nba?.totalPoints.recommendation}
+          </div>
+          <div style={{ fontSize: '9px', color: '#666' }}>
+            Prédit: {nba?.totalPoints.predicted} pts ({nba?.totalPoints.overProb}% over)
+          </div>
+        </div>
+        
+        {/* MEILLEUR MARQUEUR */}
+        <div style={{
+          background: '#1a1a1a',
+          borderRadius: '8px',
+          padding: '10px'
+        }}>
+          <div style={{ fontSize: '10px', color: '#888', marginBottom: '4px' }}>🏀 TOP SCOREUR</div>
+          <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#eab308' }}>
+            {nba?.topScorer.player}
+          </div>
+          <div style={{ fontSize: '9px', color: '#666' }}>
+            {nba?.topScorer.team} • ~{nba?.topScorer.predictedPoints} pts
+          </div>
+        </div>
+        
+        {/* KEY MATCHUP */}
+        <div style={{
+          background: '#1a1a1a',
+          borderRadius: '8px',
+          padding: '10px'
+        }}>
+          <div style={{ fontSize: '10px', color: '#888', marginBottom: '4px' }}>⚔️ DUEL CLÉ</div>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#a855f7' }}>
+            {nba?.keyMatchup}
+          </div>
+          <div style={{ fontSize: '9px', color: '#666' }}>
+            Impact sur le résultat
+          </div>
+        </div>
+      </div>
+      
+      {/* Cotes */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        gap: '8px',
+        marginTop: '12px',
+        paddingTop: '10px',
+        borderTop: '1px solid #222'
+      }}>
+        <span style={{ 
+          padding: '4px 10px', 
+          background: isHomeFavorite ? '#f97316' : '#1a1a1a', 
+          borderRadius: '4px', 
+          fontSize: '11px', 
+          color: '#fff',
+          fontWeight: isHomeFavorite ? 'bold' : 'normal'
+        }}>
+          {match.homeTeam.slice(0, 10)}: {match.oddsHome.toFixed(2)}
+        </span>
+        <span style={{ 
+          padding: '4px 10px', 
+          background: !isHomeFavorite ? '#3b82f6' : '#1a1a1a', 
+          borderRadius: '4px', 
+          fontSize: '11px', 
+          color: '#fff',
+          fontWeight: !isHomeFavorite ? 'bold' : 'normal'
+        }}>
+          {match.awayTeam.slice(0, 10)}: {match.oddsAway.toFixed(2)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// Composant MatchCardCompact - Wrapper qui choisit le bon composant selon le sport
 function MatchCardCompact({ match, index }: { match: Match; index: number }) {
+  // Si c'est un match NBA avec prédictions, utiliser le composant spécifique
+  if (match.sport === 'Basket' && match.nbaPredictions) {
+    return <NBAMatchCard match={match} index={index} />;
+  }
+  
+  // Sinon, utiliser le composant Football standard
+  return <FootballMatchCard match={match} index={index} />;
+}
+
+// Composant FootballMatchCard - Affichage pour le football
+function FootballMatchCard({ match, index }: { match: Match; index: number }) {
   const [showAllOptions, setShowAllOptions] = useState(false);
   const [enrichment, setEnrichment] = useState<{
     homeTeam?: { injuryCount: number; keyInjuries?: string[] };

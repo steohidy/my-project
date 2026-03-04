@@ -35,7 +35,7 @@ interface CrossValidatedMatch {
       dataQuality: 'high' | 'medium' | 'low';
     };
   };
-  // Nouvelles prédictions
+  // Prédictions Football
   goalsPrediction?: {
     total: number; // Buts totaux attendus
     over25: number; // Probabilité Over 2.5 buts (%)
@@ -58,11 +58,22 @@ interface CrossValidatedMatch {
     over95: number; // Probabilité Over 9.5 corners (%)
     prediction: string; // Ex: "Over 8.5"
   };
-  // Prédictions avancées
+  // Prédictions avancées (Football)
   advancedPredictions?: {
     btts: { yes: number; no: number }; // Les deux équipes marquent
     correctScore: { home: number; away: number; prob: number }[]; // Scores exacts probables
     halfTime: { home: number; draw: number; away: number }; // Résultat MT
+  };
+  // Prédictions NBA spécifiques
+  nbaPredictions?: {
+    predictedWinner: 'home' | 'away';
+    winnerTeam: string;
+    winnerProb: number;
+    spread: { line: number; favorite: string; confidence: number };
+    totalPoints: { line: number; predicted: number; overProb: number; recommendation: string };
+    topScorer: { team: string; player: string; predictedPoints: number };
+    keyMatchup: string;
+    confidence: 'high' | 'medium' | 'low';
   };
 }
 
@@ -1087,16 +1098,18 @@ function convertFallbackToValidated(fallback: FallbackMatch): CrossValidatedMatc
       over95: 42,
       prediction: 'Over 8.5 corners',
     } : undefined,
-    // Prédictions avancées
-    advancedPredictions: {
-      btts: { yes: fallback.sport === 'Foot' ? 52 : 0, no: fallback.sport === 'Foot' ? 48 : 0 },
+    // Prédictions avancées (football)
+    advancedPredictions: fallback.sport === 'Foot' ? {
+      btts: { yes: 52, no: 48 },
       correctScore: [],
       halfTime: {
         home: Math.round(fallback.winProb.home * 0.8),
         draw: fallback.winProb.draw ? Math.round(fallback.winProb.draw * 1.3) : 15,
         away: Math.round(fallback.winProb.away * 0.8),
       },
-    },
+    } : undefined,
+    // Prédictions NBA (basket uniquement)
+    nbaPredictions: fallback.sport === 'Basket' && fallback.nbaPredictions ? fallback.nbaPredictions : undefined,
   };
 }
 

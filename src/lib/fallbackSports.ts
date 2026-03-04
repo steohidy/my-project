@@ -37,13 +37,31 @@ export interface FallbackMatch {
   oddsAway: number;
   status: 'upcoming' | 'live';
   source: 'RapidAPI';
-  // Prédictions
+  // Prédictions communes
   winProb: { home: number; away: number; draw?: number };
   confidence: 'high' | 'medium' | 'low';
   riskPercentage: number;
   // Sport-specific
   spread?: { line: number; homeProb: number };
   total?: { line: number; predicted: number; overProb: number };
+  // NBA-specific
+  nbaPredictions?: {
+    predictedWinner: 'home' | 'away';
+    winnerTeam: string;
+    winnerProb: number;
+    spread: { line: number; favorite: string; confidence: number };
+    totalPoints: { line: number; predicted: number; overProb: number; recommendation: string };
+    topScorer: { team: string; player: string; predictedPoints: number };
+    keyMatchup: string;
+    confidence: 'high' | 'medium' | 'low';
+  };
+  // Hockey-specific  
+  nhlPredictions?: {
+    predictedWinner: 'home' | 'away';
+    winnerTeam: string;
+    winnerProb: number;
+    totalGoals: { line: number; predicted: number; overProb: number };
+  };
 }
 
 // ==================== FOOTBALL - DONNÉES RÉELLES ====================
@@ -152,39 +170,41 @@ const NBA_TEAMS: Record<string, {
   offRating: number;
   defRating: number;
   pace: number;
+  starPlayer: string;
+  starPPG: number;
 }> = {
   // Eastern Conference
-  'Boston Celtics': { name: 'Boston Celtics', conference: 'East', elo: 1750, offRating: 122.5, defRating: 110.2, pace: 99.8 },
-  'Milwaukee Bucks': { name: 'Milwaukee Bucks', conference: 'East', elo: 1700, offRating: 118.5, defRating: 112.0, pace: 98.2 },
-  'Cleveland Cavaliers': { name: 'Cleveland Cavaliers', conference: 'East', elo: 1720, offRating: 117.2, defRating: 109.8, pace: 98.8 },
-  'New York Knicks': { name: 'New York Knicks', conference: 'East', elo: 1670, offRating: 115.5, defRating: 112.5, pace: 96.2 },
-  'Philadelphia 76ers': { name: 'Philadelphia 76ers', conference: 'East', elo: 1680, offRating: 116.8, defRating: 113.5, pace: 97.5 },
-  'Miami Heat': { name: 'Miami Heat', conference: 'East', elo: 1650, offRating: 113.8, defRating: 112.8, pace: 95.5 },
-  'Indiana Pacers': { name: 'Indiana Pacers', conference: 'East', elo: 1660, offRating: 119.5, defRating: 115.2, pace: 101.5 },
-  'Orlando Magic': { name: 'Orlando Magic', conference: 'East', elo: 1640, offRating: 112.5, defRating: 111.5, pace: 96.8 },
-  'Chicago Bulls': { name: 'Chicago Bulls', conference: 'East', elo: 1590, offRating: 114.2, defRating: 116.8, pace: 98.2 },
-  'Atlanta Hawks': { name: 'Atlanta Hawks', conference: 'East', elo: 1600, offRating: 116.5, defRating: 117.5, pace: 99.5 },
-  'Brooklyn Nets': { name: 'Brooklyn Nets', conference: 'East', elo: 1550, offRating: 113.5, defRating: 118.2, pace: 97.8 },
-  'Toronto Raptors': { name: 'Toronto Raptors', conference: 'East', elo: 1540, offRating: 112.2, defRating: 117.8, pace: 97.2 },
-  'Charlotte Hornets': { name: 'Charlotte Hornets', conference: 'East', elo: 1500, offRating: 110.5, defRating: 119.5, pace: 98.5 },
-  'Washington Wizards': { name: 'Washington Wizards', conference: 'East', elo: 1480, offRating: 109.8, defRating: 120.5, pace: 99.2 },
-  'Detroit Pistons': { name: 'Detroit Pistons', conference: 'East', elo: 1495, offRating: 111.2, defRating: 119.8, pace: 98.0 },
+  'Boston Celtics': { name: 'Boston Celtics', conference: 'East', elo: 1750, offRating: 122.5, defRating: 110.2, pace: 99.8, starPlayer: 'Jayson Tatum', starPPG: 27.1 },
+  'Milwaukee Bucks': { name: 'Milwaukee Bucks', conference: 'East', elo: 1700, offRating: 118.5, defRating: 112.0, pace: 98.2, starPlayer: 'Giannis Antetokounmpo', starPPG: 31.2 },
+  'Cleveland Cavaliers': { name: 'Cleveland Cavaliers', conference: 'East', elo: 1720, offRating: 117.2, defRating: 109.8, pace: 98.8, starPlayer: 'Donovan Mitchell', starPPG: 28.4 },
+  'New York Knicks': { name: 'New York Knicks', conference: 'East', elo: 1670, offRating: 115.5, defRating: 112.5, pace: 96.2, starPlayer: 'Jalen Brunson', starPPG: 26.8 },
+  'Philadelphia 76ers': { name: 'Philadelphia 76ers', conference: 'East', elo: 1680, offRating: 116.8, defRating: 113.5, pace: 97.5, starPlayer: 'Joel Embiid', starPPG: 32.5 },
+  'Miami Heat': { name: 'Miami Heat', conference: 'East', elo: 1650, offRating: 113.8, defRating: 112.8, pace: 95.5, starPlayer: 'Jimmy Butler', starPPG: 21.8 },
+  'Indiana Pacers': { name: 'Indiana Pacers', conference: 'East', elo: 1660, offRating: 119.5, defRating: 115.2, pace: 101.5, starPlayer: 'Tyrese Haliburton', starPPG: 23.6 },
+  'Orlando Magic': { name: 'Orlando Magic', conference: 'East', elo: 1640, offRating: 112.5, defRating: 111.5, pace: 96.8, starPlayer: 'Paolo Banchero', starPPG: 23.2 },
+  'Chicago Bulls': { name: 'Chicago Bulls', conference: 'East', elo: 1590, offRating: 114.2, defRating: 116.8, pace: 98.2, starPlayer: 'Zach LaVine', starPPG: 24.1 },
+  'Atlanta Hawks': { name: 'Atlanta Hawks', conference: 'East', elo: 1600, offRating: 116.5, defRating: 117.5, pace: 99.5, starPlayer: 'Trae Young', starPPG: 26.5 },
+  'Brooklyn Nets': { name: 'Brooklyn Nets', conference: 'East', elo: 1550, offRating: 113.5, defRating: 118.2, pace: 97.8, starPlayer: 'Mikal Bridges', starPPG: 21.2 },
+  'Toronto Raptors': { name: 'Toronto Raptors', conference: 'East', elo: 1540, offRating: 112.2, defRating: 117.8, pace: 97.2, starPlayer: 'Scottie Barnes', starPPG: 20.8 },
+  'Charlotte Hornets': { name: 'Charlotte Hornets', conference: 'East', elo: 1500, offRating: 110.5, defRating: 119.5, pace: 98.5, starPlayer: 'LaMelo Ball', starPPG: 24.1 },
+  'Washington Wizards': { name: 'Washington Wizards', conference: 'East', elo: 1480, offRating: 109.8, defRating: 120.5, pace: 99.2, starPlayer: 'Kyle Kuzma', starPPG: 18.5 },
+  'Detroit Pistons': { name: 'Detroit Pistons', conference: 'East', elo: 1495, offRating: 111.2, defRating: 119.8, pace: 98.0, starPlayer: 'Cade Cunningham', starPPG: 23.4 },
   // Western Conference
-  'Oklahoma City Thunder': { name: 'Oklahoma City Thunder', conference: 'West', elo: 1745, offRating: 118.2, defRating: 108.5, pace: 99.2 },
-  'Denver Nuggets': { name: 'Denver Nuggets', conference: 'West', elo: 1730, offRating: 118.8, defRating: 111.5, pace: 97.5 },
-  'Minnesota Timberwolves': { name: 'Minnesota Timberwolves', conference: 'West', elo: 1710, offRating: 115.5, defRating: 108.8, pace: 96.8 },
-  'Dallas Mavericks': { name: 'Dallas Mavericks', conference: 'West', elo: 1690, offRating: 118.5, defRating: 114.8, pace: 99.8 },
-  'LA Clippers': { name: 'LA Clippers', conference: 'West', elo: 1680, offRating: 116.2, defRating: 112.5, pace: 96.2 },
-  'Phoenix Suns': { name: 'Phoenix Suns', conference: 'West', elo: 1670, offRating: 117.8, defRating: 114.2, pace: 98.5 },
-  'Los Angeles Lakers': { name: 'Los Angeles Lakers', conference: 'West', elo: 1665, offRating: 115.8, defRating: 113.8, pace: 97.8 },
-  'Golden State Warriors': { name: 'Golden State Warriors', conference: 'West', elo: 1655, offRating: 117.2, defRating: 115.5, pace: 100.2 },
-  'Sacramento Kings': { name: 'Sacramento Kings', conference: 'West', elo: 1640, offRating: 117.5, defRating: 116.2, pace: 100.5 },
-  'Memphis Grizzlies': { name: 'Memphis Grizzlies', conference: 'West', elo: 1600, offRating: 114.5, defRating: 115.2, pace: 98.8 },
-  'New Orleans Pelicans': { name: 'New Orleans Pelicans', conference: 'West', elo: 1620, offRating: 115.2, defRating: 115.8, pace: 98.2 },
-  'Houston Rockets': { name: 'Houston Rockets', conference: 'West', elo: 1580, offRating: 113.8, defRating: 117.5, pace: 99.8 },
-  'San Antonio Spurs': { name: 'San Antonio Spurs', conference: 'West', elo: 1510, offRating: 111.5, defRating: 118.8, pace: 98.5 },
-  'Portland Trail Blazers': { name: 'Portland Trail Blazers', conference: 'West', elo: 1520, offRating: 112.8, defRating: 119.2, pace: 98.2 },
-  'Utah Jazz': { name: 'Utah Jazz', conference: 'West', elo: 1530, offRating: 113.5, defRating: 118.5, pace: 97.5 },
+  'Oklahoma City Thunder': { name: 'Oklahoma City Thunder', conference: 'West', elo: 1745, offRating: 118.2, defRating: 108.5, pace: 99.2, starPlayer: 'Shai Gilgeous-Alexander', starPPG: 31.8 },
+  'Denver Nuggets': { name: 'Denver Nuggets', conference: 'West', elo: 1730, offRating: 118.8, defRating: 111.5, pace: 97.5, starPlayer: 'Nikola Jokic', starPPG: 26.2 },
+  'Minnesota Timberwolves': { name: 'Minnesota Timberwolves', conference: 'West', elo: 1710, offRating: 115.5, defRating: 108.8, pace: 96.8, starPlayer: 'Anthony Edwards', starPPG: 27.5 },
+  'Dallas Mavericks': { name: 'Dallas Mavericks', conference: 'West', elo: 1690, offRating: 118.5, defRating: 114.8, pace: 99.8, starPlayer: 'Luka Doncic', starPPG: 33.1 },
+  'LA Clippers': { name: 'LA Clippers', conference: 'West', elo: 1680, offRating: 116.2, defRating: 112.5, pace: 96.2, starPlayer: 'Kawhi Leonard', starPPG: 24.2 },
+  'Phoenix Suns': { name: 'Phoenix Suns', conference: 'West', elo: 1670, offRating: 117.8, defRating: 114.2, pace: 98.5, starPlayer: 'Kevin Durant', starPPG: 28.4 },
+  'Los Angeles Lakers': { name: 'Los Angeles Lakers', conference: 'West', elo: 1665, offRating: 115.8, defRating: 113.8, pace: 97.8, starPlayer: 'LeBron James', starPPG: 25.2 },
+  'Golden State Warriors': { name: 'Golden State Warriors', conference: 'West', elo: 1655, offRating: 117.2, defRating: 115.5, pace: 100.2, starPlayer: 'Stephen Curry', starPPG: 28.1 },
+  'Sacramento Kings': { name: 'Sacramento Kings', conference: 'West', elo: 1640, offRating: 117.5, defRating: 116.2, pace: 100.5, starPlayer: "De'Aaron Fox", starPPG: 26.8 },
+  'Memphis Grizzlies': { name: 'Memphis Grizzlies', conference: 'West', elo: 1600, offRating: 114.5, defRating: 115.2, pace: 98.8, starPlayer: 'Ja Morant', starPPG: 25.2 },
+  'New Orleans Pelicans': { name: 'New Orleans Pelicans', conference: 'West', elo: 1620, offRating: 115.2, defRating: 115.8, pace: 98.2, starPlayer: 'Zion Williamson', starPPG: 24.8 },
+  'Houston Rockets': { name: 'Houston Rockets', conference: 'West', elo: 1580, offRating: 113.8, defRating: 117.5, pace: 99.8, starPlayer: 'Jalen Green', starPPG: 22.1 },
+  'San Antonio Spurs': { name: 'San Antonio Spurs', conference: 'West', elo: 1510, offRating: 111.5, defRating: 118.8, pace: 98.5, starPlayer: 'Victor Wembanyama', starPPG: 21.8 },
+  'Portland Trail Blazers': { name: 'Portland Trail Blazers', conference: 'West', elo: 1520, offRating: 112.8, defRating: 119.2, pace: 98.2, starPlayer: 'Anfernee Simons', starPPG: 23.5 },
+  'Utah Jazz': { name: 'Utah Jazz', conference: 'West', elo: 1530, offRating: 113.5, defRating: 118.5, pace: 97.5, starPlayer: 'Lauri Markkanen', starPPG: 24.2 },
 };
 
 // ==================== HOCKEY (NHL) ====================
@@ -308,10 +328,11 @@ function generateFootballPredictions(
 
 /**
  * Génère les prédictions pour un match NBA
+ * Inclus: vainqueur, spread, total points, meilleur marqueur
  */
 function generateNBAPredictions(
-  homeTeam: { elo: number; offRating: number; defRating: number; pace: number },
-  awayTeam: { elo: number; offRating: number; defRating: number; pace: number }
+  homeTeam: { name: string; elo: number; offRating: number; defRating: number; pace: number; starPlayer: string; starPPG: number },
+  awayTeam: { name: string; elo: number; offRating: number; defRating: number; pace: number; starPlayer: string; starPPG: number }
 ): {
   oddsHome: number;
   oddsAway: number;
@@ -320,10 +341,21 @@ function generateNBAPredictions(
   total: { line: number; predicted: number; overProb: number };
   confidence: 'high' | 'medium' | 'low';
   riskPercentage: number;
+  nbaPredictions: {
+    predictedWinner: 'home' | 'away';
+    winnerTeam: string;
+    winnerProb: number;
+    spread: { line: number; favorite: string; confidence: number };
+    totalPoints: { line: number; predicted: number; overProb: number; recommendation: string };
+    topScorer: { team: string; player: string; predictedPoints: number };
+    keyMatchup: string;
+    confidence: 'high' | 'medium' | 'low';
+  };
 } {
   // Win probability
   const homeWinProb = calculateWinProbElo(homeTeam.elo, awayTeam.elo);
   const homeWinPct = Math.round(homeWinProb * 100);
+  const awayWinPct = 100 - homeWinPct;
   
   // Cotes
   const oddsHome = probToDecimalOdds(homeWinProb);
@@ -332,7 +364,8 @@ function generateNBAPredictions(
   // Point spread
   const homeNetRating = homeTeam.offRating - homeTeam.defRating;
   const awayNetRating = awayTeam.offRating - awayTeam.defRating;
-  const spreadLine = Math.round(((homeNetRating - awayNetRating) + 3) * 2) / 2;
+  const rawSpread = Math.round(((homeNetRating - awayNetRating) + 3) * 2) / 2;
+  const spreadLine = rawSpread;
   
   // Total points
   const avgPace = (homeTeam.pace + awayTeam.pace) / 2;
@@ -347,14 +380,44 @@ function generateNBAPredictions(
   const confidence: 'high' | 'medium' | 'low' = eloDiff > 150 ? 'high' : eloDiff > 80 ? 'medium' : 'low';
   const riskPercentage = Math.max(20, Math.min(70, 50 - eloDiff / 5));
   
+  // Déterminer le vainqueur prédit
+  const predictedWinner: 'home' | 'away' = homeWinProb > 0.5 ? 'home' : 'away';
+  const winnerTeam = predictedWinner === 'home' ? homeTeam.name : awayTeam.name;
+  const winnerProb = predictedWinner === 'home' ? homeWinPct : awayWinPct;
+  
+  // Déterminer le favori du spread
+  const spreadFavorite = spreadLine > 0 ? homeTeam.name : awayTeam.name;
+  const spreadConfidence = Math.abs(spreadLine) > 7 ? 70 : Math.abs(spreadLine) > 4 ? 55 : 45;
+  
+  // Recommandation Over/Under
+  const totalRecommendation = overProb >= 55 ? `Over ${totalLine}` : overProb <= 45 ? `Under ${totalLine}` : `Éviter (proche de ${totalLine})`;
+  
+  // Meilleur marqueur prédit (celui avec le plus haut PPG)
+  const topScorer = homeTeam.starPPG >= awayTeam.starPPG 
+    ? { team: homeTeam.name, player: homeTeam.starPlayer, predictedPoints: Math.round(homeTeam.starPPG * (1 + (avgPace - 98) / 100)) }
+    : { team: awayTeam.name, player: awayTeam.starPlayer, predictedPoints: Math.round(awayTeam.starPPG * (1 + (avgPace - 98) / 100)) };
+  
+  // Key matchup
+  const keyMatchup = `${homeTeam.starPlayer} vs ${awayTeam.starPlayer}`;
+  
   return {
     oddsHome,
     oddsAway,
-    winProb: { home: homeWinPct, away: 100 - homeWinPct },
+    winProb: { home: homeWinPct, away: awayWinPct },
     spread: { line: spreadLine, homeProb: homeWinPct },
     total: { line: totalLine, predicted: totalPredicted, overProb },
     confidence,
     riskPercentage,
+    nbaPredictions: {
+      predictedWinner,
+      winnerTeam,
+      winnerProb,
+      spread: { line: Math.abs(spreadLine), favorite: spreadFavorite, confidence: spreadConfidence },
+      totalPoints: { line: totalLine, predicted: totalPredicted, overProb, recommendation: totalRecommendation },
+      topScorer,
+      keyMatchup,
+      confidence,
+    },
   };
 }
 
@@ -533,6 +596,7 @@ export function generateNBAMatches(): FallbackMatch[] {
       riskPercentage: predictions.riskPercentage,
       spread: predictions.spread,
       total: predictions.total,
+      nbaPredictions: predictions.nbaPredictions,
     });
   }
   
