@@ -392,8 +392,8 @@ export async function getMatchAnalysisData(
   ]);
 
   // Get stats if fixture found
-  let homeStats = null;
-  let awayStats = null;
+  let homeStats: TeamStats | null = null;
+  let awayStats: TeamStats | null = null;
   
   if (fixture) {
     [homeStats, awayStats] = await Promise.all([

@@ -223,9 +223,9 @@ async function findMatchInCache(match: MatchInput): Promise<AnalysisResult | nul
     const matches = data.matches || [];
     
     // Get all team names for fuzzy matching
-    const homeTeams = [...new Set(matches.map((m: any) => m.homeTeam))];
-    const awayTeams = [...new Set(matches.map((m: any) => m.awayTeam))];
-    const allTeams = [...new Set([...homeTeams, ...awayTeams])];
+    const homeTeams = matches.map((m: any) => m.homeTeam as string).filter(Boolean);
+    const awayTeams = matches.map((m: any) => m.awayTeam as string).filter(Boolean);
+    const allTeams: string[] = [...new Set([...homeTeams, ...awayTeams])] as string[];
     
     // Find best matches for input teams
     const homeMatch = findBestTeamMatch(match.homeTeam, allTeams);
