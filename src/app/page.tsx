@@ -839,8 +839,11 @@ function MatchCardCompact({ match, index }: { match: Match; index: number }) {
         }}>
           <span>⚽</span>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ color: over25Prob >= 55 ? '#22c55e' : '#888', fontWeight: 'bold' }}>
-              {over25Prob >= 55 ? 'Over 2.5' : `~${avgGoals.toFixed(1)} buts`}
+            <span style={{ color: avgGoals >= 2.5 ? '#22c55e' : '#f97316', fontWeight: 'bold' }}>
+              {avgGoals >= 2.5 ? `+${avgGoals.toFixed(1)} buts` : `-${(5 - avgGoals).toFixed(1)} buts`}
+            </span>
+            <span style={{ color: avgGoals >= 2.5 ? '#22c55e' : '#f97316', fontSize: '8px' }}>
+              {avgGoals >= 2.5 ? 'Plus de buts' : 'Moins de buts'}
             </span>
             <span style={{ color: successColor, fontSize: '8px' }}>
               Réussite: {baseSuccessRate}%
