@@ -885,7 +885,7 @@ function MatchCardCompact({ match, index }: { match: Match; index: number }) {
         
         {/* Teams */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 'bold', color: '#fff', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <div style={{ fontWeight: 'bold', color: '#fff', fontSize: '13px' }}>
             {match.homeTeam} vs {match.awayTeam}
           </div>
           <div style={{ color: '#666', fontSize: '10px' }}>
