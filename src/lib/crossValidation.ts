@@ -63,20 +63,29 @@ interface SourceStats {
   lastUpdate: string;
 }
 
-// Ligues prioritaires pour le football
-const PRIORITY_LEAGUES: Record<string, { priority: number; name: string }> = {
-  'soccer_france_ligue_one': { priority: 1, name: 'Ligue 1' },
-  'soccer_epl': { priority: 1, name: 'Premier League' },
-  'soccer_spain_la_liga': { priority: 1, name: 'La Liga' },
-  'soccer_italy_serie_a': { priority: 1, name: 'Serie A' },
-  'soccer_germany_bundesliga': { priority: 1, name: 'Bundesliga' },
-  'soccer_uefa_champs_league': { priority: 2, name: 'Champions League' },
-  'soccer_uefa_europa_league': { priority: 2, name: 'Europa League' },
-  'soccer_portugal_primeira_liga': { priority: 3, name: 'Liga Portugal' },
-  'soccer_netherlands_eredivisie': { priority: 3, name: 'Eredivisie' },
-  'soccer_belgium_first_div': { priority: 3, name: 'Jupiler Pro League' },
-  'basketball_nba': { priority: 2, name: 'NBA' },
-  'basketball_euroleague': { priority: 3, name: 'Euroleague' },
+// Ligues prioritaires pour le football (plus le chiffre est bas, plus c'est prioritaire)
+const PRIORITY_LEAGUES: Record<string, { priority: number; name: string; dataQuality: 'high' | 'medium' | 'low' }> = {
+  // Top 5 européennes - Données excellentes
+  'soccer_epl': { priority: 1, name: 'Premier League', dataQuality: 'high' },
+  'soccer_spain_la_liga': { priority: 1, name: 'La Liga', dataQuality: 'high' },
+  'soccer_germany_bundesliga': { priority: 1, name: 'Bundesliga', dataQuality: 'high' },
+  'soccer_italy_serie_a': { priority: 1, name: 'Serie A', dataQuality: 'high' },
+  'soccer_france_ligue_one': { priority: 1, name: 'Ligue 1', dataQuality: 'high' },
+  // Compétitions européennes
+  'soccer_uefa_champs_league': { priority: 2, name: 'Champions League', dataQuality: 'high' },
+  'soccer_uefa_europa_league': { priority: 2, name: 'Europa League', dataQuality: 'high' },
+  'soccer_uefa_conference_league': { priority: 3, name: 'Conference League', dataQuality: 'medium' },
+  // Championnats secondaires
+  'soccer_portugal_primeira_liga': { priority: 3, name: 'Liga Portugal', dataQuality: 'medium' },
+  'soccer_netherlands_eredivisie': { priority: 3, name: 'Eredivisie', dataQuality: 'medium' },
+  'soccer_belgium_first_div': { priority: 3, name: 'Jupiler Pro League', dataQuality: 'medium' },
+  'soccer_turkey_super_league': { priority: 4, name: 'Süper Lig', dataQuality: 'medium' },
+  // Autres sports - Multi-sport
+  'basketball_nba': { priority: 2, name: 'NBA', dataQuality: 'high' },
+  'basketball_euroleague': { priority: 3, name: 'Euroleague', dataQuality: 'high' },
+  'icehockey_nhl': { priority: 3, name: 'NHL', dataQuality: 'high' },
+  'tennis_atp': { priority: 3, name: 'ATP Tour', dataQuality: 'high' },
+  'mma_ufc': { priority: 4, name: 'UFC', dataQuality: 'medium' },
 };
 
 /**
@@ -123,16 +132,29 @@ function formatMatchDate(dateString: string): string {
 }
 
 /**
- * Détermine le créneau horaire d'un match
- * Matin: 00h-12h, Après-midi: 12h-17h, Soir: 17h-00h
+ * Détermine le créneau horaire d'un match basé sur son heure de FIN
+ * Matin: fin avant 12h, Midi: fin avant 20h, Nuit: fin après 20h
  */
-function getTimeSlot(dateString: string): 'morning' | 'afternoon' | 'evening' {
+function getTimeSlot(dateString: string, sport: string): 'morning' | 'afternoon' | 'evening' {
   const date = new Date(dateString);
-  const hour = date.getHours();
+  const startHour = date.getHours();
   
-  if (hour < 12) {
+  // Durée moyenne par sport (en heures)
+  const sportDuration: Record<string, number> = {
+    'Foot': 2,        // 90min + arrêts
+    'Basket': 2.5,    // 48min + arrêts (NBA)
+    'Hockey': 2.5,    // 60min + pauses
+    'Tennis': 2,      // Variable
+    'MMA': 1.5,       // Variable selon les combats
+  };
+  
+  const duration = sportDuration[sport] || 2;
+  const endHour = startHour + duration;
+  
+  // Classer par heure de fin
+  if (endHour < 12) {
     return 'morning';
-  } else if (hour < 17) {
+  } else if (endHour < 20) {
     return 'afternoon';
   } else {
     return 'evening';
@@ -193,26 +215,39 @@ function getTimingInfo(): TimingInfo {
 }
 
 /**
- * Filtre les matchs selon le timing actuel
- * NOTE: Ne filtre PLUS par timeSlot - affiche tous les matchs disponibles
+ * Filtre et répartit les matchs par créneau (4 par créneau = 12 total)
+ * Matin: 4 matchs, Midi: 4 matchs, Nuit: 4 matchs
  */
-function filterMatchesByTiming(
+function distributeMatchesByTimeSlot(
   matches: CrossValidatedMatch[], 
   timing: TimingInfo
 ): CrossValidatedMatch[] {
-  // Ajouter le timeSlot à chaque match (informatif uniquement)
+  // Ajouter le timeSlot à chaque match
   const matchesWithSlot = matches.map(m => ({
     ...m,
-    timeSlot: getTimeSlot(m.date)
+    timeSlot: getTimeSlot(m.date, m.sport)
   }));
   
-  // Afficher TOUS les matchs disponibles, sans filtrage par timeSlot
-  // Le timing n'affecte que la disponibilité du refresh, pas l'affichage
-  return matchesWithSlot;
+  // Grouper par créneau
+  const morningMatches = matchesWithSlot.filter(m => m.timeSlot === 'morning');
+  const afternoonMatches = matchesWithSlot.filter(m => m.timeSlot === 'afternoon');
+  const eveningMatches = matchesWithSlot.filter(m => m.timeSlot === 'evening');
+  
+  // Prendre 4 matchs par créneau (triés par qualité)
+  const selectedMorning = morningMatches.slice(0, 4);
+  const selectedAfternoon = afternoonMatches.slice(0, 4);
+  const selectedEvening = eveningMatches.slice(0, 4);
+  
+  // Combiner dans l'ordre chronologique
+  const result = [...selectedMorning, ...selectedAfternoon, ...selectedEvening];
+  
+  console.log(`📊 Répartition: Matin(${selectedMorning.length}) + Midi(${selectedAfternoon.length}) + Nuit(${selectedEvening.length}) = ${result.length} matchs`);
+  
+  return result;
 }
 
 /**
- * Récupère les matchs depuis The Odds API
+ * Récupère les matchs depuis The Odds API (Multi-sport)
  */
 async function fetchOddsApiMatches(): Promise<any[]> {
   const apiKey = process.env.THE_ODDS_API_KEY;
@@ -234,15 +269,32 @@ async function fetchOddsApiMatches(): Promise<any[]> {
     
     const sports = await sportsResponse.json();
     
-    // Filtrer les sports prioritaires
-    const prioritySports = sports.filter((s: any) => 
-      PRIORITY_LEAGUES[s.key] || s.group === 'soccer'
-    ).slice(0, 10); // Limiter à 10 ligues pour économiser le quota
+    // Multi-sport: Foot d'abord, puis Basket, Hockey, Tennis si besoin
+    const sportGroups = [
+      sports.filter((s: any) => s.group === 'soccer_upcoming' || s.group === 'soccer'),  // Foot prioritaire
+      sports.filter((s: any) => s.group === 'basketball'),  // Basket
+      sports.filter((s: any) => s.group === 'icehockey'),   // Hockey
+      sports.filter((s: any) => s.group === 'tennis'),      // Tennis
+      sports.filter((s: any) => s.group === 'mma'),         // MMA/UFC
+    ].flat();
+    
+    // Filtrer les sports prioritaires en premier
+    const prioritySports = sportGroups.filter((s: any) => 
+      PRIORITY_LEAGUES[s.key]
+    );
+    
+    // Ajouter d'autres sports si pas assez
+    const otherSports = sportGroups.filter((s: any) => 
+      !PRIORITY_LEAGUES[s.key] && 
+      (s.group === 'soccer_upcoming' || s.group === 'soccer')
+    ).slice(0, 5);
+    
+    const allSportsToFetch = [...prioritySports, ...otherSports].slice(0, 15);
     
     const allMatches: any[] = [];
     
-    // Récupérer les matchs pour chaque ligue prioritaire
-    for (const sport of prioritySports) {
+    // Récupérer les matchs pour chaque sport
+    for (const sport of allSportsToFetch) {
       try {
         const oddsResponse = await fetch(
           `https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${apiKey}&regions=eu&markets=h2h,totals&oddsFormat=decimal&dateFormat=iso`,
@@ -258,7 +310,7 @@ async function fetchOddsApiMatches(): Promise<any[]> {
       }
     }
     
-    console.log(`✅ Odds API: ${allMatches.length} matchs récupérés`);
+    console.log(`✅ Odds API: ${allMatches.length} matchs récupérés (multi-sport)`);
     return allMatches;
     
   } catch (error) {
@@ -670,43 +722,59 @@ function crossValidateMatches(
 }
 
 /**
- * Trie les matchs par qualité et risque
+ * Trie les matchs par qualité des données, priorité de ligue, et risque
  */
 function sortMatchesByQuality(matches: CrossValidatedMatch[]): CrossValidatedMatch[] {
   return matches.sort((a, b) => {
-    // 1. Priorité de ligue
-    const aLeaguePriority = PRIORITY_LEAGUES[Object.keys(PRIORITY_LEAGUES).find(k => 
+    // 1. Qualité des données de la ligue (high > medium > low)
+    const aLeagueKey = Object.keys(PRIORITY_LEAGUES).find(k => 
       a.league.includes(PRIORITY_LEAGUES[k].name)
-    ) || '']?.priority || 99;
-    const bLeaguePriority = PRIORITY_LEAGUES[Object.keys(PRIORITY_LEAGUES).find(k => 
+    );
+    const bLeagueKey = Object.keys(PRIORITY_LEAGUES).find(k => 
       b.league.includes(PRIORITY_LEAGUES[k].name)
-    ) || '']?.priority || 99;
+    );
+    
+    const aDataQuality = aLeagueKey ? PRIORITY_LEAGUES[aLeagueKey].dataQuality : 'low';
+    const bDataQuality = bLeagueKey ? PRIORITY_LEAGUES[bLeagueKey].dataQuality : 'low';
+    
+    const qualityOrder = { 'high': 1, 'medium': 2, 'low': 3 };
+    if (qualityOrder[aDataQuality] !== qualityOrder[bDataQuality]) {
+      return qualityOrder[aDataQuality] - qualityOrder[bDataQuality];
+    }
+    
+    // 2. Priorité de ligue
+    const aLeaguePriority = aLeagueKey ? PRIORITY_LEAGUES[aLeagueKey].priority : 99;
+    const bLeaguePriority = bLeagueKey ? PRIORITY_LEAGUES[bLeagueKey].priority : 99;
     
     if (aLeaguePriority !== bLeaguePriority) {
       return aLeaguePriority - bLeaguePriority;
     }
     
-    // 2. Risque (plus bas = mieux)
+    // 3. Sources multiples = meilleures données
+    const aSources = a.insight.crossValidation?.sourcesCount || 1;
+    const bSources = b.insight.crossValidation?.sourcesCount || 1;
+    if (aSources !== bSources) {
+      return bSources - aSources;
+    }
+    
+    // 4. Risque (plus bas = mieux)
     if (a.insight.riskPercentage !== b.insight.riskPercentage) {
       return a.insight.riskPercentage - b.insight.riskPercentage;
     }
     
-    // 3. Value bet en priorité
+    // 5. Value bet en priorité
     if (a.insight.valueBetDetected !== b.insight.valueBetDetected) {
       return a.insight.valueBetDetected ? -1 : 1;
     }
     
-    // 4. Sources multiples en priorité
-    const aSources = a.insight.crossValidation?.sourcesCount || 1;
-    const bSources = b.insight.crossValidation?.sourcesCount || 1;
-    return bSources - aSources;
+    return 0;
   });
 }
 
 /**
  * Fonction principale : récupère et croise les données
- * FILTRE UNIQUEMENT LES MATCHS DU JOUR
- * GESTION INTELLIGENTE DU TIMING
+ * 12 PARIS/JOUR: 4 matin + 4 midi + 4 nuit
+ * PRIORISATION: Grands championnats + données multiples
  */
 export async function getCrossValidatedMatches(): Promise<{
   matches: CrossValidatedMatch[];
@@ -740,28 +808,27 @@ export async function getCrossValidatedMatches(): Promise<{
   
   console.log(`📅 Matchs du jour: ${todayMatches.length}`);
   
-  // Trier par qualité
+  // Trier par qualité (ligues prioritaires + données multiples)
   const sortedMatches = sortMatchesByQuality(todayMatches);
   
-  // Limiter à 10 matchs de qualité
-  const selectedMatches = sortedMatches.slice(0, 10);
+  // Répartir 12 matchs: 4 matin + 4 midi + 4 nuit
+  const distributedMatches = distributeMatchesByTimeSlot(sortedMatches, timing);
   
-  // Appliquer le filtre de timing
-  const timedMatches = filterMatchesByTiming(selectedMatches, timing);
-  
-  console.log(`✅ ${timedMatches.length} matchs affichés (max 10, timing: ${timing.currentPhase})`);
+  console.log(`✅ ${distributedMatches.length} matchs sélectionnés (4 matin + 4 midi + 4 nuit)`);
   
   // Stats
-  const safes = timedMatches.filter(m => m.insight.riskPercentage <= 40).length;
-  const valueBets = timedMatches.filter(m => m.insight.valueBetDetected).length;
-  const multiSource = timedMatches.filter(m => 
+  const safes = distributedMatches.filter(m => m.insight.riskPercentage <= 40).length;
+  const valueBets = distributedMatches.filter(m => m.insight.valueBetDetected).length;
+  const multiSource = distributedMatches.filter(m => 
     (m.insight.crossValidation?.sourcesCount || 1) > 1
   ).length;
+  const sports = [...new Set(distributedMatches.map(m => m.sport))];
   
   console.log(`📈 Stats: ${safes} sûrs, ${valueBets} value bets, ${multiSource} multi-sources`);
+  console.log(`🏅 Sports: ${sports.join(', ')}`);
   
   return {
-    matches: timedMatches,
+    matches: distributedMatches,
     timing
   };
 }

@@ -430,61 +430,27 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
           </span>
         </div>
         
-        {/* Boutons icônes */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Bouton Actualiser - Icône seule */}
-          <button
-            onClick={handleRefresh}
-            disabled={loading || !timing.canRefresh}
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '10px',
-              border: 'none',
-              background: !timing.canRefresh 
-                ? '#1a1a1a'
-                : loading 
-                  ? '#333'
-                  : '#3b82f6',
-              color: !timing.canRefresh ? '#444' : '#fff',
-              cursor: !timing.canRefresh ? 'not-allowed' : loading ? 'wait' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '18px',
-              transition: 'all 0.2s ease',
-              opacity: loading ? 0.7 : 1
-            }}
-            title={!timing.canRefresh ? `Prochain rafraîchissement: ${timing.nextRefreshTime}` : 'Actualiser les matchs'}
-          >
-            <span style={{ 
-              display: 'inline-block',
-              animation: loading ? 'spin 1s linear infinite' : 'none'
-            }}>🔄</span>
-          </button>
-          
-          {/* Bouton Déconnexion - Icône seule */}
-          <button
-            onClick={onLogout}
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '10px',
-              border: '1px solid #ef444440',
-              background: 'transparent',
-              color: '#ef4444',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '18px',
-              transition: 'all 0.2s ease'
-            }}
-            title="Se déconnecter"
-          >
-            🚪
-          </button>
-        </div>
+        {/* Bouton Déconnexion */}
+        <button
+          onClick={onLogout}
+          style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '10px',
+            border: '1px solid #ef444440',
+            background: 'transparent',
+            color: '#ef4444',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '18px',
+            transition: 'all 0.2s ease'
+          }}
+          title="Se déconnecter"
+        >
+          🚪
+        </button>
       </header>
 
       {/* Navigation rapide */}
