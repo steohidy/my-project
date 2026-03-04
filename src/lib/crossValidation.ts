@@ -269,28 +269,16 @@ async function fetchOddsApiMatches(): Promise<any[]> {
     
     const sports = await sportsResponse.json();
     
-    // Multi-sport: Foot d'abord, puis Basket, Hockey, Tennis si besoin
-    const sportGroups = [
-      sports.filter((s: any) => s.group?.toLowerCase() === 'soccer'),  // Foot prioritaire
-      sports.filter((s: any) => s.group?.toLowerCase() === 'basketball'),  // Basket
-      sports.filter((s: any) => s.group?.toLowerCase() === 'ice hockey'),   // Hockey
-      sports.filter((s: any) => s.group?.toLowerCase() === 'tennis'),      // Tennis
-      sports.filter((s: any) => s.group?.toLowerCase() === 'mixed martial arts'),         // MMA/UFC
-    ].flat();
+    // UNIQUEMENT FOOTBALL ET BASKET (économie maximale de crédits API)
+    const soccerSports = sports.filter((s: any) => s.group?.toLowerCase() === 'soccer');
+    const basketballSports = sports.filter((s: any) => s.group?.toLowerCase() === 'basketball');
     
-    // Filtrer les sports prioritaires en premier
-    const prioritySports = sportGroups.filter((s: any) => 
-      PRIORITY_LEAGUES[s.key]
-    );
+    // Prendre les ligues prioritaires en premier
+    const prioritySoccer = soccerSports.filter((s: any) => PRIORITY_LEAGUES[s.key]);
+    const priorityBasket = basketballSports.filter((s: any) => PRIORITY_LEAGUES[s.key]);
     
-    // Ajouter d'autres sports si pas assez
-    const otherSports = sportGroups.filter((s: any) => 
-      !PRIORITY_LEAGUES[s.key] && 
-      s.group?.toLowerCase() === 'soccer'
-    ).slice(0, 5);
-    
-    // LIMITER À 5 SPORTS PRIORITAIRES (économie de crédits API)
-    const allSportsToFetch = [...prioritySports].slice(0, 5);
+    // LIMITER À 3 LIGUES DE FOOT + 1 LIGUE DE BASKET = 4 APPELS API MAX
+    const allSportsToFetch = [...prioritySoccer.slice(0, 3), ...priorityBasket.slice(0, 1)];
 
     const allMatches: any[] = [];
 
