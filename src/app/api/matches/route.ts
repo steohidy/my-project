@@ -59,20 +59,25 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
  * DONNÉES RÉELLES UNIQUEMENT
  * GESTION INTELLIGENTE DU TIMING
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const forceRefresh = searchParams.get('refresh') === 'true';
     const now = Date.now();
     
-    // Vérifier le cache
-    if (cachedData && (now - lastFetchTime) < CACHE_TTL) {
+    // Vérifier le cache (sauf si force refresh)
+    if (!forceRefresh && cachedData && (now - lastFetchTime) < CACHE_TTL) {
       console.log('📦 Utilisation du cache');
-      // Mais mettre à jour le timing (car l'heure change)
       const { getTimingInfo } = await import('@/lib/crossValidation');
       const currentTiming = getTimingInfo();
       return NextResponse.json({
         ...cachedData,
         timing: currentTiming
       });
+    }
+
+    if (forceRefresh) {
+      console.log('🔄 Force refresh demandé - ignorage du cache');
     }
 
     // Import dynamique pour éviter les erreurs de build

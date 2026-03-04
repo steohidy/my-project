@@ -255,6 +255,11 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
     currentPhase: 'afternoon',
     message: ''
   });
+  
+  // Timer de session (20 minutes max)
+  const SESSION_DURATION = 20 * 60; // 20 minutes en secondes
+  const [sessionTimeLeft, setSessionTimeLeft] = useState(SESSION_DURATION);
+  const [showSessionWarning, setShowSessionWarning] = useState(false);
 
   // Fonction pour sauvegarder les pronostics en base (déclarée avant utilisation)
   const savePredictionsToDB = async (matchList: Match[]) => {
@@ -290,12 +295,40 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
     }
   };
 
-  // Charger les matchs + Auto-refresh toutes les 5 minutes
+  // Timer de session - décompte 20 min
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSessionTimeLeft(prev => {
+        if (prev <= 1) {
+          // Session expirée - déconnexion auto
+          onLogout();
+          return 0;
+        }
+        if (prev <= 60) {
+          setShowSessionWarning(true); // Warning à 1 minute
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [onLogout]);
+
+  // Formater le temps restant
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Charger les matchs - CHARGEMENT IMMÉDIAT + refresh toutes les 5 min
   useEffect(() => {
     let isMounted = true;
+    let refreshInterval: NodeJS.Timeout;
     
-    const fetchMatches = () => {
-      fetch('/api/matches')
+    const fetchMatches = (forceRefresh = false) => {
+      const url = forceRefresh ? '/api/matches?refresh=true' : '/api/matches';
+      fetch(url)
         .then(res => {
           if (isMounted) {
             setApiStatus(res.ok ? 'online' : 'offline');
@@ -326,15 +359,15 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
         });
     };
     
-    // Chargement initial
-    fetchMatches();
+    // Chargement initial - FORCER le refresh
+    fetchMatches(true);
     
-    // Auto-refresh toutes les 5 minutes
-    const interval = setInterval(fetchMatches, 5 * 60 * 1000);
+    // Auto-refresh toutes les 5 minutes (pas de force)
+    refreshInterval = setInterval(() => fetchMatches(false), 5 * 60 * 1000);
 
     return () => { 
       isMounted = false; 
-      clearInterval(interval);
+      clearInterval(refreshInterval);
     };
   }, []);
 
@@ -342,7 +375,7 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
     if (!timing.canRefresh) return;
     
     setLoading(true);
-    fetch('/api/matches')
+    fetch('/api/matches?refresh=true')
       .then(res => res.json())
       .then(data => {
         setMatches(data.matches || data);
@@ -399,9 +432,20 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
           padding: '6px',
           borderRadius: '8px',
           background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-          marginBottom: '12px'
+          marginBottom: '8px'
         }}>
           <span style={{ fontSize: '18px' }}>👑</span>
+        </div>
+        
+        {/* Timer de session */}
+        <div style={{
+          fontSize: '10px',
+          color: sessionTimeLeft <= 60 ? '#ef4444' : sessionTimeLeft <= 300 ? '#f97316' : '#666',
+          fontFamily: 'monospace',
+          marginBottom: '8px',
+          textAlign: 'center'
+        }}>
+          ⏱️ {formatTime(sessionTimeLeft)}
         </div>
         
         {/* Menu Items */}
@@ -443,6 +487,53 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
           🚪
         </button>
       </aside>
+
+      {/* Warning Modal - Session expire dans 1 min */}
+      {showSessionWarning && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: '#1a1a1a',
+            padding: '24px',
+            borderRadius: '12px',
+            textAlign: 'center',
+            border: '1px solid #ef4444'
+          }}>
+            <div style={{ fontSize: '40px', marginBottom: '12px' }}>⚠️</div>
+            <h3 style={{ color: '#ef4444', marginBottom: '8px' }}>Session expire bientôt</h3>
+            <p style={{ color: '#888', marginBottom: '16px' }}>
+              Déconnexion dans <strong style={{ color: '#ef4444' }}>{formatTime(sessionTimeLeft)}</strong>
+            </p>
+            <button
+              onClick={() => {
+                setSessionTimeLeft(SESSION_DURATION);
+                setShowSessionWarning(false);
+              }}
+              style={{
+                padding: '10px 24px',
+                borderRadius: '8px',
+                border: 'none',
+                background: '#f97316',
+                color: '#fff',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              Prolonger la session
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main style={{ flex: 1, overflow: 'auto', padding: '12px' }}>
