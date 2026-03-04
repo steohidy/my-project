@@ -33,7 +33,8 @@ import {
   ArrowDownRight,
   BarChart3,
   RefreshCw,
-  PiggyBank
+  PiggyBank,
+  RotateCcw
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 
@@ -77,6 +78,25 @@ export function BankrollManager() {
     description: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  const handleReset = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir réinitialiser votre bankroll à 0€ ?\nCette action supprimera tout l\'historique.')) return;
+    
+    setResetting(true);
+    try {
+      await fetch('/api/bankroll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reset' }),
+      });
+      await fetchBankroll();
+    } catch (error) {
+      console.error('Error resetting bankroll:', error);
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const fetchBankroll = useCallback(async () => {
     try {
@@ -170,8 +190,19 @@ export function BankrollManager() {
                 onClick={() => { setLoading(true); fetchBankroll(); }}
                 disabled={loading}
                 className="h-8 w-8"
+                title="Actualiser"
               >
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleReset}
+                disabled={resetting}
+                className="h-8 w-8 text-orange-500 hover:text-orange-600 hover:bg-orange-500/10"
+                title="Réinitialiser à 0€"
+              >
+                <RotateCcw className={`h-4 w-4 ${resetting ? 'animate-spin' : ''}`} />
               </Button>
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
