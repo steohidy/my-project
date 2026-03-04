@@ -49,88 +49,71 @@ interface TimingInfo {
   message: string;
 }
 
-// Cache mémoire pour la requête (court terme)
-let memoryCache: { matches: MatchData[]; timing: TimingInfo } | null = null;
-let memoryCacheTime = 0;
-const MEMORY_CACHE_TTL = 60 * 1000; // 1 minute en mémoire
+// Cache en mémoire pour la durée de vie de l'instance serverless
+let instanceCache: { matches: MatchData[]; timing: TimingInfo; date: string } | null = null;
 
 /**
- * GET - Récupérer les matchs avec système de cache quotidien
- * STRATÉGIE: 1 appel API par jour, stocké dans un fichier
- * Le site lit le fichier au lieu d'appeler les APIs
+ * GET - Récupérer les matchs avec système de cache Vercel optimisé
+ *
+ * STRATÉGIE:
+ * - Cache Vercel Edge: 6 heures (revalidate)
+ * - Cache instance: Reset automatique si nouveau jour
+ * - 1 seul appel API par jour par région edge
+ *
+ * AVANTAGE: Le nombre d'utilisateurs n'impacte PAS les crédits API
  */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const forceRefresh = searchParams.get('refresh') === 'true';
-    const now = Date.now();
+    const today = new Date().toISOString().split('T')[0];
 
-    // Import du système de cache
-    const {
-      isCacheValid,
-      readCache,
-      writeCache,
-      checkAndResetDaily
-    } = await import('@/lib/dailyCache');
-
-    // Vérifier et reset si nouveau jour
-    checkAndResetDaily();
-
-    // 1. Vérifier le cache mémoire (court terme - évite les lectures fichier)
-    if (!forceRefresh && memoryCache && (now - memoryCacheTime) < MEMORY_CACHE_TTL) {
-      console.log('⚡ Cache mémoire utilisé');
+    // Vérifier si on a un cache instance valide (même jour)
+    if (!forceRefresh && instanceCache && instanceCache.date === today) {
+      console.log('⚡ Cache instance utilisé (même jour)');
       const { getTimingInfo } = await import('@/lib/crossValidation');
       return NextResponse.json({
-        ...memoryCache,
+        matches: instanceCache.matches,
         timing: getTimingInfo(),
-        source: 'memory-cache'
+        source: 'instance-cache',
+        cachedDate: instanceCache.date
       });
     }
 
-    // 2. Vérifier le cache fichier quotidien
-    if (!forceRefresh && isCacheValid()) {
-      const cachedData = readCache();
-      if (cachedData && cachedData.matches.length > 0) {
-        console.log('📦 Cache fichier quotidien utilisé');
-        const { getTimingInfo } = await import('@/lib/crossValidation');
-
-        // Mettre en cache mémoire aussi
-        memoryCache = {
-          matches: cachedData.matches,
-          timing: cachedData.timing
-        };
-        memoryCacheTime = now;
-
-        return NextResponse.json({
-          matches: cachedData.matches,
-          timing: getTimingInfo(),
-          source: 'daily-cache',
-          cachedAt: cachedData.lastFetchTime
-        });
-      }
+    // Nouveau jour détecté - reset du cache instance
+    if (instanceCache && instanceCache.date !== today) {
+      console.log(`🌅 Nouveau jour détecté: ${instanceCache.date} → ${today}`);
+      instanceCache = null;
     }
 
-    // 3. Aucun cache valide -> Fetch depuis les APIs (1 SEUL APPEL PAR JOUR)
-    console.log('🔄 Fetch des données depuis les APIs (quota journalier)...');
-
+    // Fetch des données depuis les APIs
+    console.log('🔄 Fetch des données depuis les APIs...');
     const { getCrossValidatedMatches } = await import('@/lib/crossValidation');
     const result = await getCrossValidatedMatches();
 
     if (result.matches && result.matches.length > 0) {
-      // Sauvegarder dans le cache fichier pour toute la journée
-      writeCache(result.matches, result.timing);
+      // Stocker en cache instance pour ce jour
+      instanceCache = {
+        matches: result.matches,
+        timing: result.timing,
+        date: today
+      };
 
-      // Mettre en cache mémoire
-      memoryCache = result;
-      memoryCacheTime = now;
+      console.log(`✅ ${result.matches.length} matchs récupérés et mis en cache pour ${today}`);
 
-      console.log(`✅ ${result.matches.length} matchs récupérés et mis en cache pour aujourd'hui`);
-
-      return NextResponse.json({
-        ...result,
+      // Générer la réponse avec headers de cache
+      const response = NextResponse.json({
+        matches: result.matches,
+        timing: result.timing,
         source: 'fresh-fetch',
-        cachedAt: new Date().toISOString()
+        cachedDate: today
       });
+
+      // Cache Vercel Edge: 6 heures (les edge servers gardent la réponse)
+      response.headers.set('Cache-Control', 's-maxage=21600, stale-while-revalidate=3600');
+      response.headers.set('X-Cache-Date', today);
+
+      return response;
     }
 
     // Aucun match disponible
