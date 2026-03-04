@@ -1,56 +1,59 @@
 /**
  * Configuration d'authentification
- * Support multi-utilisateurs avec limite de connexions simultanées
+ * Support multi-utilisateurs avec expiration des comptes
  */
 
-// Utilisateurs autorisés (en production, utiliser une base de données avec hash)
-interface User {
-  username: string;
-  password: string;
-  name: string;
-  role: string;
-  maxConnections: number;
-}
-
-const VALID_USERS: User[] = [
-  {
-    username: process.env.ADMIN_USER || 'admin',
-    password: process.env.ADMIN_PASSWORD || '1234567890',
-    name: 'Administrateur',
-    role: 'admin',
-    maxConnections: 10,
-  },
-  {
-    username: process.env.DEMO_USER || 'demo',
-    password: process.env.DEMO_PASSWORD || '0987654321',
-    name: 'Utilisateur Démo',
-    role: 'demo',
-    maxConnections: 6,
-  },
-];
+import {
+  validateUser,
+  getUserByLogin,
+  isAccountExpired,
+  type User
+} from './users';
 
 // Store pour les sessions actives (en production, utiliser Redis)
 const activeSessions = new Map<string, { username: string; createdAt: number }>();
 
 // Limite globale de connexions simultanées
-const MAX_GLOBAL_CONNECTIONS = 6;
+const MAX_GLOBAL_CONNECTIONS = 10;
 
-// Session duration in milliseconds (24 hours)
-export const SESSION_DURATION = 24 * 60 * 60 * 1000;
+// Session duration in milliseconds (20 minutes comme configuré dans l'app)
+export const SESSION_DURATION = 20 * 60 * 1000;
+
+// Interface pour le retour de verifyCredentials
+interface VerifiedUser {
+  username: string;
+  name: string;
+  role: string;
+  daysRemaining?: number;
+  expiresAt?: string | null;
+}
 
 /**
  * Vérifie les identifiants de connexion
  */
-export function verifyCredentials(username: string, password: string): { valid: boolean; user?: User } {
-  const user = VALID_USERS.find(
-    u => u.username === username && u.password === password
-  );
-  
-  if (user) {
-    return { valid: true, user };
+export function verifyCredentials(username: string, password: string): {
+  valid: boolean;
+  user?: VerifiedUser;
+  error?: string;
+} {
+  const result = validateUser(username, password);
+
+  if (!result.success) {
+    return { valid: false, error: result.error };
   }
-  
-  return { valid: false };
+
+  const user = result.user!;
+
+  return {
+    valid: true,
+    user: {
+      username: user.login,
+      name: user.login, // On utilise le login comme nom
+      role: user.role,
+      daysRemaining: result.daysRemaining,
+      expiresAt: user.expiresAt
+    }
+  };
 }
 
 /**
@@ -64,24 +67,21 @@ export function canCreateNewSession(username: string): boolean {
       activeSessions.delete(token);
     }
   }
-  
+
   // Compter les sessions actives globales
   const totalActiveSessions = activeSessions.size;
-  
+
   // Vérifier la limite globale
   if (totalActiveSessions >= MAX_GLOBAL_CONNECTIONS) {
     return false;
   }
-  
-  // Vérifier la limite par utilisateur
-  const userSessions = Array.from(activeSessions.values())
-    .filter(s => s.username === username).length;
-  
-  const user = VALID_USERS.find(u => u.username === username);
-  if (user && userSessions >= user.maxConnections) {
+
+  // Vérifier que l'utilisateur existe toujours et n'est pas expiré
+  const user = getUserByLogin(username);
+  if (!user || !user.isActive || isAccountExpired(user)) {
     return false;
   }
-  
+
   return true;
 }
 
@@ -108,7 +108,6 @@ export function getActiveSessionsCount(): number {
 
 /**
  * Génère un token de session simple
- * En production, utiliser JWT avec secret fort
  */
 export function generateSessionToken(): string {
   const array = new Uint8Array(32);
@@ -118,7 +117,6 @@ export function generateSessionToken(): string {
 
 /**
  * Hash un mot de passe avec SHA-256
- * Note: En production, utiliser bcrypt ou argon2
  */
 export async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -140,11 +138,9 @@ export function isSessionValid(sessionExpiry: number): boolean {
  * Configuration de sécurité
  */
 export const securityConfig = {
-  // Rate limiting: max 5 tentatives par 15 minutes
   maxLoginAttempts: 5,
   lockoutDuration: 15 * 60 * 1000, // 15 minutes
-  
-  // Cookie settings
+
   cookieName: 'steo_elite_session',
   cookieOptions: {
     httpOnly: true,

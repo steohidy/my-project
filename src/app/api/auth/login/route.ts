@@ -22,15 +22,14 @@ function cleanOldAttempts() {
 function isRateLimited(ip: string): boolean {
   cleanOldAttempts();
   const attempts = loginAttempts.get(ip);
-  
+
   if (!attempts) return false;
-  
-  // Si le temps de lockout est passé, réinitialiser
+
   if (Date.now() - attempts.lastAttempt > securityConfig.lockoutDuration) {
     loginAttempts.delete(ip);
     return false;
   }
-  
+
   return attempts.count >= securityConfig.maxLoginAttempts;
 }
 
@@ -39,7 +38,7 @@ function isRateLimited(ip: string): boolean {
  */
 function recordFailedAttempt(ip: string) {
   const existing = loginAttempts.get(ip);
-  
+
   if (existing) {
     existing.count++;
     existing.lastAttempt = Date.now();
@@ -56,16 +55,14 @@ function resetAttempts(ip: string) {
 }
 
 /**
- * POST - Connexion avec vérification des identifiants
+ * POST - Connexion avec vérification des identifiants et expiration
  */
 export async function POST(request: NextRequest) {
   try {
-    // Récupérer l'IP du client
-    const ip = request.headers.get('x-forwarded-for') || 
-               request.headers.get('x-real-ip') || 
+    const ip = request.headers.get('x-forwarded-for') ||
+               request.headers.get('x-real-ip') ||
                'unknown';
 
-    // Vérifier le rate limiting
     if (isRateLimited(ip)) {
       return NextResponse.json(
         { success: false, error: 'Trop de tentatives. Réessayez dans 15 minutes.' },
@@ -76,7 +73,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { username, password } = body;
 
-    // Validation des entrées
     if (!username || !password) {
       recordFailedAttempt(ip);
       return NextResponse.json(
@@ -85,44 +81,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Protection contre l'injection basique
     const sanitizedUsername = username.trim().slice(0, 50);
     const sanitizedPassword = password.slice(0, 100);
 
-    // Vérifier les identifiants
+    // Vérifier les identifiants avec le nouveau système
     const result = verifyCredentials(sanitizedUsername, sanitizedPassword);
 
     if (!result.valid || !result.user) {
       recordFailedAttempt(ip);
-      
-      // Délai artificiel pour ralentir les attaques brute force
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       return NextResponse.json(
-        { success: false, error: 'Identifiants incorrects' },
+        { success: false, error: result.error || 'Identifiants incorrects' },
         { status: 401 }
       );
     }
 
-    // Vérifier la limite de connexions simultanées
     if (!canCreateNewSession(sanitizedUsername)) {
       return NextResponse.json(
-        { success: false, error: 'Limite de connexions simultanées atteinte (max 6). Réessayez plus tard.' },
+        { success: false, error: 'Limite de connexions simultanées atteinte. Réessayez plus tard.' },
         { status: 403 }
       );
     }
 
-    // Connexion réussie - réinitialiser les tentatives
     resetAttempts(ip);
 
-    // Générer un token de session
     const sessionToken = generateSessionToken();
     const sessionExpiry = Date.now() + SESSION_DURATION;
 
-    // Enregistrer la session
     registerSession(sessionToken, sanitizedUsername);
 
-    // Créer la réponse avec le cookie de session sécurisé
+    // Déterminer le type d'abonnement
+    const subscription = result.user.role === 'admin' || result.user.role === 'demo'
+      ? 'premium'
+      : 'standard';
+
     const response = NextResponse.json({
       success: true,
       user: {
@@ -130,11 +123,12 @@ export async function POST(request: NextRequest) {
         username: result.user.username,
         name: result.user.name,
         role: result.user.role,
-        subscription: result.user.role === 'admin' ? 'premium' : 'demo',
+        subscription,
+        daysRemaining: result.user.daysRemaining,
+        expiresAt: result.user.expiresAt,
       },
     });
 
-    // Définir le cookie de session sécurisé
     response.cookies.set({
       name: securityConfig.cookieName,
       value: sessionToken,
@@ -142,15 +136,16 @@ export async function POST(request: NextRequest) {
       expires: new Date(sessionExpiry),
     });
 
-    // Cookie pour les infos de session (non sensible)
     response.cookies.set({
       name: 'steo_elite_session_data',
       value: JSON.stringify({
         expiry: sessionExpiry,
         user: sanitizedUsername,
         name: result.user.name,
+        role: result.user.role,
+        daysRemaining: result.user.daysRemaining,
       }),
-      httpOnly: false, // Accessible côté client pour vérification
+      httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/',

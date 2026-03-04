@@ -2,13 +2,47 @@
 
 import { useState, useEffect } from 'react';
 
+// Interface pour les infos utilisateur
+interface UserInfo {
+  username: string;
+  name: string;
+  role: string;
+  daysRemaining?: number;
+  expiresAt?: string | null;
+}
+
 export default function Home() {
-  // État simple pour gérer l'authentification
+  // État pour gérer l'authentification
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+
+  // Vérifier si une session existe au chargement
+  useEffect(() => {
+    const sessionData = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('steo_elite_session_data='));
+    
+    if (sessionData) {
+      try {
+        const data = JSON.parse(decodeURIComponent(sessionData.split('=')[1]));
+        if (data.expiry > Date.now()) {
+          setUserInfo({
+            username: data.user,
+            name: data.name,
+            role: data.role,
+            daysRemaining: data.daysRemaining
+          });
+          setIsLoggedIn(true);
+        }
+      } catch {
+        // Session invalide
+      }
+    }
+  }, []);
 
   // Fonction de connexion
   const handleLogin = async function(e: React.FormEvent) {
@@ -26,6 +60,13 @@ export default function Home() {
       const data = await response.json();
 
       if (data.success) {
+        setUserInfo({
+          username: data.user.username,
+          name: data.user.name,
+          role: data.user.role,
+          daysRemaining: data.user.daysRemaining,
+          expiresAt: data.user.expiresAt
+        });
         setIsLoggedIn(true);
       } else {
         setError(data.error || 'Identifiants incorrects');
@@ -41,6 +82,7 @@ export default function Home() {
   const handleLogout = function() {
     fetch('/api/auth/logout', { method: 'POST' });
     setIsLoggedIn(false);
+    setUserInfo(null);
   };
 
   // Afficher la page de connexion ou l'application
@@ -183,7 +225,7 @@ export default function Home() {
   }
 
   // Application principale
-  return <AppDashboard onLogout={handleLogout} />;
+  return <AppDashboard onLogout={handleLogout} userInfo={userInfo} />;
 }
 
 // Types
@@ -241,7 +283,7 @@ interface SourceStats {
 }
 
 // Composant Dashboard
-function AppDashboard({ onLogout }: { onLogout: () => void }) {
+function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: UserInfo | null }) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'safes' | 'moderate' | 'risky' | 'all'>('safes');
@@ -260,6 +302,9 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
   const SESSION_DURATION = 20 * 60; // 20 minutes en secondes
   const [sessionTimeLeft, setSessionTimeLeft] = useState(SESSION_DURATION);
   const [showSessionWarning, setShowSessionWarning] = useState(false);
+
+  // Vérifier si le compte expire bientôt (moins de 7 jours)
+  const isExpiringSoon = userInfo?.daysRemaining !== undefined && userInfo.daysRemaining <= 7 && userInfo.role === 'user';
 
   // Fonction pour sauvegarder les pronostics en base (déclarée avant utilisation)
   const savePredictionsToDB = async (matchList: Match[]) => {
@@ -537,6 +582,30 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
 
       {/* Main Content */}
       <main style={{ flex: 1, overflow: 'auto', padding: '12px' }}>
+        {/* Alerte expiration compte */}
+        {isExpiringSoon && (
+          <div style={{
+            background: 'rgba(239,68,68,0.1)',
+            border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: '8px',
+            padding: '10px 12px',
+            marginBottom: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <span style={{ fontSize: '20px' }}>⚠️</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '12px' }}>
+                Compte expire dans {userInfo?.daysRemaining} jour{userInfo?.daysRemaining !== 1 ? 's' : ''}
+              </div>
+              <div style={{ color: '#888', fontSize: '10px' }}>
+                Contactez l'administrateur pour prolonger votre accès
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header compact */}
         <header style={{
           display: 'flex',
