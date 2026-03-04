@@ -1204,13 +1204,11 @@ function AntiTrapSection({ matches }: { matches: Match[] }) {
 
 // Section Bankroll Manager
 function BankrollSection() {
-  const [balance, setBalance] = useState(100);
+  const [balance, setBalance] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('deposit');
-  const [transactions, setTransactions] = useState([
-    { id: 1, type: 'deposit', amount: 100, date: new Date().toISOString(), desc: 'Solde initial' }
-  ]);
+  const [transactions, setTransactions] = useState<any[]>([]);
 
   const handleAddTransaction = (e: React.FormEvent) => {
     e.preventDefault();
