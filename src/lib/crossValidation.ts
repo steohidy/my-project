@@ -1,7 +1,9 @@
 /**
  * Système de croisement multi-sources pour validation des pronostics
- * Combine: The Odds API + Football-Data API
+ * Combine: The Odds API + Football-Data API + NBA Fallback
  */
+
+import { getTodayNBASchedule, getNBAPredictions } from './nbaData';
 
 interface CrossValidatedMatch {
   id: string;
@@ -246,6 +248,7 @@ function distributeMatchesByTimeSlot(
 /**
  * Récupère les matchs depuis The Odds API
  * NOUVEAU PLAN: 3 ligues Football + 1 NBA = 4 appels API
+ * FALLBACK: Utilise données NBA simulées si quota épuisé
  */
 async function fetchOddsApiMatches(): Promise<any[]> {
   const apiKey = process.env.THE_ODDS_API_KEY;
@@ -253,6 +256,10 @@ async function fetchOddsApiMatches(): Promise<any[]> {
     console.log('⚠️ THE_ODDS_API_KEY non configurée');
     return [];
   }
+
+  const allMatches: any[] = [];
+  let creditsUsed = 0;
+  let oddsApiWorking = true;
 
   try {
     // Récupérer les sports disponibles (1 crédit)
@@ -262,73 +269,80 @@ async function fetchOddsApiMatches(): Promise<any[]> {
     
     if (!sportsResponse.ok) {
       console.error(`Erreur sports API: ${sportsResponse.status}`);
-      return [];
+      oddsApiWorking = false;
     }
     
-    const sports = await sportsResponse.json();
-    
-    // ===== FOOTBALL: 3 ligues aléatoires =====
-    const soccerSports = sports.filter((s: any) => s.group?.toLowerCase() === 'soccer');
-    const availableLeagues = soccerSports.filter((s: any) => PRIORITY_LEAGUES[s.key]);
-    
-    const today = new Date().toISOString().split('T')[0];
-    const seed = today.split('-').join('');
-    
-    const shuffled = [...availableLeagues].sort((a, b) => {
-      const hashA = (seed + a.key).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      const hashB = (seed + b.key).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      return hashA - hashB;
-    });
-    
-    const allMatches: any[] = [];
-    const MIN_FOOTBALL_MATCHES = 10;
-    let creditsUsed = 0;
+    if (oddsApiWorking) {
+      const sports = await sportsResponse.json();
+      
+      // ===== FOOTBALL: 3 ligues aléatoires =====
+      const soccerSports = sports.filter((s: any) => s.group?.toLowerCase() === 'soccer');
+      const availableLeagues = soccerSports.filter((s: any) => PRIORITY_LEAGUES[s.key]);
+      
+      const today = new Date().toISOString().split('T')[0];
+      const seed = today.split('-').join('');
+      
+      const shuffled = [...availableLeagues].sort((a, b) => {
+        const hashA = (seed + a.key).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const hashB = (seed + b.key).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        return hashA - hashB;
+      });
+      
+      const MIN_FOOTBALL_MATCHES = 10;
 
-    // ===== FOOTBALL: Récupérer jusqu'à 10 matchs =====
-    // Commencer par 3 ligues, ajouter si nécessaire
-    for (const sport of shuffled) {
-      if (allMatches.filter(m => m.sport_type === 'football').length >= MIN_FOOTBALL_MATCHES) {
-        break; // On a assez de matchs
-      }
-      
-      try {
-        const oddsResponse = await fetch(
-          `https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${apiKey}&regions=eu&markets=h2h,totals&oddsFormat=decimal&dateFormat=iso`,
-          { next: { revalidate: 21600 } }
-        );
-        
-        if (oddsResponse.ok) {
-          const matches = await oddsResponse.json();
-          allMatches.push(...matches.map((m: any) => ({ ...m, source: 'odds-api', sport_type: 'football' })));
-          creditsUsed++;
-          console.log(`⚽ ${PRIORITY_LEAGUES[sport.key]?.name || sport.key}: ${matches.length} matchs`);
+      // ===== FOOTBALL: Récupérer jusqu'à 10 matchs =====
+      for (const sport of shuffled) {
+        if (allMatches.filter(m => m.sport_type === 'football').length >= MIN_FOOTBALL_MATCHES) {
+          break;
         }
-      } catch (e) {
-        console.error(`Erreur ligue ${sport.key}:`, e);
+        
+        try {
+          const oddsResponse = await fetch(
+            `https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${apiKey}&regions=eu&markets=h2h,totals&oddsFormat=decimal&dateFormat=iso`,
+            { next: { revalidate: 21600 } }
+          );
+          
+          if (oddsResponse.ok) {
+            const matches = await oddsResponse.json();
+            allMatches.push(...matches.map((m: any) => ({ ...m, source: 'odds-api', sport_type: 'football' })));
+            creditsUsed++;
+            console.log(`⚽ ${PRIORITY_LEAGUES[sport.key]?.name || sport.key}: ${matches.length} matchs`);
+          } else if (oddsResponse.status === 401) {
+            console.log('⚠️ Quota The Odds API épuisé');
+            oddsApiWorking = false;
+            break;
+          }
+        } catch (e) {
+          console.error(`Erreur ligue ${sport.key}:`, e);
+        }
       }
-    }
-    
-    const footballCount = allMatches.filter(m => m.sport_type === 'football').length;
-    console.log(`📋 Football: ${footballCount} matchs récupérés (${creditsUsed} ligues utilisées)`);
-    
-    // ===== NBA: 1 appel (1 crédit) =====
-    try {
-      const nbaResponse = await fetch(
-        `https://api.the-odds-api.com/v4/sports/${NBA_LEAGUE_KEY}/odds/?apiKey=${apiKey}&regions=us&markets=h2h,totals&oddsFormat=decimal&dateFormat=iso`,
-        { next: { revalidate: 21600 } }
-      );
       
-      if (nbaResponse.ok) {
-        const nbaMatches = await nbaResponse.json();
-        allMatches.push(...nbaMatches.map((m: any) => ({ ...m, source: 'odds-api', sport_type: 'nba' })));
-        console.log(`🏀 NBA: ${nbaMatches.length} matchs récupérés`);
-        creditsUsed++;
+      const footballCount = allMatches.filter(m => m.sport_type === 'football').length;
+      console.log(`📋 Football: ${footballCount} matchs récupérés (${creditsUsed} ligues utilisées)`);
+      
+      // ===== NBA: 1 appel (1 crédit) =====
+      if (oddsApiWorking) {
+        try {
+          const nbaResponse = await fetch(
+            `https://api.the-odds-api.com/v4/sports/${NBA_LEAGUE_KEY}/odds/?apiKey=${apiKey}&regions=us&markets=h2h,totals&oddsFormat=decimal&dateFormat=iso`,
+            { next: { revalidate: 21600 } }
+          );
+          
+          if (nbaResponse.ok) {
+            const nbaMatches = await nbaResponse.json();
+            allMatches.push(...nbaMatches.map((m: any) => ({ ...m, source: 'odds-api', sport_type: 'nba' })));
+            console.log(`🏀 NBA: ${nbaMatches.length} matchs récupérés`);
+            creditsUsed++;
+          } else if (nbaResponse.status === 401) {
+            console.log('⚠️ Quota The Odds API épuisé pour NBA');
+          }
+        } catch (e) {
+          console.error('Erreur NBA:', e);
+        }
       }
-    } catch (e) {
-      console.error('Erreur NBA:', e);
     }
     
-    console.log(`✅ Odds API: ${allMatches.length} matchs (Football + NBA) - ${creditsUsed + 1} crédits consommés`);
+    console.log(`✅ Odds API: ${allMatches.length} matchs - ${creditsUsed + 1} crédits consommés`);
     return allMatches;
     
   } catch (error) {
@@ -957,9 +971,65 @@ function sortMatchesByQuality(matches: CrossValidatedMatch[]): CrossValidatedMat
 }
 
 /**
+ * Génère des matchs NBA simulés basés sur les données réelles des équipes
+ * Utilisé comme fallback quand The Odds API est épuisé
+ */
+function generateNBAFallbackMatches(): CrossValidatedMatch[] {
+  console.log('🏀 Génération des matchs NBA (fallback)...');
+  
+  const nbaSchedule = getTodayNBASchedule();
+  const matches: CrossValidatedMatch[] = [];
+  
+  for (const game of nbaSchedule) {
+    const predictions = getNBAPredictions(game.homeTeam, game.awayTeam);
+    
+    // Créer le match au format attendu
+    const match: CrossValidatedMatch = {
+      id: game.id,
+      homeTeam: game.homeTeam,
+      awayTeam: game.awayTeam,
+      sport: 'Basket',
+      league: 'NBA',
+      date: `${game.date}T${game.time}:00Z`,
+      oddsHome: predictions.oddsHome,
+      oddsDraw: null, // Pas de nul en NBA
+      oddsAway: predictions.oddsAway,
+      status: 'upcoming',
+      sources: ['NBA Stats (Fallback)'],
+      timeSlot: 'night',
+      insight: {
+        riskPercentage: predictions.riskPercentage,
+        valueBetDetected: Math.abs(predictions.winProb.home - 50) > 25,
+        valueBetType: predictions.winProb.home > 60 ? 'home' : predictions.winProb.away > 60 ? 'away' : null,
+        confidence: predictions.confidence,
+      },
+      // NBA utilise des prédictions différentes
+      goalsPrediction: undefined,
+      cardsPrediction: undefined,
+      cornersPrediction: undefined,
+      advancedPredictions: {
+        btts: { yes: 0, no: 0 }, // Pas applicable NBA
+        correctScore: [],
+        halfTime: { 
+          home: predictions.winProb.home, 
+          draw: 0, 
+          away: predictions.winProb.away 
+        }
+      }
+    };
+    
+    matches.push(match);
+  }
+  
+  console.log(`🏀 NBA Fallback: ${matches.length} matchs générés`);
+  return matches;
+}
+
+/**
  * Fonction principale : récupère et croise les données
  * NOUVEAU PLAN: 10 Football (journée) + 5 NBA (nuit) = 15 matchs/jour
  * Consommation: ~5 crédits API/jour
+ * FALLBACK: NBA simulé si API épuisée
  */
 export async function getCrossValidatedMatches(): Promise<{
   matches: CrossValidatedMatch[];
@@ -982,6 +1052,14 @@ export async function getCrossValidatedMatches(): Promise<{
   
   // Croiser les données
   let validatedMatches = crossValidateMatches(oddsApiMatches, footballDataMatches);
+  
+  // Vérifier si on a des matchs NBA, sinon utiliser le fallback
+  const nbaMatches = validatedMatches.filter(m => m.sport === 'Basket');
+  if (nbaMatches.length === 0 && timing.currentHour >= 20) {
+    console.log('🏀 Aucun match NBA de l\'API, utilisation du fallback');
+    const nbaFallbackMatches = generateNBAFallbackMatches();
+    validatedMatches = [...validatedMatches, ...nbaFallbackMatches];
+  }
   
   // ⚠️ FILTRER UNIQUEMENT LES MATCHS DU JOUR
   const todayMatches = validatedMatches.filter(m => isToday(m.date));
