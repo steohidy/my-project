@@ -244,7 +244,8 @@ function distributeMatchesByTimeSlot(
 }
 
 /**
- * Récupère les matchs depuis The Odds API (Multi-sport)
+ * Récupère les matchs depuis The Odds API (Football uniquement)
+ * STRATÉGIE: 3 ligues aléatoires par jour pour économiser les crédits
  */
 async function fetchOddsApiMatches(): Promise<any[]> {
   const apiKey = process.env.THE_ODDS_API_KEY;
@@ -254,7 +255,7 @@ async function fetchOddsApiMatches(): Promise<any[]> {
   }
 
   try {
-    // Récupérer les sports disponibles d'abord
+    // Récupérer les sports disponibles
     const sportsResponse = await fetch(
       `https://api.the-odds-api.com/v4/sports/?apiKey=${apiKey}`
     );
@@ -269,19 +270,30 @@ async function fetchOddsApiMatches(): Promise<any[]> {
     // ===== FOOTBALL UNIQUEMENT =====
     const soccerSports = sports.filter((s: any) => s.group?.toLowerCase() === 'soccer');
     
-    // Prendre toutes les ligues définies dans PRIORITY_LEAGUES
-    const priorityLeagues = soccerSports.filter((s: any) => PRIORITY_LEAGUES[s.key]);
+    // Ligues disponibles dans PRIORITY_LEAGUES
+    const availableLeagues = soccerSports.filter((s: any) => PRIORITY_LEAGUES[s.key]);
     
-    // Toutes les ligues prioritaires
-    const allSportsToFetch = [...priorityLeagues];
+    // ===== SÉLECTION ALÉATOIRE DE 3 LIGUES PAR JOUR =====
+    // Utiliser la date comme seed pour avoir la même sélection toute la journée
+    const today = new Date().toISOString().split('T')[0];
+    const seed = today.split('-').join('') ; // ex: "20260304"
+    
+    // Mélanger avec le seed (même mélange pour toute la journée)
+    const shuffled = [...availableLeagues].sort((a, b) => {
+      const hashA = (seed + a.key).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const hashB = (seed + b.key).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      return hashA - hashB;
+    });
+    
+    // Prendre 3 ligues (ou moins si pas assez)
+    const selectedLeagues = shuffled.slice(0, 3);
 
-    console.log(`📋 ${allSportsToFetch.length} ligues à récupérer: ${allSportsToFetch.map((s: any) => PRIORITY_LEAGUES[s.key]?.name || s.key).join(', ')}`);
+    console.log(`📋 3 ligues sélectionnées pour ${today}: ${selectedLeagues.map((s: any) => PRIORITY_LEAGUES[s.key]?.name || s.key).join(', ')}`);
 
     const allMatches: any[] = [];
 
-    // Récupérer les matchs pour chaque ligue
-    // CACHE 6 HEURES pour limiter les appels API
-    for (const sport of allSportsToFetch) {
+    // Récupérer les matchs pour ces 3 ligues uniquement
+    for (const sport of selectedLeagues) {
       try {
         const oddsResponse = await fetch(
           `https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${apiKey}&regions=eu&markets=h2h,totals&oddsFormat=decimal&dateFormat=iso`,
@@ -297,7 +309,7 @@ async function fetchOddsApiMatches(): Promise<any[]> {
       }
     }
     
-    console.log(`✅ Odds API: ${allMatches.length} matchs récupérés (multi-sport)`);
+    console.log(`✅ Odds API: ${allMatches.length} matchs récupérés (3 ligues)`);
     return allMatches;
     
   } catch (error) {
