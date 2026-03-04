@@ -244,7 +244,7 @@ interface SourceStats {
 function AppDashboard({ onLogout }: { onLogout: () => void }) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'safes' | 'moderate' | 'all'>('safes');
+  const [activeTab, setActiveTab] = useState<'safes' | 'moderate' | 'risky' | 'all'>('safes');
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [apiStatus, setApiStatus] = useState<'online' | 'offline' | 'loading'>('loading');
   const [activeSection, setActiveSection] = useState<'matches' | 'antitrap' | 'bankroll' | 'results'>('matches');
@@ -353,11 +353,13 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
   // Filtrer les matchs
   const safes = matches.filter(m => m.insight.riskPercentage <= 40);
   const moderate = matches.filter(m => m.insight.riskPercentage > 40 && m.insight.riskPercentage <= 50);
+  const risky = matches.filter(m => m.insight.riskPercentage > 50);
   const valueBets = matches.filter(m => m.insight.valueBetDetected);
 
   // Matchs à afficher selon l'onglet
   const displayedMatches = activeTab === 'safes' ? safes 
     : activeTab === 'moderate' ? moderate 
+    : activeTab === 'risky' ? risky
     : matches;
 
   return (
@@ -685,6 +687,12 @@ function AppDashboard({ onLogout }: { onLogout: () => void }) {
                 onClick={() => setActiveTab('moderate')}
                 icon="⚠️"
                 label={`Modérés (${moderate.length})`}
+              />
+              <TabButton 
+                active={activeTab === 'risky'} 
+                onClick={() => setActiveTab('risky')}
+                icon="🎯"
+                label={`Audacieux (${risky.length})`}
               />
               <TabButton 
                 active={activeTab === 'all'} 
