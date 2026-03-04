@@ -1,17 +1,23 @@
-import { NextResponse } from 'next/server';
-import { securityConfig } from '@/lib/auth';
+import { NextRequest, NextResponse } from 'next/server';
+import { removeSession } from '@/lib/userPersistence';
 
 /**
  * POST - Déconnexion
- * Supprime les cookies de session
+ * Supprime les cookies de session et la session enregistrée
  */
-export async function POST() {
+export async function POST(request: NextRequest) {
+  // Récupérer le token du cookie
+  const token = request.cookies.get('steo_elite_session')?.value;
+  
+  // Supprimer la session du stockage
+  if (token) {
+    await removeSession(token);
+  }
+  
   const response = NextResponse.json({ success: true });
   
-  // Supprimer le cookie de session sécurisé
-  response.cookies.delete(securityConfig.cookieName);
-  
-  // Supprimer le cookie de données de session
+  // Supprimer les cookies
+  response.cookies.delete('steo_elite_session');
   response.cookies.delete('steo_elite_session_data');
   
   return response;

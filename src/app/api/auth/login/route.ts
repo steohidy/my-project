@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateUser } from '@/lib/users';
+import { hasActiveSession, registerSession } from '@/lib/userPersistence';
 
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
 const MAX_ATTEMPTS = 5;
@@ -44,6 +45,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Identifiant et mot de passe requis' }, { status: 400 });
     }
 
+    // ===== VÉRIFICATION SESSION ACTIVE =====
+    const alreadyConnected = await hasActiveSession(username.trim());
+    if (alreadyConnected) {
+      recordAttempt(ip, false);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Ce compte est déjà connecté sur un autre appareil. Veuillez d\'abord vous déconnecter.' 
+      }, { status: 403 });
+    }
+
     const result = await validateUser(username.trim(), password);
 
     if (!result.success) {
@@ -57,6 +68,9 @@ export async function POST(request: NextRequest) {
     const token = genToken();
     const expiry = Date.now() + SESSION_MS;
     const subscription = result.user!.role === 'admin' || result.user!.role === 'demo' ? 'premium' : 'standard';
+
+    // ===== ENREGISTRER LA SESSION =====
+    await registerSession(token, result.user!.login, SESSION_MS);
 
     const res = NextResponse.json({
       success: true,

@@ -17,9 +17,17 @@ export interface ActivityLog {
   details: string;
 }
 
+export interface ActiveSession {
+  token: string;
+  username: string;
+  createdAt: number;
+  expiresAt: number;
+}
+
 export interface StoredData {
   users: StoredUser[];
   logs: ActivityLog[];
+  activeSessions: ActiveSession[];
   lastUpdated: string | null;
 }
 
@@ -46,6 +54,7 @@ const DEFAULT_DATA: StoredData = {
     { login: 'Hans', password: '547633', role: 'user', firstLoginDate: null, expiresAt: null, isActive: true, lastLoginAt: null },
   ],
   logs: [],
+  activeSessions: [],
   lastUpdated: null
 };
 
@@ -139,4 +148,93 @@ export function storedToUsers(stored: StoredUser[]): Map<string, User> {
 
 export function usersToStored(users: Map<string, User>): StoredUser[] {
   return Array.from(users.values());
+}
+
+/**
+ * Nettoie les sessions expirées
+ */
+export async function cleanupExpiredSessions(): Promise<void> {
+  const data = await loadUsersData();
+  const now = Date.now();
+  const validSessions = (data.activeSessions || []).filter(s => s.expiresAt > now);
+  
+  if (validSessions.length !== (data.activeSessions || []).length) {
+    data.activeSessions = validSessions;
+    data.lastUpdated = new Date().toISOString();
+    await saveUsersData(data);
+    console.log(`🧹 ${data.activeSessions.length - validSessions.length} sessions expirées supprimées`);
+  }
+}
+
+/**
+ * Vérifie si un utilisateur a déjà une session active
+ * Retourne true si l'utilisateur a une session active
+ */
+export async function hasActiveSession(username: string): Promise<boolean> {
+  await cleanupExpiredSessions();
+  const data = await loadUsersData();
+  const now = Date.now();
+  const userSessions = (data.activeSessions || []).filter(
+    s => s.username.toLowerCase() === username.toLowerCase() && s.expiresAt > now
+  );
+  return userSessions.length > 0;
+}
+
+/**
+ * Enregistre une nouvelle session (déconnecte l'ancienne si existe)
+ */
+export async function registerSession(token: string, username: string, durationMs: number): Promise<void> {
+  const data = await loadUsersData();
+  const now = Date.now();
+  
+  // Supprimer les anciennes sessions de cet utilisateur
+  data.activeSessions = (data.activeSessions || []).filter(
+    s => s.username.toLowerCase() !== username.toLowerCase()
+  );
+  
+  // Ajouter la nouvelle session
+  data.activeSessions.push({
+    token,
+    username: username.toLowerCase(),
+    createdAt: now,
+    expiresAt: now + durationMs
+  });
+  
+  data.lastUpdated = new Date().toISOString();
+  await saveUsersData(data);
+  console.log(`🔐 Session enregistrée pour ${username}`);
+}
+
+/**
+ * Supprime une session (logout)
+ */
+export async function removeSession(token: string): Promise<void> {
+  const data = await loadUsersData();
+  const sessions = (data.activeSessions || []).filter(s => s.token !== token);
+  
+  if (sessions.length !== (data.activeSessions || []).length) {
+    data.activeSessions = sessions;
+    data.lastUpdated = new Date().toISOString();
+    await saveUsersData(data);
+    console.log(`🚪 Session supprimée`);
+  }
+}
+
+/**
+ * Vérifie si un token de session est valide
+ */
+export async function isSessionValid(token: string): Promise<boolean> {
+  const data = await loadUsersData();
+  const now = Date.now();
+  const session = (data.activeSessions || []).find(s => s.token === token && s.expiresAt > now);
+  return !!session;
+}
+
+/**
+ * Obtient le nombre de sessions actives
+ */
+export async function getActiveSessionsCount(): Promise<number> {
+  await cleanupExpiredSessions();
+  const data = await loadUsersData();
+  return (data.activeSessions || []).length;
 }
