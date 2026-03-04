@@ -276,3 +276,91 @@ export function getUserStats(): {
     regular: users.filter(u => u.role === 'user').length
   };
 }
+
+/**
+ * Ajoute un nouvel utilisateur
+ */
+export function addUser(data: {
+  login: string;
+  password: string;
+  role: 'admin' | 'demo' | 'user';
+  isActive: boolean;
+}): boolean {
+  const loginLower = data.login.toLowerCase();
+  
+  // Vérifier si l'utilisateur existe déjà
+  if (activeUsers.has(loginLower)) {
+    return false;
+  }
+
+  const newUser: User = {
+    login: data.login,
+    password: data.password,
+    role: data.role,
+    firstLoginDate: null,
+    expiresAt: null,
+    isActive: data.isActive,
+    lastLoginAt: null
+  };
+
+  activeUsers.set(loginLower, newUser);
+  console.log(`✅ Nouvel utilisateur créé: ${data.login} (${data.role})`);
+  return true;
+}
+
+/**
+ * Modifie un utilisateur existant
+ */
+export function updateUser(login: string, data: {
+  password?: string;
+  role?: 'admin' | 'demo' | 'user';
+  isActive?: boolean;
+  expiresAt?: string | null;
+}): boolean {
+  const user = getUserByLogin(login);
+  
+  if (!user) {
+    return false;
+  }
+
+  // Ne pas modifier l'admin principal
+  if (user.role === 'admin' && login.toLowerCase() === 'admin') {
+    return false;
+  }
+
+  if (data.password !== undefined) {
+    user.password = data.password;
+  }
+  if (data.role !== undefined) {
+    user.role = data.role;
+  }
+  if (data.isActive !== undefined) {
+    user.isActive = data.isActive;
+  }
+  if (data.expiresAt !== undefined) {
+    user.expiresAt = data.expiresAt;
+  }
+
+  console.log(`📝 Utilisateur modifié: ${login}`);
+  return true;
+}
+
+/**
+ * Supprime un utilisateur
+ */
+export function deleteUser(login: string): boolean {
+  const user = getUserByLogin(login);
+  
+  if (!user) {
+    return false;
+  }
+
+  // Ne pas supprimer l'admin principal
+  if (user.role === 'admin' && login.toLowerCase() === 'admin') {
+    return false;
+  }
+
+  activeUsers.delete(login.toLowerCase());
+  console.log(`🗑️ Utilisateur supprimé: ${login}`);
+  return true;
+}

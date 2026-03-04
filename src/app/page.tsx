@@ -289,7 +289,7 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
   const [activeTab, setActiveTab] = useState<'safes' | 'moderate' | 'risky' | 'all'>('safes');
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [apiStatus, setApiStatus] = useState<'online' | 'offline' | 'loading'>('loading');
-  const [activeSection, setActiveSection] = useState<'matches' | 'antitrap' | 'bankroll' | 'results'>('matches');
+  const [activeSection, setActiveSection] = useState<'matches' | 'antitrap' | 'bankroll' | 'results' | 'admin'>('matches');
   const [timing, setTiming] = useState<TimingInfo>({
     currentHour: new Date().getHours(),
     canRefresh: true,
@@ -498,6 +498,11 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
         <NavButton icon="🛡️" label="Trap" active={activeSection === 'antitrap'} onClick={() => setActiveSection('antitrap')} color="#ef4444" />
         <NavButton icon="💰" label="Bank" active={activeSection === 'bankroll'} onClick={() => setActiveSection('bankroll')} color="#22c55e" />
         <NavButton icon="📊" label="Stats" active={activeSection === 'results'} onClick={() => setActiveSection('results')} color="#8b5cf6" />
+        
+        {/* Admin Button - Visible uniquement pour les admins */}
+        {userInfo?.role === 'admin' && (
+          <NavButton icon="⚙️" label="Admin" active={activeSection === 'admin'} onClick={() => setActiveSection('admin')} color="#eab308" />
+        )}
         
         {/* Spacer */}
         <div style={{ flex: 1 }}></div>
@@ -742,6 +747,21 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
               </p>
             </div>
             <ResultsSection />
+          </div>
+        )}
+
+        {/* Section Admin - Visible uniquement pour les admins */}
+        {activeSection === 'admin' && userInfo?.role === 'admin' && (
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ marginBottom: '12px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#eab308', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                ⚙️ Administration
+              </h2>
+              <p style={{ color: '#888', fontSize: '11px', marginBottom: '4px' }}>
+                Gestion des utilisateurs et des accès
+              </p>
+            </div>
+            <AdminPanel />
           </div>
         )}
       </main>
@@ -2231,6 +2251,403 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// ===== COMPOSANT ADMIN PANEL =====
+interface AdminUser {
+  login: string;
+  role: 'admin' | 'demo' | 'user';
+  firstLoginDate: string | null;
+  expiresAt: string | null;
+  isActive: boolean;
+  lastLoginAt: string | null;
+}
+
+function AdminPanel() {
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [stats, setStats] = useState({ total: 0, active: 0, expired: 0, admin: 0, demo: 0, regular: 0 });
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState('');
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+  const [newUser, setNewUser] = useState({ login: '', password: '', role: 'user' as 'admin' | 'demo' | 'user' });
+
+  // Charger les utilisateurs
+  const loadUsers = async () => {
+    try {
+      const res = await fetch('/api/admin/users');
+      if (res.ok) {
+        const data = await res.json();
+        setUsers(data.users);
+        setStats(data.stats);
+      }
+    } catch (e) {
+      console.error('Erreur chargement utilisateurs:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  // Action sur un utilisateur
+  const handleAction = async (action: string, login: string, data?: any) => {
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, login, data })
+      });
+      const result = await res.json();
+      
+      if (result.success) {
+        setMessage(`✅ ${result.message}`);
+        loadUsers();
+        setTimeout(() => setMessage(''), 3000);
+      } else {
+        setMessage(`❌ ${result.error}`);
+      }
+    } catch (e) {
+      setMessage('❌ Erreur serveur');
+    }
+  };
+
+  // Ajouter un utilisateur
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleAction('add', '', newUser);
+    setShowAddForm(false);
+    setNewUser({ login: '', password: '', role: 'user' });
+  };
+
+  // Modifier un utilisateur
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    await handleAction('update', editingUser.login, { password: newUser.password || undefined, role: newUser.role });
+    setEditingUser(null);
+    setNewUser({ login: '', password: '', role: 'user' });
+  };
+
+  // Formater la date
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return 'Jamais';
+    return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Calculer les jours restants
+  const getDaysRemaining = (expiresAt: string | null) => {
+    if (!expiresAt) return null;
+    const diff = new Date(expiresAt).getTime() - Date.now();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
+
+  if (loading) {
+    return <div style={{ color: '#888', padding: '20px', textAlign: 'center' }}>Chargement...</div>;
+  }
+
+  return (
+    <div style={{ background: '#111', borderRadius: '12px', padding: '16px', border: '1px solid #eab30830' }}>
+      {/* Message de notification */}
+      {message && (
+        <div style={{
+          background: message.startsWith('✅') ? '#22c55e20' : '#ef444420',
+          border: `1px solid ${message.startsWith('✅') ? '#22c55e40' : '#ef444440'}`,
+          borderRadius: '8px',
+          padding: '10px 12px',
+          marginBottom: '16px',
+          color: message.startsWith('✅') ? '#22c55e' : '#ef4444',
+          fontSize: '12px'
+        }}>
+          {message}
+        </div>
+      )}
+
+      {/* Statistiques */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '8px', marginBottom: '16px' }}>
+        <div style={{ background: '#1a1a1a', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#eab308' }}>{stats.total}</div>
+          <div style={{ fontSize: '10px', color: '#888' }}>Total</div>
+        </div>
+        <div style={{ background: '#1a1a1a', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#22c55e' }}>{stats.active}</div>
+          <div style={{ fontSize: '10px', color: '#888' }}>Actifs</div>
+        </div>
+        <div style={{ background: '#1a1a1a', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ef4444' }}>{stats.expired}</div>
+          <div style={{ fontSize: '10px', color: '#888' }}>Expirés</div>
+        </div>
+        <div style={{ background: '#1a1a1a', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#8b5cf6' }}>{stats.regular}</div>
+          <div style={{ fontSize: '10px', color: '#888' }}>Utilisateurs</div>
+        </div>
+      </div>
+
+      {/* Bouton Ajouter */}
+      <button
+        onClick={() => setShowAddForm(true)}
+        style={{
+          width: '100%',
+          padding: '10px',
+          background: '#eab308',
+          color: '#000',
+          border: 'none',
+          borderRadius: '8px',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          marginBottom: '16px'
+        }}
+      >
+        ➕ Ajouter un utilisateur
+      </button>
+
+      {/* Formulaire d'ajout */}
+      {showAddForm && (
+        <form onSubmit={handleAddUser} style={{ background: '#1a1a1a', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
+          <h4 style={{ margin: '0 0 12px 0', color: '#eab308' }}>Nouvel utilisateur</h4>
+          <div style={{ display: 'grid', gap: '8px' }}>
+            <input
+              type="text"
+              placeholder="Login"
+              value={newUser.login}
+              onChange={e => setNewUser({ ...newUser, login: e.target.value })}
+              required
+              style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #333', background: '#0a0a0a', color: '#fff' }}
+            />
+            <input
+              type="text"
+              placeholder="Mot de passe"
+              value={newUser.password}
+              onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+              required
+              style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #333', background: '#0a0a0a', color: '#fff' }}
+            />
+            <select
+              value={newUser.role}
+              onChange={e => setNewUser({ ...newUser, role: e.target.value as 'admin' | 'demo' | 'user' })}
+              style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #333', background: '#0a0a0a', color: '#fff' }}
+            >
+              <option value="user">Utilisateur</option>
+              <option value="demo">Demo</option>
+              <option value="admin">Admin</option>
+            </select>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button type="submit" style={{ flex: 1, padding: '8px', background: '#22c55e', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+                Créer
+              </button>
+              <button type="button" onClick={() => setShowAddForm(false)} style={{ flex: 1, padding: '8px', background: '#333', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+                Annuler
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
+
+      {/* Formulaire de modification */}
+      {editingUser && (
+        <form onSubmit={handleUpdateUser} style={{ background: '#1a1a1a', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
+          <h4 style={{ margin: '0 0 12px 0', color: '#eab308' }}>Modifier {editingUser.login}</h4>
+          <div style={{ display: 'grid', gap: '8px' }}>
+            <input
+              type="text"
+              placeholder="Nouveau mot de passe (vide = inchangé)"
+              value={newUser.password}
+              onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+              style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #333', background: '#0a0a0a', color: '#fff' }}
+            />
+            <select
+              value={newUser.role}
+              onChange={e => setNewUser({ ...newUser, role: e.target.value as 'admin' | 'demo' | 'user' })}
+              style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #333', background: '#0a0a0a', color: '#fff' }}
+            >
+              <option value="user">Utilisateur</option>
+              <option value="demo">Demo</option>
+              <option value="admin">Admin</option>
+            </select>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button type="submit" style={{ flex: 1, padding: '8px', background: '#22c55e', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+                Modifier
+              </button>
+              <button type="button" onClick={() => { setEditingUser(null); setNewUser({ login: '', password: '', role: 'user' }); }} style={{ flex: 1, padding: '8px', background: '#333', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+                Annuler
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
+
+      {/* Liste des utilisateurs */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {users.map(user => {
+          const daysRemaining = getDaysRemaining(user.expiresAt);
+          const isExpired = daysRemaining !== null && daysRemaining <= 0;
+          
+          return (
+            <div key={user.login} style={{
+              background: '#1a1a1a',
+              borderRadius: '8px',
+              padding: '12px',
+              border: `1px solid ${!user.isActive || isExpired ? '#ef444430' : '#333'}`,
+              opacity: !user.isActive || isExpired ? 0.7 : 1
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: 'bold', color: '#fff' }}>{user.login}</span>
+                    <span style={{
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      fontSize: '9px',
+                      fontWeight: 'bold',
+                      background: user.role === 'admin' ? '#ef4444' : user.role === 'demo' ? '#8b5cf6' : '#3b82f6',
+                      color: '#fff'
+                    }}>
+                      {user.role.toUpperCase()}
+                    </span>
+                    {!user.isActive && (
+                      <span style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '9px', background: '#ef4444', color: '#fff' }}>DÉSACTIVÉ</span>
+                    )}
+                    {isExpired && (
+                      <span style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '9px', background: '#f97316', color: '#fff' }}>EXPIRÉ</span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '10px', color: '#666', marginTop: '4px' }}>
+                    Dernière connexion: {formatDate(user.lastLoginAt)}
+                  </div>
+                </div>
+                
+                {user.role !== 'admin' && (
+                  <div style={{ textAlign: 'right' }}>
+                    {user.expiresAt && (
+                      <div style={{
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        color: daysRemaining && daysRemaining <= 7 ? '#ef4444' : daysRemaining && daysRemaining <= 30 ? '#f97316' : '#22c55e'
+                      }}>
+                        {daysRemaining} jours restants
+                      </div>
+                    )}
+                    <div style={{ fontSize: '9px', color: '#666' }}>
+                      Expire: {formatDate(user.expiresAt)}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              {user.role !== 'admin' && (
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '8px' }}>
+                  {/* Prolonger */}
+                  <button
+                    onClick={() => handleAction('extend', user.login, { months: 1 })}
+                    style={{
+                      padding: '4px 8px',
+                      fontSize: '10px',
+                      background: '#22c55e',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    +1 mois
+                  </button>
+                  <button
+                    onClick={() => handleAction('extend', user.login, { months: 3 })}
+                    style={{
+                      padding: '4px 8px',
+                      fontSize: '10px',
+                      background: '#22c55e',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    +3 mois
+                  </button>
+
+                  {/* Activer/Désactiver */}
+                  {user.isActive ? (
+                    <button
+                      onClick={() => handleAction('deactivate', user.login)}
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: '10px',
+                        background: '#f97316',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Désactiver
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleAction('reactivate', user.login)}
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: '10px',
+                        background: '#3b82f6',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Réactiver
+                    </button>
+                  )}
+
+                  {/* Modifier */}
+                  <button
+                    onClick={() => {
+                      setEditingUser(user);
+                      setNewUser({ login: user.login, password: '', role: user.role });
+                    }}
+                    style={{
+                      padding: '4px 8px',
+                      fontSize: '10px',
+                      background: '#8b5cf6',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Modifier
+                  </button>
+
+                  {/* Supprimer */}
+                  <button
+                    onClick={() => {
+                      if (confirm(`Supprimer ${user.login} ?`)) {
+                        handleAction('delete', user.login);
+                      }
+                    }}
+                    style={{
+                      padding: '4px 8px',
+                      fontSize: '10px',
+                      background: '#ef4444',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
