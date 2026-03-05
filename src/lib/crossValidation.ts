@@ -1115,9 +1115,8 @@ function convertFallbackToValidated(fallback: FallbackMatch): CrossValidatedMatc
 
 /**
  * Fonction principale : récupère et croise les données
- * NOUVEAU PLAN: 10 Football (journée) + 5 NBA (nuit) = 15 matchs/jour
- * Consommation: ~5 crédits API/jour
- * FALLBACK AUTOMATIQUE: Si Odds API épuisé, utilise RapidAPI + données générées
+ * GARANTIT: 10 Football + 5 NBA = 15 matchs par jour
+ * FALLBACK AUTOMATIQUE: Si Odds API épuisé, utilise données générées
  */
 export async function getCrossValidatedMatches(): Promise<{
   matches: CrossValidatedMatch[];
@@ -1138,56 +1137,22 @@ export async function getCrossValidatedMatches(): Promise<{
   
   console.log(`📊 Sources: Odds API (${oddsApiMatches.length}), Football-Data (${footballDataMatches.length})`);
   
-  // ⚠️ DÉTECTION QUOTA ÉPUISÉ
-  // Si Odds API ne renvoie AUCUN match, c'est que le quota est épuisé
-  const isQuotaExhausted = oddsApiMatches.length === 0;
+  // DÉTECTION: Aucun match de l'API = utiliser fallback
+  const footballFromApi = oddsApiMatches.filter((m: any) => !m.sport_key?.includes('basketball'));
+  const hasApiFootball = footballFromApi.length >= 5;
   
   let validatedMatches: CrossValidatedMatch[] = [];
   
-  if (isQuotaExhausted) {
-    console.log('⚠️ The Odds API quota épuisé ou erreur - Activation du fallback multi-sports');
-    
-    // Utiliser le système de fallback complet
-    if (isFallbackAvailable()) {
-      console.log('🔄 Récupération via RapidAPI + données générées...');
-      const fallbackMatches = await getAllFallbackMatches();
-      validatedMatches = fallbackMatches.map(convertFallbackToValidated);
-      console.log(`✅ Fallback: ${validatedMatches.length} matchs récupérés`);
-    } else {
-      // Dernier recours: uniquement NBA fallback
-      console.log('🔄 Utilisation du fallback NBA uniquement...');
-      validatedMatches = generateNBAFallbackMatches();
-    }
-  } else {
-    // Fonctionnement normal: croiser les données
+  if (hasApiFootball) {
+    // API fonctionne - utiliser les données réelles
+    console.log('✅ API Odds fonctionne - Utilisation des données réelles');
     validatedMatches = crossValidateMatches(oddsApiMatches, footballDataMatches);
-    
-    // Vérifier si on a des matchs NBA, sinon utiliser le fallback
-    const nbaMatches = validatedMatches.filter(m => m.sport === 'Basket');
-    if (nbaMatches.length === 0 && isFallbackAvailable()) {
-      console.log('🏀 Aucun match NBA de l\'API - Utilisation du fallback');
-      const nbaFallback = await getAllFallbackMatches();
-      const nbaOnly = nbaFallback.filter(m => m.sport === 'Basket').map(convertFallbackToValidated);
-      validatedMatches = [...validatedMatches, ...nbaOnly];
-    } else if (nbaMatches.length === 0) {
-      console.log('🏀 Aucun match NBA de l\'API - Utilisation du fallback local');
-      const nbaFallbackMatches = generateNBAFallbackMatches();
-      validatedMatches = [...validatedMatches, ...nbaFallbackMatches];
-    }
-    
-    // Vérifier si on a assez de matchs football, sinon compléter avec fallback
-    const footballMatches = validatedMatches.filter(m => m.sport === 'Foot');
-    if (footballMatches.length < 5 && isFallbackAvailable()) {
-      console.log('⚽ Peu de matchs football - Complément via fallback');
-      const fbFallback = await getAllFallbackMatches();
-      const fbOnly = fbFallback.filter(m => m.sport === 'Foot')
-        .filter(m => !validatedMatches.some(v => 
-          v.homeTeam === m.homeTeam && v.awayTeam === m.awayTeam
-        ))
-        .slice(0, 10 - footballMatches.length)
-        .map(convertFallbackToValidated);
-      validatedMatches = [...validatedMatches, ...fbOnly];
-    }
+  } else {
+    // API épuisée ou peu de matchs - utiliser le fallback
+    console.log('⚠️ API Odds épuisée ou peu de matchs - Activation du fallback');
+    const fallbackMatches = await getAllFallbackMatches();
+    validatedMatches = fallbackMatches.map(convertFallbackToValidated);
+    console.log(`✅ Fallback: ${validatedMatches.length} matchs récupérés`);
   }
   
   // ⚠️ FILTRER UNIQUEMENT LES MATCHS DU JOUR
@@ -1203,25 +1168,17 @@ export async function getCrossValidatedMatches(): Promise<{
   // Trier par qualité (ligues prioritaires + données multiples)
   const sortedMatches = sortMatchesByQuality(todayMatches);
   
-  // Répartir selon le NOUVEAU PLAN: 10 Foot + 5 NBA
+  // Répartir selon le PLAN: 10 Foot + 5 NBA
   const distributedMatches = distributeMatchesByTimeSlot(sortedMatches, timing);
   
   // Stats détaillées par sport
   const footballCount = distributedMatches.filter(m => m.sport === 'Foot').length;
   const nbaCount = distributedMatches.filter(m => m.sport === 'Basket').length;
-  const nhlCount = distributedMatches.filter(m => m.sport === 'Hockey').length;
-  console.log(`✅ ${distributedMatches.length} matchs sélectionnés: ${footballCount} Football + ${nbaCount} NBA + ${nhlCount} NHL`);
+  console.log(`✅ ${distributedMatches.length} matchs sélectionnés: ${footballCount} Football + ${nbaCount} NBA`);
   
   // Stats
   const safes = distributedMatches.filter(m => m.insight.riskPercentage <= 40).length;
   const valueBets = distributedMatches.filter(m => m.insight.valueBetDetected).length;
-  const multiSource = distributedMatches.filter(m => 
-    (m.insight.crossValidation?.sourcesCount || 1) > 1
-  ).length;
-  const sports = [...new Set(distributedMatches.map(m => m.sport))];
-  
-  console.log(`📈 Stats: ${safes} sûrs, ${valueBets} value bets, ${multiSource} multi-sources`);
-  console.log(`🏅 Sports: ${sports.join(', ')}`);
   
   return {
     matches: distributedMatches,
