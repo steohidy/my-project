@@ -1219,3 +1219,31 @@ export async function getSourceStats(): Promise<SourceStats> {
 }
 
 export type { CrossValidatedMatch, SourceStats };
+
+/**
+ * Vide tous les caches (API + Fallback)
+ * Utilisé pour forcer un refresh complet
+ */
+export async function clearAllCaches(): Promise<void> {
+  console.log('🗑️ Vidage de tous les caches...');
+  
+  // Vider le cache du fallback
+  try {
+    const { clearFallbackCache } = await import('./fallbackSports');
+    clearFallbackCache();
+  } catch {
+    console.log('⚠️ Impossible de vider le cache fallback');
+  }
+  
+  // Vider le cache de sportsApi
+  try {
+    const sportsApiModule = await import('./sportsApi');
+    if (sportsApiModule.clearSportsApiCache) {
+      sportsApiModule.clearSportsApiCache();
+    }
+  } catch {
+    console.log('⚠️ Cache sportsApi non disponible');
+  }
+  
+  console.log('✅ Tous les caches vidés');
+}

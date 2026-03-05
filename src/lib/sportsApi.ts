@@ -767,6 +767,15 @@ export async function forceRefresh(): Promise<RealMatch[]> {
 }
 
 /**
+ * Vide le cache (alias pour usage externe)
+ */
+export function clearSportsApiCache(): void {
+  cachedMatches = [];
+  lastFetchTime = 0;
+  console.log('🗑️ Cache sportsApi vidé');
+}
+
+/**
  * Vérifie si les APIs sont configurées
  */
 export function getApiStatus(): { provider: string; enabled: boolean }[] {

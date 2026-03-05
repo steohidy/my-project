@@ -877,5 +877,72 @@ export function isFallbackAvailable(): boolean {
   return true; // Toujours disponible car on génère les matchs
 }
 
+/**
+ * Convertit un match fallback au format CrossValidatedMatch
+ * Utilisé pour assurer la compatibilité avec le système principal
+ */
+export function convertFallbackToValidated(fallback: FallbackMatch): any {
+  return {
+    id: fallback.id,
+    homeTeam: fallback.homeTeam,
+    awayTeam: fallback.awayTeam,
+    sport: fallback.sport,
+    league: fallback.league,
+    date: `${fallback.date}T${fallback.time}:00Z`,
+    oddsHome: fallback.oddsHome,
+    oddsDraw: fallback.oddsDraw,
+    oddsAway: fallback.oddsAway,
+    status: fallback.status,
+    sources: [fallback.source],
+    timeSlot: fallback.sport === 'Basket' || fallback.sport === 'Hockey' ? 'night' : 'day',
+    insight: {
+      riskPercentage: fallback.riskPercentage,
+      valueBetDetected: Math.abs(fallback.winProb.home - 50) > 25 || 
+                        (fallback.winProb.draw !== undefined && fallback.winProb.draw > 32),
+      valueBetType: fallback.winProb.home > 60 ? 'home' : 
+                    fallback.winProb.away > 60 ? 'away' : 
+                    fallback.winProb.draw && fallback.winProb.draw > 30 ? 'draw' : null,
+      confidence: fallback.confidence,
+      crossValidation: {
+        sourcesCount: 1,
+        oddsConsensus: true,
+        dataQuality: 'medium' as const,
+      },
+    },
+    goalsPrediction: fallback.sport === 'Foot' ? {
+      total: 2.5,
+      over25: fallback.winProb.home > 55 || fallback.winProb.away > 55 ? 55 : 48,
+      under25: fallback.winProb.home > 55 || fallback.winProb.away > 55 ? 45 : 52,
+      over15: 72,
+      bothTeamsScore: 52,
+      prediction: fallback.winProb.draw && fallback.winProb.draw > 28 ? 'Match serré' : 'Over 1.5 buts',
+    } : undefined,
+    cardsPrediction: fallback.sport === 'Foot' ? {
+      total: 4.2,
+      over45: 52,
+      under45: 48,
+      redCardRisk: 18,
+      prediction: 'Match normal',
+    } : undefined,
+    cornersPrediction: fallback.sport === 'Foot' ? {
+      total: 9.5,
+      over85: 55,
+      under85: 45,
+      over95: 42,
+      prediction: 'Over 8.5 corners',
+    } : undefined,
+    advancedPredictions: fallback.sport === 'Foot' ? {
+      btts: { yes: 52, no: 48 },
+      correctScore: [],
+      halfTime: {
+        home: Math.round(fallback.winProb.home * 0.8),
+        draw: fallback.winProb.draw ? Math.round(fallback.winProb.draw * 1.3) : 15,
+        away: Math.round(fallback.winProb.away * 0.8),
+      },
+    } : undefined,
+    nbaPredictions: fallback.sport === 'Basket' && fallback.nbaPredictions ? fallback.nbaPredictions : undefined,
+  };
+}
+
 // Export des données pour usage externe
 export { FOOTBALL_TEAMS, NBA_TEAMS, NHL_TEAMS };

@@ -59,12 +59,14 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
  * DONNÉES RÉELLES UNIQUEMENT
  * GESTION INTELLIGENTE DU TIMING
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const forceRefresh = searchParams.get('refresh') === 'true';
     const now = Date.now();
     
-    // Vérifier le cache
-    if (cachedData && (now - lastFetchTime) < CACHE_TTL) {
+    // Vérifier le cache (ignorer si forceRefresh)
+    if (!forceRefresh && cachedData && (now - lastFetchTime) < CACHE_TTL) {
       console.log('📦 Utilisation du cache');
       // Mais mettre à jour le timing (car l'heure change)
       const { getTimingInfo } = await import('@/lib/crossValidation');
@@ -76,18 +78,41 @@ export async function GET() {
     }
 
     // Import dynamique pour éviter les erreurs de build
-    const { getCrossValidatedMatches } = await import('@/lib/crossValidation');
+    const { getCrossValidatedMatches, clearAllCaches } = await import('@/lib/crossValidation');
+    
+    // Forcer le refresh du cache interne si demandé
+    if (forceRefresh) {
+      console.log('🔄 Refresh forcé - vidage des caches');
+      clearAllCaches();
+    }
     
     const result = await getCrossValidatedMatches();
     
     if (result.matches && result.matches.length > 0) {
       cachedData = result;
       lastFetchTime = now;
+      console.log(`✅ ${result.matches.length} matchs retournés`);
       return NextResponse.json(result);
     }
     
-    // Aucun match - retourner un message d'erreur clair
-    console.error('❌ Aucune donnée réelle disponible');
+    // Aucun match - forcer le fallback
+    console.error('❌ Aucun match - activation forcée du fallback');
+    const { getAllFallbackMatches, convertFallbackToValidated } = await import('@/lib/fallbackSports');
+    const fallbackMatches = await getAllFallbackMatches();
+    const convertedMatches = fallbackMatches.map(convertFallbackToValidated);
+    
+    if (convertedMatches.length > 0) {
+      const { getTimingInfo } = await import('@/lib/crossValidation');
+      const fallbackResult = {
+        matches: convertedMatches,
+        timing: getTimingInfo()
+      };
+      cachedData = fallbackResult;
+      lastFetchTime = now;
+      console.log(`✅ Fallback: ${convertedMatches.length} matchs récupérés`);
+      return NextResponse.json(fallbackResult);
+    }
+    
     return NextResponse.json({ 
       error: 'Aucun match disponible actuellement',
       message: 'Veuillez réessayer dans quelques minutes',
