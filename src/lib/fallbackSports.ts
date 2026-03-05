@@ -4,15 +4,21 @@
  * Utilise des données réelles d'équipes avec Elo et statistiques
  */
 
+// Configuration RapidAPI (optionnel - utilise les données générées si non configuré)
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || '';
+const RAPIDAPI_HOST = process.env.RAPIDAPI_HOST || 'sportapi7.p.rapidapi.com';
+
 // Cache TTL (6 heures pour éviter trop de régénérations)
 const CACHE_TTL = 6 * 60 * 60 * 1000;
 let cache: {
   football: { data: any[]; timestamp: number };
   basketball: { data: any[]; timestamp: number };
+  hockey: { data: any[]; timestamp: number };
   lastDate: string;
 } = {
   football: { data: [], timestamp: 0 },
   basketball: { data: [], timestamp: 0 },
+  hockey: { data: [], timestamp: 0 },
   lastDate: '',
 };
 
@@ -858,6 +864,7 @@ export function clearFallbackCache(): void {
   cache = {
     football: { data: [], timestamp: 0 },
     basketball: { data: [], timestamp: 0 },
+    hockey: { data: [], timestamp: 0 },
     lastDate: '',
   };
   console.log('🗑️ Cache fallback vidé');
