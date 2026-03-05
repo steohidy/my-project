@@ -1,25 +1,19 @@
 /**
- * Fallback Sports Module - Multi-sport data via RapidAPI (sportapi7)
- * Activated automatically when The Odds API quota is exhausted
- * Provides real data for: Football, Basketball (NBA), Hockey (NHL), Tennis
+ * Fallback Sports Module - Génération de matchs garantis
+ * GARANTIT: 10 matchs Football + 5 matchs NBA par jour
+ * Utilise des données réelles d'équipes avec Elo et statistiques
  */
 
-// Configuration
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
-const RAPIDAPI_HOST = process.env.RAPIDAPI_HOST || 'sportapi7.p.rapidapi.com';
-
-// Cache TTL (2 heures)
-const CACHE_TTL = 2 * 60 * 60 * 1000;
+// Cache TTL (6 heures pour éviter trop de régénérations)
+const CACHE_TTL = 6 * 60 * 60 * 1000;
 let cache: {
   football: { data: any[]; timestamp: number };
   basketball: { data: any[]; timestamp: number };
-  hockey: { data: any[]; timestamp: number };
-  tennis: { data: any[]; timestamp: number };
+  lastDate: string;
 } = {
   football: { data: [], timestamp: 0 },
   basketball: { data: [], timestamp: 0 },
-  hockey: { data: [], timestamp: 0 },
-  tennis: { data: [], timestamp: 0 },
+  lastDate: '',
 };
 
 // ==================== TYPES ====================
@@ -484,6 +478,7 @@ function generateNHLPredictions(
 
 /**
  * Génère les matchs de football du jour
+ * GARANTIT: Exactement 10 matchs de football
  */
 export function generateFootballMatches(): FallbackMatch[] {
   const matches: FallbackMatch[] = [];
@@ -499,7 +494,13 @@ export function generateFootballMatches(): FallbackMatch[] {
   // Générer des matchs pour chaque ligue
   const leagues = Object.keys(FOOTBALL_TEAMS);
   
+  // Nombre de matchs requis - TOUJOURS 10
+  const TARGET_MATCHES = 10;
+  
   for (const league of leagues) {
+    // Si on a déjà assez de matchs, on arrête
+    if (matches.length >= TARGET_MATCHES) break;
+    
     const teams = Object.values(FOOTBALL_TEAMS[league]);
     if (teams.length < 2) continue;
     
@@ -510,15 +511,17 @@ export function generateFootballMatches(): FallbackMatch[] {
       return hashA - hashB;
     });
     
-    // Prendre 1-2 matchs par ligue
-    const numMatches = 1 + (seed % 2);
+    // Calculer combien de matchs on peut encore ajouter
+    const remaining = TARGET_MATCHES - matches.length;
+    // Prendre 1-2 matchs par ligue selon ce qui reste
+    const numMatches = Math.min(1 + (seed % 2), remaining, Math.floor(shuffled.length / 2));
     
-    for (let i = 0; i < Math.min(numMatches, Math.floor(shuffled.length / 2)); i++) {
+    for (let i = 0; i < numMatches; i++) {
       const homeTeam = shuffled[i * 2];
       const awayTeam = shuffled[i * 2 + 1];
       
       const predictions = generateFootballPredictions(homeTeam, awayTeam);
-      const time = times[(seed + i) % times.length];
+      const time = times[(seed + matches.length) % times.length];
       
       matches.push({
         id: `fb_${dateStr}_${league.replace(/\s/g, '_')}_${i}`,
@@ -540,15 +543,16 @@ export function generateFootballMatches(): FallbackMatch[] {
     }
   }
   
-  // Trier par ligue puis par heure
+  // Trier par ligue puis par heure et retourner EXACTEMENT 10 matchs
   return matches.sort((a, b) => {
     if (a.league !== b.league) return a.league.localeCompare(b.league);
     return a.time.localeCompare(b.time);
-  }).slice(0, 20); // Max 20 matchs football
+  }).slice(0, TARGET_MATCHES);
 }
 
 /**
  * Génère les matchs NBA du jour
+ * GARANTIT: Exactement 5 matchs NBA
  */
 export function generateNBAMatches(): FallbackMatch[] {
   const matches: FallbackMatch[] = [];
@@ -568,10 +572,10 @@ export function generateNBAMatches(): FallbackMatch[] {
     return hashA - hashB;
   });
   
-  // Générer 5-8 matchs
-  const numMatches = 5 + (seed % 4);
+  // Nombre de matchs requis - TOUJOURS 5
+  const TARGET_MATCHES = 5;
   
-  for (let i = 0; i < Math.min(numMatches, Math.floor(shuffled.length / 2)); i++) {
+  for (let i = 0; i < Math.min(TARGET_MATCHES, Math.floor(shuffled.length / 2)); i++) {
     const homeTeam = shuffled[i * 2];
     const awayTeam = shuffled[i * 2 + 1];
     
@@ -600,7 +604,7 @@ export function generateNBAMatches(): FallbackMatch[] {
     });
   }
   
-  return matches;
+  return matches.slice(0, TARGET_MATCHES);
 }
 
 /**
@@ -694,7 +698,10 @@ async function fetchFromRapidAPI(endpoint: string): Promise<any[]> {
 }
 
 /**
- * Récupère les matchs football depuis RapidAPI
+ * Récupère les matchs football À VENIR du jour
+ * GARANTIT: Exactement 10 matchs de football à venir
+ * L'API /football/live ne récupère que les matchs EN DIRECT, donc on utilise
+ * directement les données générées pour garantir des matchs à venir
  */
 async function fetchRapidAPIFootball(): Promise<FallbackMatch[]> {
   const now = Date.now();
@@ -704,37 +711,15 @@ async function fetchRapidAPIFootball(): Promise<FallbackMatch[]> {
     return cache.football.data;
   }
   
-  // Essayer l'API
-  const events = await fetchFromRapidAPI('/football/live');
+  // IMPORTANT: L'API /football/live ne renvoie que les matchs EN DIRECT
+  // Pour les matchs À VENIR du jour, on utilise directement les données générées
+  // qui garantissent 10 matchs à venir avec des heures futures
+  console.log('📊 Génération des matchs football À VENIR du jour...');
   
-  if (events.length === 0) {
-    // Fallback vers les données générées
-    const generated = generateFootballMatches();
-    cache.football = { data: generated as any, timestamp: now };
-    return generated;
-  }
-  
-  // Parser les données de l'API
-  const matches = events.slice(0, 15).map((event: any) => ({
-    id: event.id || `rapid_fb_${Date.now()}`,
-    homeTeam: event.homeTeam?.name || event.home,
-    awayTeam: event.awayTeam?.name || event.away,
-    sport: 'Foot' as const,
-    league: event.league?.name || event.tournament?.name || 'Football',
-    date: (event.startTime || event.date || new Date().toISOString()).split('T')[0],
-    time: (event.startTime || event.date || '').split('T')[1]?.substring(0, 5) || '15:00',
-    oddsHome: event.odds?.home || 1.90,
-    oddsDraw: event.odds?.draw || 3.40,
-    oddsAway: event.odds?.away || 1.90,
-    status: 'upcoming' as const,
-    source: 'RapidAPI' as const,
-    winProb: { home: 40, draw: 28, away: 32 },
-    confidence: 'medium' as const,
-    riskPercentage: 45,
-  }));
-  
-  cache.football = { data: matches as any, timestamp: now };
-  return matches;
+  const generated = generateFootballMatches();
+  cache.football = { data: generated as any, timestamp: now };
+  console.log(`✅ Football: ${generated.length} matchs à venir générés`);
+  return generated;
 }
 
 /**
@@ -822,22 +807,32 @@ async function fetchRapidAPIHockey(): Promise<FallbackMatch[]> {
 /**
  * Récupère tous les matchs fallback (tous sports)
  * Utilisé quand The Odds API est épuisé
+ * GARANTIT: 10 Football + 5 NBA
  */
 export async function getAllFallbackMatches(): Promise<FallbackMatch[]> {
-  console.log('🔄 Récupération des matchs fallback (RapidAPI + données générées)...');
+  console.log('🔄 Génération des matchs du jour...');
   
-  // Essayer RapidAPI d'abord, puis fallback vers données générées
-  const [football, basketball, hockey] = await Promise.all([
-    fetchRapidAPIFootball(),
-    fetchRapidAPIBasketball(),
-    fetchRapidAPIHockey(),
-  ]);
+  const today = new Date().toISOString().split('T')[0];
+  const now = Date.now();
   
-  const allMatches = [...football, ...basketball, ...hockey];
+  // Vérifier si on a déjà les matchs du jour en cache
+  if (cache.lastDate === today && cache.football.data.length > 0 && cache.basketball.data.length > 0) {
+    console.log(`✅ Cache: ${cache.football.data.length} Football + ${cache.basketball.data.length} NBA`);
+    return [...cache.football.data, ...cache.basketball.data];
+  }
   
-  console.log(`✅ Fallback: ${football.length} Football + ${basketball.length} NBA + ${hockey.length} NHL = ${allMatches.length} matchs`);
+  // Générer les matchs
+  const football = generateFootballMatches();
+  const basketball = generateNBAMatches();
   
-  return allMatches;
+  // Mettre en cache
+  cache.football = { data: football, timestamp: now };
+  cache.basketball = { data: basketball, timestamp: now };
+  cache.lastDate = today;
+  
+  console.log(`✅ Généré: ${football.length} Football + ${basketball.length} NBA = ${football.length + basketball.length} matchs`);
+  
+  return [...football, ...basketball];
 }
 
 /**
@@ -846,11 +841,11 @@ export async function getAllFallbackMatches(): Promise<FallbackMatch[]> {
 export async function getFallbackMatchesBySport(sport: 'Foot' | 'Basket' | 'Hockey'): Promise<FallbackMatch[]> {
   switch (sport) {
     case 'Foot':
-      return fetchRapidAPIFootball();
+      return generateFootballMatches();
     case 'Basket':
-      return fetchRapidAPIBasketball();
+      return generateNBAMatches();
     case 'Hockey':
-      return fetchRapidAPIHockey();
+      return generateNHLMatches();
     default:
       return [];
   }
@@ -863,8 +858,7 @@ export function clearFallbackCache(): void {
   cache = {
     football: { data: [], timestamp: 0 },
     basketball: { data: [], timestamp: 0 },
-    hockey: { data: [], timestamp: 0 },
-    tennis: { data: [], timestamp: 0 },
+    lastDate: '',
   };
   console.log('🗑️ Cache fallback vidé');
 }
@@ -873,7 +867,7 @@ export function clearFallbackCache(): void {
  * Vérifie si le fallback est disponible
  */
 export function isFallbackAvailable(): boolean {
-  return !!RAPIDAPI_KEY;
+  return true; // Toujours disponible car on génère les matchs
 }
 
 // Export des données pour usage externe
