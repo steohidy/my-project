@@ -1055,10 +1055,10 @@ function NBAMatchCard({ match, index }: { match: Match; index: number }) {
         }}>
           <div style={{ fontSize: '10px', color: '#888', marginBottom: '4px' }}>📊 SPREAD</div>
           <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#22c55e' }}>
-            {nba?.spread.favorite} ({nba?.spread.line > 0 ? '-' : '+'}{Math.abs(nba?.spread.line || 0)})
+            {nba?.spread?.favorite} ({(nba?.spread?.line ?? 0) > 0 ? '-' : '+'}{Math.abs(nba?.spread?.line ?? 0)})
           </div>
           <div style={{ fontSize: '9px', color: '#666' }}>
-            Confiance: {nba?.spread.confidence}%
+            Confiance: {nba?.spread?.confidence}%
           </div>
         </div>
         
@@ -1069,11 +1069,11 @@ function NBAMatchCard({ match, index }: { match: Match; index: number }) {
           padding: '10px'
         }}>
           <div style={{ fontSize: '10px', color: '#888', marginBottom: '4px' }}>📈 TOTAL POINTS</div>
-          <div style={{ fontSize: '14px', fontWeight: 'bold', color: nba?.totalPoints.overProb && nba.totalPoints.overProb >= 55 ? '#22c55e' : '#f97316' }}>
-            {nba?.totalPoints.recommendation}
+          <div style={{ fontSize: '14px', fontWeight: 'bold', color: (nba?.totalPoints?.overProb ?? 0) >= 55 ? '#22c55e' : '#f97316' }}>
+            {nba?.totalPoints?.recommendation}
           </div>
           <div style={{ fontSize: '9px', color: '#666' }}>
-            Prédit: {nba?.totalPoints.predicted} pts ({nba?.totalPoints.overProb}% over)
+            Prédit: {nba?.totalPoints?.predicted} pts ({nba?.totalPoints?.overProb}% over)
           </div>
         </div>
         
@@ -1085,10 +1085,10 @@ function NBAMatchCard({ match, index }: { match: Match; index: number }) {
         }}>
           <div style={{ fontSize: '10px', color: '#888', marginBottom: '4px' }}>🏀 TOP SCOREUR</div>
           <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#eab308' }}>
-            {nba?.topScorer.player}
+            {nba?.topScorer?.player}
           </div>
           <div style={{ fontSize: '9px', color: '#666' }}>
-            {nba?.topScorer.team} • ~{nba?.topScorer.predictedPoints} pts
+            {nba?.topScorer?.team} • ~{nba?.topScorer?.predictedPoints} pts
           </div>
         </div>
         
