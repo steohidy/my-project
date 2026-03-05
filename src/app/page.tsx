@@ -380,7 +380,7 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
     }, 1000);
 
     return () => clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // onLogout est une fonction stable passée par le parent, on l'ignore intentionnellement des dépendances
   }, []);
 
   // Formater le temps restant
@@ -530,7 +530,7 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
         </div>
         
         {/* Menu Items */}
-        <NavButton icon="⚽" label="Pronos" active={activeSection === 'matches'} onClick={() => setActiveSection('matches')} color="#f97316" />
+        <NavButton icon="⚽🏀" label="Pronos" active={activeSection === 'matches'} onClick={() => setActiveSection('matches')} color="#f97316" />
         <NavButton icon="🔍" label="Analyse" active={activeSection === 'analyse'} onClick={() => setActiveSection('analyse')} color="#3b82f6" />
         <NavButton icon="🛡️" label="Trap" active={activeSection === 'antitrap'} onClick={() => setActiveSection('antitrap')} color="#ef4444" />
         <NavButton icon="💰" label="Bank" active={activeSection === 'bankroll'} onClick={() => setActiveSection('bankroll')} color="#22c55e" />
@@ -697,6 +697,32 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
               </p>
             </div>
 
+            {/* Bandeau d'information horaires */}
+            <div style={{
+              background: 'linear-gradient(135deg, #1a2a1a 0%, #0a1a0a 100%)',
+              border: '1px solid #22c55e30',
+              borderRadius: '8px',
+              padding: '10px 14px',
+              marginBottom: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '16px',
+              flexWrap: 'wrap'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                <span>⚽</span>
+                <span style={{ color: '#22c55e', fontWeight: 'bold' }}>Foot:</span>
+                <span style={{ color: '#888' }}>toute la journée</span>
+              </div>
+              <div style={{ width: '1px', height: '16px', background: '#333' }}></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                <span>🏀</span>
+                <span style={{ color: '#f97316', fontWeight: 'bold' }}>Basket:</span>
+                <span style={{ color: '#888' }}>à partir de 20h</span>
+              </div>
+            </div>
+
             {/* Tabs compacts */}
             <div style={{
               display: 'flex',
@@ -708,8 +734,8 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
               <TabButtonCompact active={activeTab === 'safes'} onClick={() => setActiveTab('safes')} icon="🛡️" label="Sûrs" count={safes.length} />
               <TabButtonCompact active={activeTab === 'moderate'} onClick={() => setActiveTab('moderate')} icon="⚠️" label="Modérés" count={moderate.length} />
               <TabButtonCompact active={activeTab === 'risky'} onClick={() => setActiveTab('risky')} icon="🎯" label="Risqués" count={risky.length} />
-              <TabButtonCompact active={activeTab === 'finished'} onClick={() => setActiveTab('finished')} icon="✅" label="Terminés" count={finishedMatches.length} />
               <TabButtonCompact active={activeTab === 'all'} onClick={() => setActiveTab('all')} icon="📋" label="Tous" count={matches.length} />
+              <TabButtonCompact active={activeTab === 'finished'} onClick={() => setActiveTab('finished')} icon="✅" label="Terminés" count={finishedMatches.length} />
             </div>
 
             {/* Loading State */}
