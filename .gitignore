@@ -55,3 +55,6 @@ upload/
 # Download outputs (local only)
 download/
 .vercel
+
+# Backup folders
+backup_*/
