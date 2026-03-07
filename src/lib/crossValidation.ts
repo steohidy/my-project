@@ -539,8 +539,8 @@ async function fetchESPNNBAGames(): Promise<CrossValidatedMatch[]> {
             confidence: predictions.spread.homeProb
           },
           totalPoints: {
-            line: predictions.total.overUnder,
-            predicted: predictions.total.total,
+            line: predictions.total.line,
+            predicted: predictions.total.predicted,
             overProb: predictions.total.overProb,
             recommendation: predictions.total.overProb > 52 ? 'Over' : predictions.total.overProb < 48 ? 'Under' : 'Neutre'
           },
