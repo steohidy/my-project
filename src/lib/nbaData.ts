@@ -343,7 +343,7 @@ export function getNBAPredictions(homeTeamName: string, awayTeamName: string): {
   winProb: { home: number; away: number };
   spread: { line: number; homeProb: number };
   total: { line: number; predicted: number; overProb: number };
-  confidence: string;
+  confidence: 'low' | 'medium' | 'high';
   riskPercentage: number;
 } {
   const homeTeam = NBA_TEAMS[homeTeamName];
