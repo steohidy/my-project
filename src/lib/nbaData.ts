@@ -136,9 +136,16 @@ export async function fetchRealNBAGames(): Promise<Array<{
       if (isLive) status = 'live';
       else if (isFinished) status = 'finished';
       
-      // IMPORTANT: Utiliser la date UTC pour le stockage
+      // IMPORTANT: Calculer la date sportive (date de début en heure locale EST)
+      // Les matchs NBA se jouent en heure EST (UTC-5 ou UTC-4 en été)
       const eventDate = new Date(event.date);
       const dateUTC = eventDate.toISOString(); // Format ISO complet en UTC
+      
+      // Convertir en heure EST pour obtenir la "date sportive"
+      const estDate = new Date(eventDate.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      const gameDate = estDate.toISOString().split('T')[0]; // Date de début en EST (ex: 2026-03-06)
+      
+      // Heure UTC pour affichage
       const date = eventDate.toISOString().split('T')[0]; // YYYY-MM-DD en UTC
       const time = eventDate.toISOString().slice(11, 16); // HH:MM en UTC
       
@@ -146,9 +153,10 @@ export async function fetchRealNBAGames(): Promise<Array<{
         id: `nba_${event.id}`,
         homeTeam,
         awayTeam,
-        date,           // YYYY-MM-DD UTC
+        date,           // YYYY-MM-DD UTC (pour stockage technique)
         time,           // HH:MM UTC
         dateUTC,        // ISO complet UTC
+        gameDate,       // Date sportive (date de début en heure locale EST)
         status,
         isLive,
         homeScore: homeCompetitor?.score ? parseInt(homeCompetitor.score) : undefined,
@@ -197,6 +205,7 @@ export function getTodayNBASchedule(): Array<{
   date: string;
   time: string;
   dateUTC: string;
+  gameDate: string;
   conference: string;
   status: 'upcoming' | 'live' | 'finished';
   isLive: boolean;
@@ -215,6 +224,7 @@ export function getTodayNBASchedule(): Array<{
     date: string;
     time: string;
     dateUTC: string;
+    gameDate: string;
     conference: string;
     status: 'upcoming' | 'live' | 'finished';
     isLive: boolean;
@@ -255,6 +265,7 @@ export function getTodayNBASchedule(): Array<{
       date: dateStr,
       time: gameTimeUTC,
       dateUTC,
+      gameDate: dateStr, // Pour le fallback, même date car généré aujourd'hui
       conference: homeTeam.conference === awayTeam.conference ? homeTeam.conference : 'Inter',
       status: 'upcoming' as const,
       isLive: false

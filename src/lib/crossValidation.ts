@@ -24,7 +24,8 @@ interface CrossValidatedMatch {
   awayTeam: string;
   sport: string;
   league: string;
-  date: string;
+  date: string;           // Date UTC (stockage technique)
+  gameDate?: string;      // Date sportive (date de début en heure locale) - utilisée pour les statistiques
   oddsHome: number;
   oddsDraw: number | null;
   oddsAway: number;
@@ -186,8 +187,16 @@ const NBA_LEAGUE_NAME = 'NBA';
  * IMPORTANT: Pour les matchs NBA (00h-06h UTC), ils sont considérés comme "hier" en heure de Paris
  * mais font partie du même "jour de match" sportif
  */
-function isToday(dateString: string, sport?: string): boolean {
+function isToday(dateString: string, sport?: string, gameDate?: string): boolean {
   if (!dateString) return false;
+  
+  // Si gameDate est fourni, l'utiliser directement (date sportive)
+  // Pour NBA: gameDate = date de début en heure EST
+  // Pour Football: gameDate = date de début en heure européenne
+  if (gameDate) {
+    const todayUTC = new Date().toISOString().split('T')[0];
+    return gameDate === todayUTC;
+  }
   
   const matchDate = new Date(dateString);
   const now = new Date();
@@ -204,15 +213,6 @@ function isToday(dateString: string, sport?: string): boolean {
     now.getUTCMonth(),
     now.getUTCDate()
   ));
-  
-  // Pour les matchs NBA (00h-06h UTC), ils correspondent au "soir" du jour précédent
-  // Donc un match à 01h UTC le 5 mars est affiché comme "soir du 4 mars"
-  const matchHour = matchDate.getUTCHours();
-  
-  if (sport === 'Basket' && matchHour < 6) {
-    // Décaler d'un jour pour les matchs de nuit
-    matchDateUTC.setUTCDate(matchDateUTC.getUTCDate() - 1);
-  }
   
   // Accepter aujourd'hui et demain (pour les matchs dans les 24h)
   const tomorrowUTC = new Date(todayUTC);
@@ -540,6 +540,7 @@ async function fetchESPNNBAGames(): Promise<CrossValidatedMatch[]> {
         sport: 'Basket',
         league: 'NBA',
         date: matchDate,  // Date ISO en UTC
+        gameDate: game.gameDate || game.date,  // Date sportive (date de début en heure locale EST)
         oddsHome: predictions.oddsHome,
         oddsDraw: null,
         oddsAway: predictions.oddsAway,
@@ -1050,6 +1051,7 @@ function generateNBAFallbackMatches(): CrossValidatedMatch[] {
       sport: 'Basket',
       league: 'NBA',
       date: matchDate,  // Date ISO en UTC
+      gameDate: game.gameDate || game.date,  // Date sportive (date de début en heure locale EST)
       oddsHome: predictions.oddsHome,
       oddsDraw: null, // Pas de nul en NBA
       oddsAway: predictions.oddsAway,
