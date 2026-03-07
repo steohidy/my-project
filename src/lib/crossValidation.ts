@@ -1110,6 +1110,7 @@ function convertFallbackToValidated(fallback: FallbackMatch): CrossValidatedMatc
       over15: 72,
       bothTeamsScore: 52,
       prediction: fallback.winProb.draw && fallback.winProb.draw > 28 ? 'Match serré' : 'Over 1.5 buts',
+      basedOn: 'estimated' as DataQuality,
     } : undefined,
     // Prédictions de cartons (football uniquement)
     cardsPrediction: fallback.sport === 'Foot' ? {
