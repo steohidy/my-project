@@ -1218,23 +1218,33 @@ function FootballMatchCard({ match, index }: { match: Match; index: number }) {
   // Recommandation intelligente
   let recommendation = '';
   let recColor = '#22c55e';
+  let recommendationProb = 0; // Probabilité RÉELLE de la recommandation
+  
   if (favoriteOdds < 1.5 && favoriteProb >= 65) {
     recommendation = `✅ Victoire ${favoriteTeam}`;
+    recommendationProb = favoriteProb; // Probabilité de victoire du favori
     recColor = '#22c55e';
   } else if (favoriteOdds < 2.0 && favoriteProb >= 50) {
     recommendation = `✅ ${favoriteTeam} ou Nul`;
+    // Probabilité = victoire favori + nul
+    recommendationProb = favorite === 'home' ? homeOrDrawProb : awayOrDrawProb;
     recColor = '#22c55e';
   } else if (drawProb >= 30) {
     recommendation = `⚠️ Risque de Nul`;
+    recommendationProb = drawProb;
     recColor = '#f97316';
   } else {
     recommendation = `⏳ Match serré`;
+    recommendationProb = Math.max(homeProb, awayProb);
     recColor = '#f97316';
   }
   
-  // Taux de réussite basé sur la confiance
-  const baseSuccessRate = match.insight.confidence === 'high' ? 75 : match.insight.confidence === 'medium' ? 60 : 45;
-  const successColor = baseSuccessRate >= 70 ? '#22c55e' : baseSuccessRate >= 55 ? '#f97316' : '#ef4444';
+  // Taux de réussite = la VRAIE probabilité de la recommandation (pas un chiffre arbitraire!)
+  const successRate = recommendationProb;
+  const successColor = successRate >= 70 ? '#22c55e' : successRate >= 55 ? '#f97316' : '#ef4444';
+  
+  // Avertissement si probabilité faible
+  const lowProbWarning = successRate < 55 && recommendation.includes('✅');
   
   return (
     <div style={{
@@ -1324,9 +1334,19 @@ function FootballMatchCard({ match, index }: { match: Match; index: number }) {
         <div>
           <div style={{ color: recColor, fontSize: '14px', fontWeight: 'bold' }}>
             {recommendation}
+            {lowProbWarning && (
+              <span style={{ fontSize: '10px', color: '#ef4444', marginLeft: '6px' }}>
+                ⚠️ Risqué
+              </span>
+            )}
           </div>
           <div style={{ color: '#888', fontSize: '10px', marginTop: '2px' }}>
-            Taux de réussite estimé: <span style={{ color: successColor, fontWeight: 'bold' }}>{baseSuccessRate}%</span>
+            Probabilité: <span style={{ color: successColor, fontWeight: 'bold' }}>{successRate}%</span>
+            {successRate < 55 && (
+              <span style={{ color: '#ef4444', marginLeft: '4px' }}>
+                (seuil recommandé: 55%+)
+              </span>
+            )}
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
