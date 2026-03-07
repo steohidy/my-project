@@ -1378,10 +1378,15 @@ function FootballMatchCard({ match, index }: { match: Match; index: number }) {
             <span style={{ fontSize: '14px' }}>⚽</span>
             <div>
               <div style={{ color: match.goalsPrediction.over25 >= 55 ? '#22c55e' : '#f97316', fontWeight: 'bold' }}>
-                {match.goalsPrediction.over25 >= 55 ? 'Over 2.5' : 'Under 2.5'}
+                {match.goalsPrediction.over25 >= 55 ? 'Over 2.5 Buts ✓' : 'Under 2.5 Buts ✓'}
               </div>
               <div style={{ color: '#888', fontSize: '9px' }}>
-                {match.goalsPrediction.over25 >= 55 ? match.goalsPrediction.over25 : match.goalsPrediction.under25}% • {match.goalsPrediction.total} buts attendus
+                {match.goalsPrediction.over25 >= 55 
+                  ? `Plus de 2.5 buts: ${match.goalsPrediction.over25}% de chance` 
+                  : `Moins de 2.5 buts: ${match.goalsPrediction.under25}% de chance`}
+              </div>
+              <div style={{ color: '#666', fontSize: '8px', marginTop: '2px' }}>
+                Moyenne: {match.goalsPrediction.total} buts/match prévu
               </div>
             </div>
           </div>
@@ -1402,10 +1407,17 @@ function FootballMatchCard({ match, index }: { match: Match; index: number }) {
             <span style={{ fontSize: '14px' }}>🥅</span>
             <div>
               <div style={{ color: match.advancedPredictions.btts.yes >= 55 ? '#22c55e' : '#ef4444', fontWeight: 'bold' }}>
-                BTTS: {match.advancedPredictions.btts.yes >= 55 ? 'Oui' : 'Non'}
+                {match.advancedPredictions.btts.yes >= 55 
+                  ? 'Les 2 équipes marquent ✓' 
+                  : match.advancedPredictions.btts.yes >= 48 
+                    ? 'BTTS incertain ⚠️' 
+                    : '1 équipe à 0 probable'}
               </div>
               <div style={{ color: '#888', fontSize: '9px' }}>
-                Oui: {match.advancedPredictions.btts.yes}% | Non: {match.advancedPredictions.btts.no}%
+                Les 2 marquent: {match.advancedPredictions.btts.yes}% | Au moins 1 à 0: {match.advancedPredictions.btts.no}%
+              </div>
+              <div style={{ color: '#666', fontSize: '8px', marginTop: '2px' }}>
+                Seuil recommandé: 55%+ pour parier "Oui"
               </div>
             </div>
           </div>
@@ -1425,10 +1437,15 @@ function FootballMatchCard({ match, index }: { match: Match; index: number }) {
             <span style={{ fontSize: '14px' }}>🟨</span>
             <div>
               <div style={{ color: '#eab308', fontWeight: 'bold' }}>
-                {match.cardsPrediction.over45 >= 55 ? 'Over 4.5' : 'Under 4.5'} cartons
+                {match.cardsPrediction.over45 >= 55 ? 'Plus de 4.5 cartons ✓' : 'Moins de 4.5 cartons ✓'}
               </div>
               <div style={{ color: '#888', fontSize: '9px' }}>
-                {match.cardsPrediction.total} attendus • Rouge: {match.cardsPrediction.redCardRisk}%
+                {match.cardsPrediction.over45 >= 55 
+                  ? `Plus de 4.5 cartons: ${match.cardsPrediction.over45}% de chance`
+                  : `Moins de 4.5 cartons: ${match.cardsPrediction.under45}% de chance`}
+              </div>
+              <div style={{ color: '#666', fontSize: '8px', marginTop: '2px' }}>
+                {match.cardsPrediction.total} cartons attendus • Carton rouge: {match.cardsPrediction.redCardRisk}% de risque
               </div>
             </div>
           </div>
@@ -1448,10 +1465,15 @@ function FootballMatchCard({ match, index }: { match: Match; index: number }) {
             <span style={{ fontSize: '14px' }}>🚩</span>
             <div>
               <div style={{ color: '#3b82f6', fontWeight: 'bold' }}>
-                {match.cornersPrediction.over85 >= 55 ? 'Over 8.5' : 'Under 8.5'} corners
+                {match.cornersPrediction.over85 >= 55 ? 'Plus de 8.5 corners ✓' : 'Moins de 8.5 corners ✓'}
               </div>
               <div style={{ color: '#888', fontSize: '9px' }}>
-                {match.cornersPrediction.total} attendus • {match.cornersPrediction.over85}% Over
+                {match.cornersPrediction.over85 >= 55 
+                  ? `Plus de 8.5 corners: ${match.cornersPrediction.over85}% de chance`
+                  : `Moins de 8.5 corners: ${match.cornersPrediction.under85}% de chance`}
+              </div>
+              <div style={{ color: '#666', fontSize: '8px', marginTop: '2px' }}>
+                {match.cornersPrediction.total} corners attendus dans le match
               </div>
             </div>
           </div>
@@ -2518,41 +2540,58 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
                 fontWeight: 'bold',
                 color: '#22c55e'
               }}>
-                ⚽ Buts attendus: {match.goalsPrediction.total}
+                ⚽ Prédiction Buts
+              </div>
+              <div style={{ 
+                fontSize: '10px', 
+                color: '#666', 
+                marginBottom: '8px',
+                padding: '4px 8px',
+                background: '#1a1a1a',
+                borderRadius: '4px'
+              }}>
+                📈 Moyenne prévue: <strong style={{ color: '#fff' }}>{match.goalsPrediction.total} buts</strong> par match
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '11px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#888' }}>Over 2.5:</span>
+                  <span style={{ color: '#888' }}>Plus de 2.5:</span>
                   <span style={{ color: match.goalsPrediction.over25 >= 55 ? '#22c55e' : '#888', fontWeight: 'bold' }}>
                     {match.goalsPrediction.over25}%
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#888' }}>Under 2.5:</span>
+                  <span style={{ color: '#888' }}>Moins de 2.5:</span>
                   <span style={{ color: match.goalsPrediction.under25 >= 55 ? '#22c55e' : '#888', fontWeight: 'bold' }}>
                     {match.goalsPrediction.under25}%
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#888' }}>Over 1.5:</span>
-                  <span style={{ color: '#888' }}>{match.goalsPrediction.over15}%</span>
+                  <span style={{ color: '#888' }}>Plus de 1.5:</span>
+                  <span style={{ color: match.goalsPrediction.over15 >= 55 ? '#22c55e' : '#888', fontWeight: 'bold' }}>
+                    {match.goalsPrediction.over15}%
+                  </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: '#888' }}>Les 2 marquent:</span>
-                  <span style={{ color: '#888' }}>{match.goalsPrediction.bothTeamsScore}%</span>
+                  <span style={{ color: match.goalsPrediction.bothTeamsScore >= 55 ? '#22c55e' : '#888', fontWeight: 'bold' }}>
+                    {match.goalsPrediction.bothTeamsScore}%
+                  </span>
                 </div>
               </div>
               <div style={{ 
-                marginTop: '6px', 
-                padding: '4px 8px', 
-                background: '#22c55e20', 
+                marginTop: '8px', 
+                padding: '6px 8px', 
+                background: match.goalsPrediction.over25 >= 55 ? '#22c55e20' : '#1a1a1a', 
                 borderRadius: '4px',
-                fontSize: '11px',
-                color: '#22c55e',
+                fontSize: '10px',
+                color: match.goalsPrediction.over25 >= 55 ? '#22c55e' : '#f97316',
                 fontWeight: 'bold',
-                textAlign: 'center'
+                textAlign: 'center',
+                border: match.goalsPrediction.over25 >= 55 ? '1px solid #22c55e30' : 'none'
               }}>
-                📊 {match.goalsPrediction.prediction}
+                {match.goalsPrediction.over25 >= 55 
+                  ? `✓ Recommandation: PLUS DE 2.5 BUTS (${match.goalsPrediction.over25}% de chance)`
+                  : `✓ Recommandation: MOINS DE 2.5 BUTS (${match.goalsPrediction.under25}% de chance)`}
               </div>
             </div>
           )}
@@ -2575,17 +2614,27 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
                 fontWeight: 'bold',
                 color: '#eab308'
               }}>
-                🟨 Cartons attendus: {match.cardsPrediction.total}
+                🟨 Prédiction Cartons
+              </div>
+              <div style={{ 
+                fontSize: '10px', 
+                color: '#666', 
+                marginBottom: '8px',
+                padding: '4px 8px',
+                background: '#1a1a1a',
+                borderRadius: '4px'
+              }}>
+                📈 Moyenne prévue: <strong style={{ color: '#fff' }}>{match.cardsPrediction.total} cartons</strong> (jaunes + rouges)
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '11px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#888' }}>Over 4.5:</span>
+                  <span style={{ color: '#888' }}>Plus de 4.5:</span>
                   <span style={{ color: match.cardsPrediction.over45 >= 55 ? '#eab308' : '#888', fontWeight: 'bold' }}>
                     {match.cardsPrediction.over45}%
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#888' }}>Under 4.5:</span>
+                  <span style={{ color: '#888' }}>Moins de 4.5:</span>
                   <span style={{ color: match.cardsPrediction.under45 >= 55 ? '#eab308' : '#888', fontWeight: 'bold' }}>
                     {match.cardsPrediction.under45}%
                   </span>
@@ -2598,16 +2647,19 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
                 </div>
               </div>
               <div style={{ 
-                marginTop: '6px', 
-                padding: '4px 8px', 
-                background: '#eab30820', 
+                marginTop: '8px', 
+                padding: '6px 8px', 
+                background: match.cardsPrediction.over45 >= 55 ? '#eab30820' : '#1a1a1a', 
                 borderRadius: '4px',
-                fontSize: '11px',
-                color: '#eab308',
+                fontSize: '10px',
+                color: match.cardsPrediction.over45 >= 55 ? '#eab308' : '#f97316',
                 fontWeight: 'bold',
-                textAlign: 'center'
+                textAlign: 'center',
+                border: match.cardsPrediction.over45 >= 55 ? '1px solid #eab30830' : 'none'
               }}>
-                📊 {match.cardsPrediction.prediction}
+                {match.cardsPrediction.over45 >= 55 
+                  ? `✓ Recommandation: PLUS DE 4.5 CARTONS (${match.cardsPrediction.over45}% de chance)`
+                  : `✓ Recommandation: MOINS DE 4.5 CARTONS (${match.cardsPrediction.under45}% de chance)`}
               </div>
             </div>
           )}
