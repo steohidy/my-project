@@ -11,8 +11,7 @@
  * - Les prédictions "estimated" sont clairement identifiées
  */
 
-import { fetchRealNBAGames, getTodayNBASchedule, getNBAPredictions } from './nbaData';
-import { getAllFallbackMatches, isFallbackAvailable, FallbackMatch } from './fallbackSports';
+import { fetchRealNBAGames, getNBAPredictions } from './nbaData';
 import { analyzeMatchWithRealData, calculateFormScore } from './apiFootball';
 
 // Type pour la qualité des données
@@ -32,6 +31,12 @@ interface CrossValidatedMatch {
   status: string;
   sources: string[]; // Liste des sources
   timeSlot?: 'day' | 'night';
+  // Live status
+  isLive?: boolean;
+  homeScore?: number;
+  awayScore?: number;
+  period?: number;
+  clock?: string;
   insight: {
     riskPercentage: number;
     valueBetDetected: boolean;
@@ -1232,22 +1237,16 @@ export async function getCrossValidatedMatches(): Promise<{
   
   console.log(`📊 Sources: Odds API (${oddsApiMatches.length}), Football-Data (${footballDataMatches.length}), ESPN NBA (${espnNBAGames.length})`);
   
-  // DÉTECTION: Aucun match de l'API = utiliser fallback
-  const footballFromApi = oddsApiMatches.filter((m: any) => !m.sport_key?.includes('basketball'));
-  const hasApiFootball = footballFromApi.length >= 5;
-  
+  // ===== IMPORTANT: DONNÉES RÉELLES UNIQUEMENT =====
+  // Plus de fallback/fictif - si les APIs ne renvoient rien, on affiche "Aucun match"
   let validatedMatches: CrossValidatedMatch[] = [];
   
-  if (hasApiFootball) {
-    // API fonctionne - utiliser les données réelles
-    console.log('✅ API Odds fonctionne - Utilisation des données réelles');
+  // Utiliser uniquement les données des APIs réelles
+  if (oddsApiMatches.length > 0 || footballDataMatches.length > 0) {
+    console.log('✅ Données réelles des APIs');
     validatedMatches = crossValidateMatches(oddsApiMatches, footballDataMatches);
   } else {
-    // API épuisée ou peu de matchs - utiliser le fallback
-    console.log('⚠️ API Odds épuisée ou peu de matchs - Activation du fallback');
-    const fallbackMatches = await getAllFallbackMatches();
-    validatedMatches = fallbackMatches.map(convertFallbackToValidated);
-    console.log(`✅ Fallback: ${validatedMatches.length} matchs récupérés`);
+    console.log('⚠️ Aucune donnée football des APIs');
   }
   
   // ===== AJOUTER LES VRAIS MATCHS NBA ESPN =====
