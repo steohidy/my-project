@@ -339,11 +339,23 @@ function distributeMatchesByTimeSlot(
   const footballMatches = matchesWithSlot.filter(m => m.sport === 'Foot');
   const nbaMatches = matchesWithSlot.filter(m => m.sport === 'Basket');
   
-  // Football: 10 matchs pour la journée (00h-20h GMT)
-  const selectedFootball = footballMatches.slice(0, 10);
+  // ===== LOGIQUE ADAPTATIVE =====
+  // Si NBA disponible → 10 Foot + NBA
+  // Si NBA indisponible (nuit/été) → Plus de Foot
+  let selectedFootball: CrossValidatedMatch[];
+  let selectedNBA: CrossValidatedMatch[];
   
-  // NBA: 5 matchs pour la nuit (20h-00h GMT)
-  const selectedNBA = nbaMatches.slice(0, 5);
+  if (nbaMatches.length > 0) {
+    // NBA disponible: 10 Foot + NBA
+    selectedFootball = footballMatches.slice(0, 10);
+    selectedNBA = nbaMatches.slice(0, 5);
+    console.log(`🏀 NBA disponible: ${selectedNBA.length} matchs`);
+  } else {
+    // Pas de NBA (nuit européenne, off-season): Plus de Foot
+    selectedFootball = footballMatches.slice(0, 15);
+    selectedNBA = [];
+    console.log(`🌙 NBA non disponible - Affichage de ${selectedFootball.length} matchs Foot`);
+  }
   
   // Combiner: Football d'abord, puis NBA
   const result = [...selectedFootball, ...selectedNBA];
@@ -839,27 +851,49 @@ function crossValidateMatches(
     
     if (oddsHome === 0 || oddsAway === 0) continue;
     
-    // Calcul du risque amélioré
-    const minOdds = Math.min(oddsHome, oddsAway);
-    const maxOdds = Math.max(oddsHome, oddsAway);
-    const disparity = maxOdds - minOdds;
+    // ===== CALCUL DES PROBABILITÉS RÉELLES =====
+    const totalImplied = (1/oddsHome) + (1/oddsAway) + (oddsDraw ? 1/oddsDraw : 0);
     
+    // Probabilités implicites normalisées (en pourcentage)
+    const homeWinProb = Math.round((1/oddsHome) / totalImplied * 100);
+    const awayWinProb = Math.round((1/oddsAway) / totalImplied * 100);
+    const drawProb = oddsDraw ? Math.round((1/oddsDraw) / totalImplied * 100) : 0;
+    
+    // Déterminer le favori
+    const favorite = oddsHome < oddsAway ? 'home' : 'away';
+    const favoriteProb = favorite === 'home' ? homeWinProb : awayWinProb;
+    const favoriteOdds = favorite === 'home' ? oddsHome : oddsAway;
+    
+    // ===== CALCUL DU RISQUE BASÉ SUR LA RECOMMANDATION =====
+    // Le risque = 100 - probabilité de réussite de la recommandation
+    let recommendationSuccessProb = 50;
     let riskPercentage = 50;
-    if (minOdds < 1.3) riskPercentage = 15;
-    else if (minOdds < 1.5) riskPercentage = 20;
-    else if (minOdds < 1.8) riskPercentage = 30;
-    else if (minOdds < 2.0) riskPercentage = 35;
-    else if (minOdds < 2.5) riskPercentage = 45;
-    else if (minOdds < 3.0) riskPercentage = 55;
-    else riskPercentage = 70;
     
-    // Bonus de confiance si plusieurs sources
+    // Si cote du favori < 1.5 → Recommandation "Victoire Favori"
+    if (favoriteOdds < 1.5 && favoriteProb >= 65) {
+      recommendationSuccessProb = favoriteProb;
+    }
+    // Si cote du favori < 2.0 → Recommandation "Favori ou Nul" (Double Chance)
+    else if (favoriteOdds < 2.0 && favoriteProb >= 50) {
+      // Probabilité = Victoire favori + Nul
+      recommendationSuccessProb = favorite === 'home' 
+        ? homeWinProb + drawProb 
+        : awayWinProb + drawProb;
+    }
+    // Sinon → Match serré, probabilité basée sur le favori
+    else {
+      recommendationSuccessProb = Math.max(homeWinProb, awayWinProb);
+    }
+    
+    // Le risque est l'inverse de la probabilité de réussite
+    riskPercentage = 100 - recommendationSuccessProb;
+    
+    // Ajustement pour sources multiples (plus de confiance)
     if (hasMultipleSources) {
-      riskPercentage = Math.max(riskPercentage - 5, 15);
+      riskPercentage = Math.max(riskPercentage - 5, 10);
     }
     
     // Détection de value bet améliorée
-    const totalImplied = (1/oddsHome) + (1/oddsAway) + (oddsDraw ? 1/oddsDraw : 0);
     const margin = totalImplied - 1;
     const hasValueBet = margin > 0.03;
     
