@@ -786,6 +786,152 @@ function calculateAdvancedPredictions(
 }
 
 /**
+ * Traite les matchs de Football-Data API comme source PRINCIPALE
+ * Enrichit avec les cotes de Odds API si disponibles
+ * SINON: utilise des cotes estimées basées sur les probabilités implicites
+ */
+function processFootballDataMatches(
+  footballDataMatches: any[],
+  oddsApiMatches: any[]
+): CrossValidatedMatch[] {
+  const validatedMatches: CrossValidatedMatch[] = [];
+  
+  // Créer un index des cotes Odds API pour recherche rapide
+  const oddsIndex = new Map<string, any>();
+  for (const oddsMatch of oddsApiMatches) {
+    const homeKey = normalizeTeamName(oddsMatch.home_team || '');
+    const awayKey = normalizeTeamName(oddsMatch.away_team || '');
+    const key = `${homeKey}-${awayKey}`;
+    oddsIndex.set(key, oddsMatch);
+  }
+  
+  // Traiter chaque match Football-Data
+  for (const fdMatch of footballDataMatches) {
+    const homeTeam = fdMatch.homeTeam?.name || fdMatch.homeTeam || 'Unknown';
+    const awayTeam = fdMatch.awayTeam?.name || fdMatch.awayTeam || 'Unknown';
+    
+    const homeKey = normalizeTeamName(homeTeam);
+    const awayKey = normalizeTeamName(awayTeam);
+    const crossKey = `${homeKey}-${awayKey}`;
+    
+    // Chercher les cotes correspondantes dans Odds API
+    const oddsMatch = oddsIndex.get(crossKey);
+    
+    let oddsHome = 0;
+    let oddsDraw: number | null = null;
+    let oddsAway = 0;
+    let hasOddsFromApi = false;
+    
+    if (oddsMatch) {
+      // Extraire les cotes de Odds API
+      const bookmaker = oddsMatch.bookmakers?.[0];
+      const h2hMarket = bookmaker?.markets?.find((m: any) => m.key === 'h2h');
+      const outcomes = h2hMarket?.outcomes || [];
+      
+      for (const outcome of outcomes) {
+        const outcomeName = normalizeTeamName(outcome.name || '');
+        const price = outcome.price;
+        const name = outcome.name?.toLowerCase() || '';
+        
+        if (name === 'draw' || name === 'x' || name === 'nul') {
+          oddsDraw = price;
+        } else if (outcomeName === homeKey || outcomeName.includes(homeKey) || homeKey.includes(outcomeName)) {
+          oddsHome = price;
+        } else if (outcomeName === awayKey || outcomeName.includes(awayKey) || awayKey.includes(outcomeName)) {
+          oddsAway = price;
+        }
+      }
+      
+      if (oddsHome > 0 && oddsAway > 0) {
+        hasOddsFromApi = true;
+      }
+    }
+    
+    // Si pas de cotes de Odds API, estimer à partir des probabilités
+    if (!hasOddsFromApi) {
+      // Utiliser les stats/elo si disponibles, sinon estimation par défaut
+      const homeWinProb = fdMatch.homeTeam?.probability || fdMatch.probability?.home || 0.45;
+      const awayWinProb = fdMatch.awayTeam?.probability || fdMatch.probability?.away || 0.30;
+      const drawProb = fdMatch.probability?.draw || 0.25;
+      
+      // Calculer les cotes décimales depuis les probabilités
+      oddsHome = Math.round((1 / homeWinProb) * 100) / 100;
+      oddsDraw = Math.round((1 / drawProb) * 100) / 100;
+      oddsAway = Math.round((1 / awayWinProb) * 100) / 100;
+      
+      // S'assurer que les cotes sont réalistes
+      oddsHome = Math.max(1.1, Math.min(15, oddsHome));
+      oddsDraw = Math.max(2.5, Math.min(8, oddsDraw || 3.5));
+      oddsAway = Math.max(1.1, Math.min(15, oddsAway));
+    }
+    
+    // Calculer le risque basé sur les cotes
+    const minOdds = Math.min(oddsHome, oddsAway);
+    let riskPercentage = 50;
+    if (minOdds < 1.3) riskPercentage = 15;
+    else if (minOdds < 1.5) riskPercentage = 20;
+    else if (minOdds < 1.8) riskPercentage = 30;
+    else if (minOdds < 2.0) riskPercentage = 35;
+    else if (minOdds < 2.5) riskPercentage = 45;
+    else if (minOdds < 3.0) riskPercentage = 55;
+    else riskPercentage = 70;
+    
+    // Déterminer la ligue
+    const competition = fdMatch.competition?.name || fdMatch.league || 'Autre';
+    const leagueName = competition;
+    
+    // Confiance
+    let confidence: string;
+    if (riskPercentage <= 40) confidence = 'high';
+    else if (riskPercentage <= 55) confidence = 'medium';
+    else confidence = 'low';
+    
+    // Calculer les prédictions de buts
+    const goalsPrediction = calculateGoalsPredictionFromOdds(oddsHome, oddsAway, oddsDraw);
+    const advancedPredictions = calculateAdvancedPredictions(oddsHome, oddsAway, oddsDraw, goalsPrediction);
+    
+    const match: CrossValidatedMatch = {
+      id: fdMatch.id || `fd_${homeTeam}_${awayTeam}_${Date.now()}`,
+      homeTeam,
+      awayTeam,
+      sport: 'Foot',
+      league: leagueName,
+      date: fdMatch.utcDate || fdMatch.date || new Date().toISOString(),
+      oddsHome,
+      oddsDraw,
+      oddsAway,
+      status: fdMatch.status || 'upcoming',
+      sources: hasOddsFromApi ? ['Football-Data API', 'Odds API'] : ['Football-Data API'],
+      insight: {
+        riskPercentage,
+        valueBetDetected: false,
+        valueBetType: null,
+        confidence,
+        crossValidation: {
+          sourcesCount: hasOddsFromApi ? 2 : 1,
+          oddsConsensus: hasOddsFromApi,
+          dataQuality: hasOddsFromApi ? 'high' : 'medium',
+        },
+      },
+      dataQuality: {
+        result: hasOddsFromApi ? 'real' : 'estimated',
+        goals: 'estimated',
+        cards: 'none',
+        corners: 'none',
+      },
+      goalsPrediction,
+      advancedPredictions,
+    };
+    
+    validatedMatches.push(match);
+  }
+  
+  console.log(`📋 processFootballDataMatches: ${validatedMatches.length} matchs traités (${validatedMatches.filter(m => m.sources?.includes('Odds API')).length} avec cotes réelles)`);
+  
+  return validatedMatches;
+}
+
+/**
  * Croise les données des deux sources
  */
 function crossValidateMatches(
@@ -1237,14 +1383,17 @@ export async function getCrossValidatedMatches(): Promise<{
   
   console.log(`📊 Sources: Odds API (${oddsApiMatches.length}), Football-Data (${footballDataMatches.length}), ESPN NBA (${espnNBAGames.length})`);
   
-  // ===== IMPORTANT: DONNÉES RÉELLES UNIQUEMENT =====
-  // Plus de fallback/fictif - si les APIs ne renvoient rien, on affiche "Aucun match"
+  // ===== LOGIQUE INVERSÉE: Football-Data PRINCIPAL, Odds API SECONDAIRE =====
+  // Football-Data API = source principale des matchs (toujours disponible)
+  // The Odds API = source secondaire pour les cotes (quota limité)
   let validatedMatches: CrossValidatedMatch[] = [];
   
-  // Utiliser uniquement les données des APIs réelles
-  if (oddsApiMatches.length > 0 || footballDataMatches.length > 0) {
-    console.log('✅ Données réelles des APIs');
-    validatedMatches = crossValidateMatches(oddsApiMatches, footballDataMatches);
+  if (footballDataMatches.length > 0) {
+    console.log('✅ Football-Data API comme source principale');
+    validatedMatches = processFootballDataMatches(footballDataMatches, oddsApiMatches);
+  } else if (oddsApiMatches.length > 0) {
+    console.log('✅ Odds API comme fallback (pas de Football-Data)');
+    validatedMatches = crossValidateMatches(oddsApiMatches, []);
   } else {
     console.log('⚠️ Aucune donnée football des APIs');
   }
