@@ -59,8 +59,22 @@ interface CrossValidatedMatch {
     prediction: string;
     basedOn: DataQuality; // 'real' ou 'estimated'
   };
-  // Cartons - SUPPRIMÉ (pas de données réelles disponibles)
-  // Les prédictions de cartons étaient basées sur des modèles théoriques sans données réelles
+  // Prédictions de cartons (football uniquement)
+  cardsPrediction?: {
+    total: number;
+    over45: number;
+    under45: number;
+    redCardRisk: number;
+    prediction: string;
+  };
+  // Prédictions de corners (football uniquement)
+  cornersPrediction?: {
+    total: number;
+    over85: number;
+    under85: number;
+    over95: number;
+    prediction: string;
+  };
   // Prédictions avancées (Football) - avec source
   advancedPredictions?: {
     btts: { yes: number; no: number; basedOn: DataQuality };
