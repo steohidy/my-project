@@ -194,6 +194,8 @@ export function getTodayNBASchedule(): Array<{
   time: string;
   dateUTC: string;
   conference: string;
+  status: 'upcoming' | 'live' | 'finished';
+  isLive: boolean;
 }> {
   const now = new Date();
   const dateStr = now.toISOString().split('T')[0];
@@ -210,6 +212,8 @@ export function getTodayNBASchedule(): Array<{
     time: string;
     dateUTC: string;
     conference: string;
+    status: 'upcoming' | 'live' | 'finished';
+    isLive: boolean;
   }> = [];
   
   // Use date-based seed for consistent daily matchups
@@ -247,7 +251,9 @@ export function getTodayNBASchedule(): Array<{
       date: dateStr,
       time: gameTimeUTC,
       dateUTC,
-      conference: homeTeam.conference === awayTeam.conference ? homeTeam.conference : 'Inter'
+      conference: homeTeam.conference === awayTeam.conference ? homeTeam.conference : 'Inter',
+      status: 'upcoming' as const,
+      isLive: false
     });
   }
   

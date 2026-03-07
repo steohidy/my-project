@@ -122,6 +122,19 @@ interface CrossValidatedMatch {
   isLive?: boolean;
   period?: number;
   clock?: string;
+  // Impact des blessures
+  injuryImpact?: {
+    homeInjuries: number;
+    awayInjuries: number;
+    impactLevel: 'low' | 'medium' | 'high';
+    affectedPlayers: string[];
+  };
+  injuryReasoning?: string[];
+  injuryRecommendation?: string;
+  injuries?: {
+    homeTeam: any[];
+    awayTeam: any[];
+  };
 }
 
 // Interface pour les stats de timing
@@ -1257,17 +1270,17 @@ export async function getCrossValidatedMatches(): Promise<{
           
           const totalKeyInjuries = homeKeyInjuries.length + awayKeyInjuries.length;
           
-          let impact: 'none' | 'low' | 'medium' | 'high' = 'none';
+          let impactLevel: 'none' | 'low' | 'medium' | 'high' = 'none';
           let riskAdjustment = 0;
           
           if (totalKeyInjuries >= 3) {
-            impact = 'high';
+            impactLevel = 'high';
             riskAdjustment = 15;
           } else if (totalKeyInjuries >= 2 || injuryData.totalInjuries >= 4) {
-            impact = 'medium';
+            impactLevel = 'medium';
             riskAdjustment = 10;
           } else if (injuryData.totalInjuries >= 1) {
-            impact = 'low';
+            impactLevel = 'low';
             riskAdjustment = 5;
           }
           
@@ -1280,7 +1293,12 @@ export async function getCrossValidatedMatches(): Promise<{
                 ...distributedMatches[idx].insight,
                 riskPercentage: Math.min(80, distributedMatches[idx].insight.riskPercentage + riskAdjustment)
               },
-              injuryImpact: impact,
+              injuryImpact: {
+                homeInjuries: injuryData.homeTeam.injuries.length,
+                awayInjuries: injuryData.awayTeam.injuries.length,
+                impactLevel: impactLevel === 'none' ? 'low' : impactLevel,
+                affectedPlayers: [...homeKeyInjuries, ...awayKeyInjuries].map(inj => inj.player)
+              },
               injuryReasoning: injuryData.summary ? [injuryData.summary] : [],
               injuryRecommendation: injuryData.summary,
               injuries: {
@@ -1486,18 +1504,18 @@ export async function getCrossValidatedMatches(): Promise<{
             
             const totalKeyInjuries = homeKeyInjuries.length + awayKeyInjuries.length;
             
-            let impact: 'none' | 'low' | 'medium' | 'high' = 'none';
+            let impactLevel: 'none' | 'low' | 'medium' | 'high' = 'none';
             let adjustedProb = livePreds.homeWinProb;
             let riskAdjustment = 0;
             
             if (totalKeyInjuries >= 3) {
-              impact = 'high';
+              impactLevel = 'high';
               riskAdjustment = 15;
             } else if (totalKeyInjuries >= 2 || injuryData.totalInjuries >= 4) {
-              impact = 'medium';
+              impactLevel = 'medium';
               riskAdjustment = 10;
             } else if (injuryData.totalInjuries >= 1) {
-              impact = 'low';
+              impactLevel = 'low';
               riskAdjustment = 5;
             }
             
@@ -1537,7 +1555,12 @@ export async function getCrossValidatedMatches(): Promise<{
                   },
                   confidence: livePreds.confidence
                 },
-                injuryImpact: impact,
+                injuryImpact: {
+                  homeInjuries: injuryData.homeTeam.injuries.length,
+                  awayInjuries: injuryData.awayTeam.injuries.length,
+                  impactLevel: impactLevel === 'none' ? 'low' : impactLevel,
+                  affectedPlayers: [...homeKeyInjuries, ...awayKeyInjuries].map((inj: any) => inj.player)
+                },
                 injuryReasoning: injuryData.summary ? [injuryData.summary] : [],
                 injuryRecommendation: injuryData.summary,
                 injuries: {
