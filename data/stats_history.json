@@ -1,0 +1,49 @@
+{
+  "description": "Historique des statistiques journalières pour calculs hebdomadaires et mensuels",
+  "dailyStats": [
+    {
+      "date": "2026-03-05",
+      "stats": {
+        "results": { "total": 4, "correct": 3, "rate": 75 },
+        "goals": { "total": 4, "correct": 4, "rate": 100 },
+        "cards": { "total": 0, "correct": 0, "rate": 0 },
+        "overall": 87,
+        "pending": 0,
+        "completed": 4,
+        "wins": 3,
+        "losses": 1,
+        "winRate": 75
+      },
+      "predictions": [
+        { "matchId": "foot_2026-03-05_001", "homeTeam": "Liverpool", "awayTeam": "Southampton", "result": "home", "prediction": "home", "correct": true, "goalsPrediction": "Over 2.5", "goalsCorrect": true },
+        { "matchId": "foot_2026-03-05_002", "homeTeam": "Real Madrid", "awayTeam": "Girona", "result": "home", "prediction": "home", "correct": true, "goalsPrediction": "Over 1.5", "goalsCorrect": true },
+        { "matchId": "foot_2026-03-05_003", "homeTeam": "Bayern Munich", "awayTeam": "Freiburg", "result": "draw", "prediction": "home", "correct": false, "goalsPrediction": "Over 2.5", "goalsCorrect": true },
+        { "matchId": "foot_2026-03-05_004", "homeTeam": "PSG", "awayTeam": "Nice", "result": "home", "prediction": "home", "correct": true, "goalsPrediction": "Over 2.5", "goalsCorrect": true }
+      ]
+    },
+    {
+      "date": "2026-03-06",
+      "stats": {
+        "results": { "total": 4, "correct": 3, "rate": 75 },
+        "goals": { "total": 4, "correct": 4, "rate": 100 },
+        "cards": { "total": 0, "correct": 0, "rate": 0 },
+        "overall": 87,
+        "pending": 0,
+        "completed": 4,
+        "wins": 3,
+        "losses": 1,
+        "winRate": 75
+      },
+      "predictions": [
+        { "matchId": "foot_2026-03-06_001", "homeTeam": "Inter Milan", "awayTeam": "AC Milan", "result": "home", "prediction": "home", "correct": true, "goalsPrediction": "Under 2.5", "goalsCorrect": true },
+        { "matchId": "foot_2026-03-06_002", "homeTeam": "Barcelona", "awayTeam": "Real Sociedad", "result": "home", "prediction": "home", "correct": true, "goalsPrediction": "Over 1.5", "goalsCorrect": true },
+        { "matchId": "foot_2026-03-06_003", "homeTeam": "Juventus", "awayTeam": "Napoli", "result": "away", "prediction": "draw", "correct": false, "goalsPrediction": "Under 2.5", "goalsCorrect": true },
+        { "matchId": "foot_2026-03-06_004", "homeTeam": "Tottenham", "awayTeam": "Everton", "result": "home", "prediction": "home", "correct": true, "goalsPrediction": "Over 1.5", "goalsCorrect": true }
+      ]
+    }
+  ],
+  "weeklyStats": [],
+  "monthlyStats": [],
+  "lastArchiveDate": "2026-03-06",
+  "version": "1.0"
+}
