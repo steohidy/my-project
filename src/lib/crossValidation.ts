@@ -102,6 +102,12 @@ interface CrossValidatedMatch {
     keyMatchup: string;
     confidence: 'high' | 'medium' | 'low';
   };
+  // Propriétés pour les matchs en direct (NBA)
+  homeScore?: number;
+  awayScore?: number;
+  isLive?: boolean;
+  period?: number;
+  clock?: string;
 }
 
 // Interface pour les stats de timing
