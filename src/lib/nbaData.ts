@@ -77,6 +77,7 @@ export async function fetchRealNBAGames(): Promise<Array<{
   date: string;       // Format: YYYY-MM-DD (date UTC)
   time: string;       // Format: HH:MM (heure UTC)
   dateUTC: string;    // Format ISO complet en UTC
+  gameDate: string;   // Date sportive (date de début en heure locale EST)
   status: 'upcoming' | 'live' | 'finished';
   isLive: boolean;
   homeScore?: number;
