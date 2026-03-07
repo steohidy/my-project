@@ -1130,12 +1130,13 @@ function convertFallbackToValidated(fallback: FallbackMatch): CrossValidatedMatc
     } : undefined,
     // Prédictions avancées (football)
     advancedPredictions: fallback.sport === 'Foot' ? {
-      btts: { yes: 52, no: 48 },
+      btts: { yes: 52, no: 48, basedOn: 'estimated' as DataQuality },
       correctScore: [],
       halfTime: {
         home: Math.round(fallback.winProb.home * 0.8),
         draw: fallback.winProb.draw ? Math.round(fallback.winProb.draw * 1.3) : 15,
         away: Math.round(fallback.winProb.away * 0.8),
+        basedOn: 'estimated' as DataQuality,
       },
     } : undefined,
     // Prédictions NBA (basket uniquement)
