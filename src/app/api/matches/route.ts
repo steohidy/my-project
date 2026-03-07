@@ -11,7 +11,11 @@ interface MatchData {
   oddsHome: number;
   oddsDraw: number | null;
   oddsAway: number;
-  status: string;
+  status: 'upcoming' | 'live' | 'finished';
+  isLive?: boolean;
+  homeScore?: number;
+  awayScore?: number;
+  minute?: number;
   timeSlot?: 'day' | 'night';
   insight: {
     riskPercentage: number;

@@ -241,6 +241,12 @@ interface Match {
   oddsAway: number;
   sources?: string[];
   timeSlot?: 'morning' | 'afternoon' | 'evening';
+  // Live status
+  isLive?: boolean;
+  status?: 'upcoming' | 'live' | 'finished';
+  homeScore?: number;
+  awayScore?: number;
+  minute?: number;
   insight: {
     riskPercentage: number;
     valueBetDetected: boolean;
@@ -309,7 +315,7 @@ interface SourceStats {
 function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: UserInfo | null }) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'safes' | 'moderate' | 'risky' | 'finished' | 'all'>('safes');
+  const [activeTab, setActiveTab] = useState<'live' | 'safes' | 'moderate' | 'risky' | 'finished' | 'all'>('safes');
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [apiStatus, setApiStatus] = useState<'online' | 'offline' | 'loading'>('loading');
   const [activeSection, setActiveSection] = useState<'matches' | 'analyse' | 'antitrap' | 'bankroll' | 'results' | 'admin'>('matches');
@@ -473,6 +479,9 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
     return matchDate <= now;
   });
 
+  // Filtrer les matchs EN DIRECT (live)
+  const liveMatches = matches.filter(m => m.isLive === true || m.status === 'live');
+
   // Filtrer les matchs à venir uniquement
   const safes = upcomingMatches.filter(m => m.insight.riskPercentage <= 40);
   const moderate = upcomingMatches.filter(m => m.insight.riskPercentage > 40 && m.insight.riskPercentage <= 50);
@@ -480,19 +489,29 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
   const valueBets = upcomingMatches.filter(m => m.insight.valueBetDetected);
 
   // Matchs à afficher selon l'onglet
-  const displayedMatches = activeTab === 'safes' ? safes 
+  const displayedMatches = activeTab === 'live' ? liveMatches
+    : activeTab === 'safes' ? safes 
     : activeTab === 'moderate' ? moderate 
     : activeTab === 'risky' ? risky
     : activeTab === 'finished' ? finishedMatches
     : matches;
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#0a0a0a',
-      color: '#fff',
-      display: 'flex'
-    }}>
+    <>
+      {/* CSS pour animation pulse */}
+      <style jsx global>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+      `}</style>
+      
+      <div style={{
+        minHeight: '100vh',
+        background: '#0a0a0a',
+        color: '#fff',
+        display: 'flex'
+      }}>
       {/* Sidebar - Menu Vertical */}
       <aside style={{
         width: '70px',
@@ -705,6 +724,7 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
               flexWrap: 'nowrap',
               overflowX: 'auto'
             }}>
+              <TabButtonCompact active={activeTab === 'live'} onClick={() => setActiveTab('live')} icon="🔴" label="Live" count={liveMatches.length} isLive={liveMatches.length > 0} />
               <TabButtonCompact active={activeTab === 'safes'} onClick={() => setActiveTab('safes')} icon="🛡️" label="Sûrs" count={safes.length} />
               <TabButtonCompact active={activeTab === 'moderate'} onClick={() => setActiveTab('moderate')} icon="⚠️" label="Modérés" count={moderate.length} />
               <TabButtonCompact active={activeTab === 'risky'} onClick={() => setActiveTab('risky')} icon="🎯" label="Risqués" count={risky.length} />
@@ -819,6 +839,7 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
         )}
       </main>
     </div>
+    </>
   );
 }
 
@@ -855,25 +876,33 @@ function NavButton({ icon, label, active, onClick, color }: { icon: string; labe
 }
 
 // Composant TabButtonCompact
-function TabButtonCompact({ active, onClick, icon, label, count }: { active: boolean; onClick: () => void; icon: string; label: string; count: number }) {
+function TabButtonCompact({ active, onClick, icon, label, count, isLive }: { active: boolean; onClick: () => void; icon: string; label: string; count: number; isLive?: boolean }) {
+  // Style spécial pour le bouton Live quand des matchs sont en cours
+  const liveStyle = isLive && !active ? {
+    border: '1px solid #ef4444',
+    background: 'linear-gradient(135deg, rgba(239,68,68,0.2) 0%, rgba(239,68,68,0.1) 100%)',
+    animation: 'pulse 2s infinite',
+  } : {};
+  
   return (
     <button
       onClick={onClick}
       style={{
         padding: '8px 12px',
         borderRadius: '8px',
-        border: active ? '1px solid #f97316' : '1px solid #333',
-        background: active ? '#f97316' : 'transparent',
-        color: active ? '#fff' : '#888',
+        border: active ? (isLive ? '1px solid #ef4444' : '1px solid #f97316') : '1px solid #333',
+        background: active ? (isLive ? '#ef4444' : '#f97316') : 'transparent',
+        color: active ? '#fff' : (isLive ? '#ef4444' : '#888'),
         cursor: 'pointer',
         fontSize: '11px',
-        fontWeight: active ? 'bold' : 'normal',
+        fontWeight: active ? 'bold' : (isLive ? 'bold' : 'normal'),
         display: 'flex',
         alignItems: 'center',
         gap: '6px',
         whiteSpace: 'nowrap',
         flexDirection: 'column',
-        minWidth: '60px'
+        minWidth: '60px',
+        ...liveStyle
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
