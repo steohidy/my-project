@@ -158,13 +158,17 @@ export async function fetchRealNBAGames(): Promise<Array<{
       };
     });
     
-    // Filtrer les matchs: garder ceux qui sont aujourd'hui (en UTC) ou en live
-    const todayUTC = now.toISOString().split('T')[0];
-    const relevantGames = games.filter((g: any) => 
-      g.date === todayUTC || g.isLive || g.status === 'live'
-    );
+    // Filtrer les matchs: garder ceux qui sont dans une fenêtre de 24h
+    // (matchs de la nuit dernière, en live, et à venir ce soir)
+    const nowTime = now.getTime();
+    const relevantGames = games.filter((g: any) => {
+      const gameTime = new Date(g.dateUTC).getTime();
+      const hoursDiff = (gameTime - nowTime) / (1000 * 60 * 60);
+      // Garder: matchs passés il y a moins de 6h, en live, ou à venir dans les 24h
+      return hoursDiff > -6 && hoursDiff < 24;
+    });
     
-    console.log(`✅ ESPN: ${relevantGames.length} NBA games (today: ${todayUTC}), ${relevantGames.filter((g: any) => g.isLive).length} LIVE`);
+    console.log(`✅ ESPN: ${relevantGames.length} NBA games, ${relevantGames.filter((g: any) => g.isLive).length} LIVE`);
     
     // Sort: live first, then by time
     relevantGames.sort((a: any, b: any) => {
