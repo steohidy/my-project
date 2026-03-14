@@ -160,8 +160,8 @@ function calculateTennisProbability(
   player2: string,
   odds1: number,
   odds2: number,
-  ranking1: { rank: number; points: number } | null,
-  ranking2: { rank: number; points: number } | null,
+  ranking1: { rank: number; name: string; points: number } | null,
+  ranking2: { rank: number; name: string; points: number } | null,
   surface: string
 ): { probability: number; confidence: 'very_high' | 'high' | 'medium' | 'low'; reasoning: string[] } {
   
@@ -386,8 +386,8 @@ async function generatePicks(): Promise<BasePick[]> {
     const p1LastName = pred.player1.split(' ').pop()?.toLowerCase() || '';
     const p2LastName = pred.player2.split(' ').pop()?.toLowerCase() || '';
     
-    let ranking1 = tennisRankings.get(p1Normalized) || tennisRankings.get(p1LastName);
-    let ranking2 = tennisRankings.get(p2Normalized) || tennisRankings.get(p2LastName);
+    let ranking1 = tennisRankings.get(p1Normalized) || tennisRankings.get(p1LastName) || null;
+    let ranking2 = tennisRankings.get(p2Normalized) || tennisRankings.get(p2LastName) || null;
     
     const odds1 = pred.odds1 || 1.85;
     const odds2 = pred.odds2 || 1.85;
