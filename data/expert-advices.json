@@ -1,0 +1,1640 @@
+{
+  "generatedAt": "2026-03-14T07:58:33.670Z",
+  "phase": "all-sports",
+  "nextReset": "Pré-calcul quotidien 6h30 UTC",
+  "totalAdvices": 41,
+  "stats": {
+    "football": 20,
+    "basketball": 7,
+    "hockey": 14
+  },
+  "advices": [
+    {
+      "matchId": "fb_746947",
+      "homeTeam": "TSG Hoffenheim",
+      "awayTeam": "VfL Wolfsburg",
+      "sport": "Foot",
+      "league": "Bundesliga",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 2.05,
+        "edge": 26,
+        "publicPercentage": 49,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "low",
+        "reasoning": [
+          "TSG Hoffenheim favori selon l'analyse",
+          "Prédiction buts: Les deux marquent"
+        ],
+        "kellyStake": 1,
+        "maxStake": 2,
+        "expectedValue": 5.2
+      },
+      "warnings": [
+        "Confiance faible - parier avec prudence",
+        "Edge élevé détecté: 26%"
+      ],
+      "dataQuality": "low"
+    },
+    {
+      "matchId": "fb_748418",
+      "homeTeam": "Real Madrid",
+      "awayTeam": "Elche",
+      "sport": "Foot",
+      "league": "La Liga",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "away",
+        "favoriteOdds": 1.91,
+        "edge": 25,
+        "publicPercentage": 52,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "away",
+        "confidence": "low",
+        "reasoning": [
+          "Elche a un avantage",
+          "Prédiction buts: Over 2.5 buts"
+        ],
+        "kellyStake": 1,
+        "maxStake": 2,
+        "expectedValue": 5
+      },
+      "warnings": [
+        "Confiance faible - parier avec prudence",
+        "Edge élevé détecté: 25%"
+      ],
+      "dataQuality": "low"
+    },
+    {
+      "matchId": "fb_746639",
+      "homeTeam": "Lorient",
+      "awayTeam": "Lens",
+      "sport": "Foot",
+      "league": "Ligue 1",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "away",
+        "favoriteOdds": 2.08,
+        "edge": 21,
+        "publicPercentage": 48,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "away",
+        "confidence": "low",
+        "reasoning": [
+          "Lens a un avantage",
+          "Prédiction buts: Les deux marquent"
+        ],
+        "kellyStake": 1,
+        "maxStake": 2,
+        "expectedValue": 4.2
+      },
+      "warnings": [
+        "Confiance faible - parier avec prudence",
+        "Edge élevé détecté: 21%"
+      ],
+      "dataQuality": "low"
+    },
+    {
+      "matchId": "nba_401810824",
+      "homeTeam": "Philadelphia 76ers",
+      "awayTeam": "Brooklyn Nets",
+      "sport": "Basket",
+      "league": "NBA",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 1.73,
+        "edge": 21,
+        "publicPercentage": 58,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "Philadelphia 76ers favori selon l'analyse"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 8.4
+      },
+      "warnings": [
+        "Edge élevé détecté: 21%"
+      ],
+      "dataQuality": "high"
+    },
+    {
+      "matchId": "nba_401810830",
+      "homeTeam": "LA Clippers",
+      "awayTeam": "Sacramento Kings",
+      "sport": "Basket",
+      "league": "NBA",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 1.72,
+        "edge": 21,
+        "publicPercentage": 58,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "LA Clippers favori selon l'analyse"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 8.4
+      },
+      "warnings": [
+        "Edge élevé détecté: 21%"
+      ],
+      "dataQuality": "high"
+    },
+    {
+      "matchId": "fb_740895",
+      "homeTeam": "West Ham United",
+      "awayTeam": "Manchester City",
+      "sport": "Foot",
+      "league": "Premier League",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 3.38,
+        "edge": 19,
+        "publicPercentage": 30,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "low",
+        "reasoning": [
+          "West Ham United favori selon l'analyse",
+          "Prédiction buts: Under 2.5 buts"
+        ],
+        "kellyStake": 1,
+        "maxStake": 2,
+        "expectedValue": 3.8
+      },
+      "warnings": [
+        "Confiance faible - parier avec prudence",
+        "Edge élevé détecté: 19%"
+      ],
+      "dataQuality": "low"
+    },
+    {
+      "matchId": "fb_748414",
+      "homeTeam": "Girona",
+      "awayTeam": "Athletic Club",
+      "sport": "Foot",
+      "league": "La Liga",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 1.96,
+        "edge": 19,
+        "publicPercentage": 51,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "low",
+        "reasoning": [
+          "Girona favori selon l'analyse",
+          "Prédiction buts: Les deux marquent"
+        ],
+        "kellyStake": 1,
+        "maxStake": 2,
+        "expectedValue": 3.8
+      },
+      "warnings": [
+        "Confiance faible - parier avec prudence",
+        "Edge élevé détecté: 19%"
+      ],
+      "dataQuality": "low"
+    },
+    {
+      "matchId": "nba_401810826",
+      "homeTeam": "Boston Celtics",
+      "awayTeam": "Washington Wizards",
+      "sport": "Basket",
+      "league": "NBA",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 1.6,
+        "edge": 19,
+        "publicPercentage": 63,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "Boston Celtics favori selon l'analyse"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 7.6
+      },
+      "warnings": [
+        "Edge élevé détecté: 19%"
+      ],
+      "dataQuality": "high"
+    },
+    {
+      "matchId": "fb_746642",
+      "homeTeam": "AS Monaco",
+      "awayTeam": "Brest",
+      "sport": "Foot",
+      "league": "Ligue 1",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 1.88,
+        "edge": 18,
+        "publicPercentage": 53,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "AS Monaco favori selon l'analyse",
+          "Prédiction buts: Les deux marquent"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 7.2
+      },
+      "warnings": [
+        "Edge élevé détecté: 18%"
+      ],
+      "dataQuality": "high"
+    },
+    {
+      "matchId": "nba_401810825",
+      "homeTeam": "Atlanta Hawks",
+      "awayTeam": "Milwaukee Bucks",
+      "sport": "Basket",
+      "league": "NBA",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 1.96,
+        "edge": 18,
+        "publicPercentage": 51,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "Atlanta Hawks favori selon l'analyse"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 7.2
+      },
+      "warnings": [
+        "Edge élevé détecté: 18%"
+      ],
+      "dataQuality": "high"
+    },
+    {
+      "matchId": "nba_401810827",
+      "homeTeam": "Miami Heat",
+      "awayTeam": "Orlando Magic",
+      "sport": "Basket",
+      "league": "NBA",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 2.12,
+        "edge": 16,
+        "publicPercentage": 47,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "Miami Heat favori selon l'analyse"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 6.4
+      },
+      "warnings": [
+        "Edge élevé détecté: 16%"
+      ],
+      "dataQuality": "medium"
+    },
+    {
+      "matchId": "nba_401810828",
+      "homeTeam": "San Antonio Spurs",
+      "awayTeam": "Charlotte Hornets",
+      "sport": "Basket",
+      "league": "NBA",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 1.83,
+        "edge": 15,
+        "publicPercentage": 55,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "San Antonio Spurs favori selon l'analyse"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 6
+      },
+      "warnings": [
+        "Edge élevé détecté: 15%"
+      ],
+      "dataQuality": "high"
+    },
+    {
+      "matchId": "nba_401810829",
+      "homeTeam": "Los Angeles Lakers",
+      "awayTeam": "Denver Nuggets",
+      "sport": "Basket",
+      "league": "NBA",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 2.09,
+        "edge": 15,
+        "publicPercentage": 48,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "Los Angeles Lakers favori selon l'analyse"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 6
+      },
+      "warnings": [
+        "Edge élevé détecté: 15%"
+      ],
+      "dataQuality": "medium"
+    },
+    {
+      "matchId": "nhl_401803400",
+      "homeTeam": "Tampa Bay Lightning",
+      "awayTeam": "Carolina Hurricanes",
+      "sport": "Hockey",
+      "league": "NHL",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 2.12,
+        "edge": 13,
+        "publicPercentage": 47,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "low",
+        "reasoning": [
+          "Tampa Bay Lightning favori selon l'analyse"
+        ],
+        "kellyStake": 1,
+        "maxStake": 2,
+        "expectedValue": 2.6
+      },
+      "warnings": [
+        "Confiance faible - parier avec prudence",
+        "Edge élevé détecté: 13%"
+      ],
+      "dataQuality": "low"
+    },
+    {
+      "matchId": "nhl_401803405",
+      "homeTeam": "Utah Mammoth",
+      "awayTeam": "Pittsburgh Penguins",
+      "sport": "Hockey",
+      "league": "NHL",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 2.21,
+        "edge": 13,
+        "publicPercentage": 45,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "low",
+        "reasoning": [
+          "Utah Mammoth favori selon l'analyse"
+        ],
+        "kellyStake": 1,
+        "maxStake": 2,
+        "expectedValue": 2.6
+      },
+      "warnings": [
+        "Confiance faible - parier avec prudence",
+        "Edge élevé détecté: 13%"
+      ],
+      "dataQuality": "low"
+    },
+    {
+      "matchId": "fb_737066",
+      "homeTeam": "Udinese",
+      "awayTeam": "Juventus",
+      "sport": "Foot",
+      "league": "Serie A",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "away",
+        "favoriteOdds": 1.94,
+        "edge": 12,
+        "publicPercentage": 52,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "away",
+        "confidence": "medium",
+        "reasoning": [
+          "Juventus a un avantage",
+          "Prédiction buts: Les deux marquent"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 4.8
+      },
+      "warnings": [
+        "Edge élevé détecté: 12%"
+      ],
+      "dataQuality": "high"
+    },
+    {
+      "matchId": "nhl_401803394",
+      "homeTeam": "Ottawa Senators",
+      "awayTeam": "Anaheim Ducks",
+      "sport": "Hockey",
+      "league": "NHL",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 2.11,
+        "edge": 12,
+        "publicPercentage": 47,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "Ottawa Senators favori selon l'analyse"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 4.8
+      },
+      "warnings": [
+        "Edge élevé détecté: 12%"
+      ],
+      "dataQuality": "medium"
+    },
+    {
+      "matchId": "nhl_401803395",
+      "homeTeam": "Washington Capitals",
+      "awayTeam": "Boston Bruins",
+      "sport": "Hockey",
+      "league": "NHL",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 2.2,
+        "edge": 12,
+        "publicPercentage": 45,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "low",
+        "reasoning": [
+          "Washington Capitals favori selon l'analyse"
+        ],
+        "kellyStake": 1,
+        "maxStake": 2,
+        "expectedValue": 2.4
+      },
+      "warnings": [
+        "Confiance faible - parier avec prudence",
+        "Edge élevé détecté: 12%"
+      ],
+      "dataQuality": "low"
+    },
+    {
+      "matchId": "nhl_401803396",
+      "homeTeam": "Winnipeg Jets",
+      "awayTeam": "Colorado Avalanche",
+      "sport": "Hockey",
+      "league": "NHL",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "away",
+        "favoriteOdds": 2.11,
+        "edge": 12,
+        "publicPercentage": 47,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "away",
+        "confidence": "medium",
+        "reasoning": [
+          "Colorado Avalanche a un avantage"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 4.8
+      },
+      "warnings": [
+        "Edge élevé détecté: 12%"
+      ],
+      "dataQuality": "medium"
+    },
+    {
+      "matchId": "nhl_401803403",
+      "homeTeam": "Philadelphia Flyers",
+      "awayTeam": "Columbus Blue Jackets",
+      "sport": "Hockey",
+      "league": "NHL",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 2.16,
+        "edge": 12,
+        "publicPercentage": 46,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "low",
+        "reasoning": [
+          "Philadelphia Flyers favori selon l'analyse"
+        ],
+        "kellyStake": 1,
+        "maxStake": 2,
+        "expectedValue": 2.4
+      },
+      "warnings": [
+        "Confiance faible - parier avec prudence",
+        "Edge élevé détecté: 12%"
+      ],
+      "dataQuality": "low"
+    },
+    {
+      "matchId": "nhl_401803404",
+      "homeTeam": "Dallas Stars",
+      "awayTeam": "Detroit Red Wings",
+      "sport": "Hockey",
+      "league": "NHL",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 1.92,
+        "edge": 12,
+        "publicPercentage": 52,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "Dallas Stars favori selon l'analyse"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 4.8
+      },
+      "warnings": [
+        "Edge élevé détecté: 12%"
+      ],
+      "dataQuality": "high"
+    },
+    {
+      "matchId": "nhl_401803398",
+      "homeTeam": "Buffalo Sabres",
+      "awayTeam": "Toronto Maple Leafs",
+      "sport": "Hockey",
+      "league": "NHL",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 1.9,
+        "edge": 11,
+        "publicPercentage": 53,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "Buffalo Sabres favori selon l'analyse"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 4.4
+      },
+      "warnings": [
+        "Edge élevé détecté: 11%"
+      ],
+      "dataQuality": "high"
+    },
+    {
+      "matchId": "nhl_401803399",
+      "homeTeam": "Montreal Canadiens",
+      "awayTeam": "San Jose Sharks",
+      "sport": "Hockey",
+      "league": "NHL",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 1.94,
+        "edge": 11,
+        "publicPercentage": 52,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "Montreal Canadiens favori selon l'analyse"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 4.4
+      },
+      "warnings": [
+        "Edge élevé détecté: 11%"
+      ],
+      "dataQuality": "high"
+    },
+    {
+      "matchId": "fb_740888",
+      "homeTeam": "Burnley",
+      "awayTeam": "AFC Bournemouth",
+      "sport": "Foot",
+      "league": "Premier League",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 1.9,
+        "edge": 10,
+        "publicPercentage": 53,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "Burnley favori selon l'analyse",
+          "Prédiction buts: Les deux marquent"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 4
+      },
+      "warnings": [
+        "Edge élevé détecté: 10%"
+      ],
+      "dataQuality": "high"
+    },
+    {
+      "matchId": "nhl_401803397",
+      "homeTeam": "Minnesota Wild",
+      "awayTeam": "New York Rangers",
+      "sport": "Hockey",
+      "league": "NHL",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 1.82,
+        "edge": 10,
+        "publicPercentage": 55,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "Minnesota Wild favori selon l'analyse"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 4
+      },
+      "warnings": [
+        "Edge élevé détecté: 10%"
+      ],
+      "dataQuality": "high"
+    },
+    {
+      "matchId": "nhl_401803401",
+      "homeTeam": "New Jersey Devils",
+      "awayTeam": "Los Angeles Kings",
+      "sport": "Hockey",
+      "league": "NHL",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 2.18,
+        "edge": 10,
+        "publicPercentage": 46,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "New Jersey Devils favori selon l'analyse"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 4
+      },
+      "warnings": [
+        "Edge élevé détecté: 10%"
+      ],
+      "dataQuality": "medium"
+    },
+    {
+      "matchId": "nhl_401803402",
+      "homeTeam": "New York Islanders",
+      "awayTeam": "Calgary Flames",
+      "sport": "Hockey",
+      "league": "NHL",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 1.9,
+        "edge": 10,
+        "publicPercentage": 53,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "New York Islanders favori selon l'analyse"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 4
+      },
+      "warnings": [
+        "Edge élevé détecté: 10%"
+      ],
+      "dataQuality": "high"
+    },
+    {
+      "matchId": "nhl_401803407",
+      "homeTeam": "Vegas Golden Knights",
+      "awayTeam": "Chicago Blackhawks",
+      "sport": "Hockey",
+      "league": "NHL",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 1.96,
+        "edge": 10,
+        "publicPercentage": 51,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "Vegas Golden Knights favori selon l'analyse"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 4
+      },
+      "warnings": [
+        "Edge élevé détecté: 10%"
+      ],
+      "dataQuality": "high"
+    },
+    {
+      "matchId": "fb_746950",
+      "homeTeam": "Bayer Leverkusen",
+      "awayTeam": "Bayern Munich",
+      "sport": "Foot",
+      "league": "Bundesliga",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "away",
+        "favoriteOdds": 1.92,
+        "edge": 9,
+        "publicPercentage": 52,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "away",
+        "confidence": "medium",
+        "reasoning": [
+          "Bayern Munich a un avantage",
+          "Prédiction buts: Les deux marquent"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 3.6
+      },
+      "warnings": [
+        "Edge élevé détecté: 9%"
+      ],
+      "dataQuality": "high"
+    },
+    {
+      "matchId": "fb_737070",
+      "homeTeam": "Napoli",
+      "awayTeam": "Lecce",
+      "sport": "Foot",
+      "league": "Serie A",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 3.03,
+        "edge": 9,
+        "publicPercentage": 33,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "low",
+        "reasoning": [
+          "Napoli favori selon l'analyse",
+          "Prédiction buts: Under 2.5 buts"
+        ],
+        "kellyStake": 1,
+        "maxStake": 2,
+        "expectedValue": 1.8
+      },
+      "warnings": [
+        "Confiance faible - parier avec prudence",
+        "Edge élevé détecté: 9%"
+      ],
+      "dataQuality": "low"
+    },
+    {
+      "matchId": "fb_746949",
+      "homeTeam": "Hamburg SV",
+      "awayTeam": "FC Cologne",
+      "sport": "Foot",
+      "league": "Bundesliga",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 2.12,
+        "edge": 8,
+        "publicPercentage": 47,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "Hamburg SV favori selon l'analyse",
+          "Prédiction buts: Les deux marquent"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 3.2
+      },
+      "warnings": [
+        "Edge élevé détecté: 8%"
+      ],
+      "dataQuality": "medium"
+    },
+    {
+      "matchId": "fb_748419",
+      "homeTeam": "Real Oviedo",
+      "awayTeam": "Valencia",
+      "sport": "Foot",
+      "league": "La Liga",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "away",
+        "favoriteOdds": 2.34,
+        "edge": 7,
+        "publicPercentage": 43,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "away",
+        "confidence": "medium",
+        "reasoning": [
+          "Valencia a un avantage",
+          "Prédiction buts: Under 2.5 buts"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 2.8
+      },
+      "warnings": [
+        "Edge élevé détecté: 7%"
+      ],
+      "dataQuality": "medium"
+    },
+    {
+      "matchId": "fb_746951",
+      "homeTeam": "Borussia Dortmund",
+      "awayTeam": "FC Augsburg",
+      "sport": "Foot",
+      "league": "Bundesliga",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 2.02,
+        "edge": 7,
+        "publicPercentage": 50,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "medium",
+        "reasoning": [
+          "Borussia Dortmund favori selon l'analyse",
+          "Prédiction buts: Les deux marquent"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 2.8
+      },
+      "warnings": [
+        "Edge élevé détecté: 7%"
+      ],
+      "dataQuality": "medium"
+    },
+    {
+      "matchId": "fb_748423",
+      "homeTeam": "Atlético Madrid",
+      "awayTeam": "Getafe",
+      "sport": "Foot",
+      "league": "La Liga",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "away",
+        "favoriteOdds": 2.39,
+        "edge": 6,
+        "publicPercentage": 42,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "away",
+        "confidence": "medium",
+        "reasoning": [
+          "Getafe a un avantage",
+          "Prédiction buts: Les deux marquent"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 2.4
+      },
+      "warnings": [
+        "Edge élevé détecté: 6%"
+      ],
+      "dataQuality": "medium"
+    },
+    {
+      "matchId": "fb_746943",
+      "homeTeam": "Eintracht Frankfurt",
+      "awayTeam": "1. FC Heidenheim 1846",
+      "sport": "Foot",
+      "league": "Bundesliga",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "away",
+        "favoriteOdds": 3.07,
+        "edge": 6,
+        "publicPercentage": 33,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "away",
+        "confidence": "low",
+        "reasoning": [
+          "1. FC Heidenheim 1846 a un avantage",
+          "Bonne value potentielle",
+          "Prédiction buts: Under 2.5 buts"
+        ],
+        "kellyStake": 1,
+        "maxStake": 2,
+        "expectedValue": 1.2
+      },
+      "warnings": [
+        "Confiance faible - parier avec prudence",
+        "Edge élevé détecté: 6%"
+      ],
+      "dataQuality": "low"
+    },
+    {
+      "matchId": "fb_737072",
+      "homeTeam": "Internazionale",
+      "awayTeam": "Atalanta",
+      "sport": "Foot",
+      "league": "Serie A",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "away",
+        "favoriteOdds": 3,
+        "edge": 5,
+        "publicPercentage": 33,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "away",
+        "confidence": "low",
+        "reasoning": [
+          "Atalanta a un avantage",
+          "Bonne value potentielle",
+          "Prédiction buts: Under 2.5 buts"
+        ],
+        "kellyStake": 1,
+        "maxStake": 2,
+        "expectedValue": 1
+      },
+      "warnings": [
+        "Confiance faible - parier avec prudence"
+      ],
+      "dataQuality": "low"
+    },
+    {
+      "matchId": "nhl_401803406",
+      "homeTeam": "Vancouver Canucks",
+      "awayTeam": "Seattle Kraken",
+      "sport": "Hockey",
+      "league": "NHL",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "away",
+        "favoriteOdds": 2.41,
+        "edge": 5,
+        "publicPercentage": 41,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "away",
+        "confidence": "low",
+        "reasoning": [
+          "Seattle Kraken a un avantage"
+        ],
+        "kellyStake": 1,
+        "maxStake": 2,
+        "expectedValue": 1
+      },
+      "warnings": [
+        "Confiance faible - parier avec prudence"
+      ],
+      "dataQuality": "low"
+    },
+    {
+      "matchId": "fb_740889",
+      "homeTeam": "Chelsea",
+      "awayTeam": "Newcastle United",
+      "sport": "Foot",
+      "league": "Premier League",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "away",
+        "favoriteOdds": 2.66,
+        "edge": 4,
+        "publicPercentage": 38,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "away",
+        "confidence": "medium",
+        "reasoning": [
+          "Newcastle United a un avantage",
+          "Bonne value potentielle",
+          "Prédiction buts: Under 2.5 buts"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 1.6
+      },
+      "warnings": [],
+      "dataQuality": "medium"
+    },
+    {
+      "matchId": "fb_746637",
+      "homeTeam": "Angers",
+      "awayTeam": "Nice",
+      "sport": "Foot",
+      "league": "Ligue 1",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "home",
+        "favoriteOdds": 2.34,
+        "edge": 3,
+        "publicPercentage": 43,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "home",
+        "confidence": "low",
+        "reasoning": [
+          "Angers favori selon l'analyse",
+          "Prédiction buts: Les deux marquent"
+        ],
+        "kellyStake": 1,
+        "maxStake": 2,
+        "expectedValue": 0.6
+      },
+      "warnings": [
+        "Confiance faible - parier avec prudence"
+      ],
+      "dataQuality": "low"
+    },
+    {
+      "matchId": "fb_740894",
+      "homeTeam": "Sunderland",
+      "awayTeam": "Brighton & Hove Albion",
+      "sport": "Foot",
+      "league": "Premier League",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "away",
+        "favoriteOdds": 2.09,
+        "edge": 2,
+        "publicPercentage": 48,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "away",
+        "confidence": "medium",
+        "reasoning": [
+          "Brighton & Hove Albion a un avantage",
+          "Prédiction buts: Les deux marquent"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 0.8
+      },
+      "warnings": [],
+      "dataQuality": "medium"
+    },
+    {
+      "matchId": "fb_740886",
+      "homeTeam": "Arsenal",
+      "awayTeam": "Everton",
+      "sport": "Foot",
+      "league": "Premier League",
+      "context": {
+        "recentNews": [],
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "form": {
+          "home": "N/A",
+          "away": "N/A"
+        }
+      },
+      "oddsAnalysis": {
+        "favorite": "away",
+        "favoriteOdds": 2.29,
+        "edge": 1,
+        "publicPercentage": 44,
+        "isPublicFade": false
+      },
+      "recommendation": {
+        "bet": "away",
+        "confidence": "medium",
+        "reasoning": [
+          "Everton a un avantage",
+          "Prédiction buts: Under 2.5 buts"
+        ],
+        "kellyStake": 2,
+        "maxStake": 3,
+        "expectedValue": 0.4
+      },
+      "warnings": [],
+      "dataQuality": "medium"
+    }
+  ]
+}

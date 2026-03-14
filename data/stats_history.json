@@ -1,0 +1,536 @@
+{
+  "description": "Historique des statistiques journalières pour calculs hebdomadaires et mensuels",
+  "version": "4.0",
+  "dailyStats": [
+    {
+      "date": "2026-03-10",
+      "stats": {
+        "results": {
+          "total": 2,
+          "correct": 0,
+          "rate": 0
+        },
+        "goals": {
+          "total": 0,
+          "correct": 0,
+          "rate": 0
+        },
+        "overall": 0,
+        "completed": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "bySport": {
+          "football": {
+            "total": 0,
+            "wins": 0,
+            "losses": 0,
+            "winRate": 0,
+            "details": {
+              "resultats": {
+                "total": 0,
+                "wins": 0,
+                "winRate": 0
+              },
+              "buts": {
+                "total": 0,
+                "wins": 0,
+                "winRate": 0
+              },
+              "btts": {
+                "total": 0,
+                "wins": 0,
+                "winRate": 0
+              }
+            }
+          },
+          "basketball": {
+            "total": 2,
+            "wins": 0,
+            "losses": 2,
+            "winRate": 0,
+            "details": {
+              "resultats": {
+                "total": 2,
+                "wins": 0,
+                "winRate": 0
+              }
+            }
+          },
+          "hockey": {
+            "total": 0,
+            "wins": 0,
+            "losses": 0,
+            "winRate": 0,
+            "details": {
+              "resultats": {
+                "total": 0,
+                "wins": 0,
+                "winRate": 0
+              }
+            }
+          }
+        }
+      },
+      "predictions": [
+        {
+          "matchId": "nba_401810790",
+          "homeTeam": "LA Clippers",
+          "awayTeam": "New York Knicks",
+          "sport": "basketball",
+          "league": "NBA",
+          "result": "home",
+          "prediction": "away",
+          "predictedGoals": null,
+          "correct": false,
+          "score": "126-118"
+        },
+        {
+          "matchId": "nba_401810789",
+          "homeTeam": "Utah Jazz",
+          "awayTeam": "Golden State Warriors",
+          "sport": "basketball",
+          "league": "NBA",
+          "result": "home",
+          "prediction": "away",
+          "predictedGoals": null,
+          "correct": false,
+          "score": "119-116"
+        }
+      ]
+    },
+    {
+      "date": "2026-03-09",
+      "stats": {
+        "results": {
+          "total": 3,
+          "correct": 0,
+          "rate": 0
+        },
+        "goals": {
+          "total": 0,
+          "correct": 0,
+          "rate": 0
+        },
+        "overall": 0,
+        "completed": 3,
+        "wins": 0,
+        "losses": 3,
+        "winRate": 0,
+        "bySport": {
+          "football": {
+            "total": 0,
+            "wins": 0,
+            "losses": 0,
+            "winRate": 0,
+            "details": {
+              "resultats": {
+                "total": 0,
+                "wins": 0,
+                "winRate": 0
+              },
+              "buts": {
+                "total": 0,
+                "wins": 0,
+                "winRate": 0
+              },
+              "btts": {
+                "total": 0,
+                "wins": 0,
+                "winRate": 0
+              }
+            }
+          },
+          "basketball": {
+            "total": 3,
+            "wins": 0,
+            "losses": 3,
+            "winRate": 0,
+            "details": {
+              "resultats": {
+                "total": 3,
+                "wins": 0,
+                "winRate": 0
+              }
+            }
+          },
+          "hockey": {
+            "total": 0,
+            "wins": 0,
+            "losses": 0,
+            "winRate": 0,
+            "details": {
+              "resultats": {
+                "total": 0,
+                "wins": 0,
+                "winRate": 0
+              }
+            }
+          }
+        }
+      },
+      "predictions": [
+        {
+          "matchId": "nba_401810786",
+          "homeTeam": "Cleveland Cavaliers",
+          "awayTeam": "Philadelphia 76ers",
+          "sport": "basketball",
+          "league": "NBA",
+          "result": "home",
+          "prediction": "away",
+          "predictedGoals": null,
+          "correct": false,
+          "score": "115-101"
+        },
+        {
+          "matchId": "nba_401810788",
+          "homeTeam": "Oklahoma City Thunder",
+          "awayTeam": "Denver Nuggets",
+          "sport": "basketball",
+          "league": "NBA",
+          "result": "home",
+          "prediction": "away",
+          "predictedGoals": null,
+          "correct": false,
+          "score": "129-126"
+        },
+        {
+          "matchId": "nba_401810787",
+          "homeTeam": "Brooklyn Nets",
+          "awayTeam": "Memphis Grizzlies",
+          "sport": "basketball",
+          "league": "NBA",
+          "result": "home",
+          "prediction": "away",
+          "predictedGoals": null,
+          "correct": false,
+          "score": "126-115"
+        }
+      ]
+    },
+    {
+      "date": "2026-03-06",
+      "stats": {
+        "results": {
+          "total": 4,
+          "correct": 3,
+          "rate": 75
+        },
+        "goals": {
+          "total": 4,
+          "correct": 4,
+          "rate": 100
+        },
+        "overall": 88,
+        "completed": 4,
+        "wins": 3,
+        "losses": 1,
+        "winRate": 75,
+        "bySport": {
+          "football": {
+            "total": 4,
+            "wins": 3,
+            "losses": 1,
+            "winRate": 75,
+            "details": {
+              "resultats": {
+                "total": 4,
+                "wins": 3,
+                "winRate": 75
+              },
+              "buts": {
+                "total": 4,
+                "wins": 4,
+                "winRate": 100
+              },
+              "btts": {
+                "total": 0,
+                "wins": 0,
+                "winRate": 0
+              }
+            }
+          },
+          "basketball": {
+            "total": 0,
+            "wins": 0,
+            "losses": 0,
+            "winRate": 0,
+            "details": {
+              "resultats": {
+                "total": 0,
+                "wins": 0,
+                "winRate": 0
+              }
+            }
+          },
+          "hockey": {
+            "total": 0,
+            "wins": 0,
+            "losses": 0,
+            "winRate": 0,
+            "details": {
+              "resultats": {
+                "total": 0,
+                "wins": 0,
+                "winRate": 0
+              }
+            }
+          }
+        }
+      },
+      "predictions": [
+        {
+          "matchId": "foot_2026-03-06_001",
+          "homeTeam": "Inter Milan",
+          "awayTeam": "AC Milan",
+          "sport": "football",
+          "league": "Serie A",
+          "result": "home",
+          "prediction": "home",
+          "predictedGoals": "Under 2.5",
+          "correct": true,
+          "goalsCorrect": true,
+          "score": "2-0"
+        },
+        {
+          "matchId": "foot_2026-03-06_002",
+          "homeTeam": "Barcelona",
+          "awayTeam": "Real Sociedad",
+          "sport": "football",
+          "league": "La Liga",
+          "result": "home",
+          "prediction": "home",
+          "predictedGoals": "Over 1.5",
+          "correct": true,
+          "goalsCorrect": true,
+          "score": "3-1"
+        },
+        {
+          "matchId": "foot_2026-03-06_003",
+          "homeTeam": "Juventus",
+          "awayTeam": "Napoli",
+          "sport": "football",
+          "league": "Serie A",
+          "result": "away",
+          "prediction": "draw",
+          "predictedGoals": "Under 2.5",
+          "correct": false,
+          "goalsCorrect": true,
+          "score": "0-2"
+        },
+        {
+          "matchId": "foot_2026-03-06_004",
+          "homeTeam": "Tottenham",
+          "awayTeam": "Everton",
+          "sport": "football",
+          "league": "Premier League",
+          "result": "home",
+          "prediction": "home",
+          "predictedGoals": "Over 1.5",
+          "correct": true,
+          "goalsCorrect": true,
+          "score": "4-1"
+        }
+      ]
+    },
+    {
+      "date": "2026-03-05",
+      "stats": {
+        "results": {
+          "total": 4,
+          "correct": 3,
+          "rate": 75
+        },
+        "goals": {
+          "total": 4,
+          "correct": 4,
+          "rate": 100
+        },
+        "overall": 88,
+        "completed": 4,
+        "wins": 3,
+        "losses": 1,
+        "winRate": 75,
+        "bySport": {
+          "football": {
+            "total": 4,
+            "wins": 3,
+            "losses": 1,
+            "winRate": 75,
+            "details": {
+              "resultats": {
+                "total": 4,
+                "wins": 3,
+                "winRate": 75
+              },
+              "buts": {
+                "total": 4,
+                "wins": 4,
+                "winRate": 100
+              },
+              "btts": {
+                "total": 0,
+                "wins": 0,
+                "winRate": 0
+              }
+            }
+          },
+          "basketball": {
+            "total": 0,
+            "wins": 0,
+            "losses": 0,
+            "winRate": 0,
+            "details": {
+              "resultats": {
+                "total": 0,
+                "wins": 0,
+                "winRate": 0
+              }
+            }
+          },
+          "hockey": {
+            "total": 0,
+            "wins": 0,
+            "losses": 0,
+            "winRate": 0,
+            "details": {
+              "resultats": {
+                "total": 0,
+                "wins": 0,
+                "winRate": 0
+              }
+            }
+          }
+        }
+      },
+      "predictions": [
+        {
+          "matchId": "foot_2026-03-05_001",
+          "homeTeam": "Liverpool",
+          "awayTeam": "Southampton",
+          "sport": "football",
+          "league": "Premier League",
+          "result": "home",
+          "prediction": "home",
+          "predictedGoals": "Over 2.5",
+          "correct": true,
+          "goalsCorrect": true,
+          "score": "3-1"
+        },
+        {
+          "matchId": "foot_2026-03-05_002",
+          "homeTeam": "Real Madrid",
+          "awayTeam": "Girona",
+          "sport": "football",
+          "league": "La Liga",
+          "result": "home",
+          "prediction": "home",
+          "predictedGoals": "Over 1.5",
+          "correct": true,
+          "goalsCorrect": true,
+          "score": "2-0"
+        },
+        {
+          "matchId": "foot_2026-03-05_003",
+          "homeTeam": "Bayern Munich",
+          "awayTeam": "Freiburg",
+          "sport": "football",
+          "league": "Bundesliga",
+          "result": "draw",
+          "prediction": "home",
+          "predictedGoals": "Over 2.5",
+          "correct": false,
+          "goalsCorrect": true,
+          "score": "1-1"
+        },
+        {
+          "matchId": "foot_2026-03-05_004",
+          "homeTeam": "PSG",
+          "awayTeam": "Nice",
+          "sport": "football",
+          "league": "Ligue 1",
+          "result": "home",
+          "prediction": "home",
+          "predictedGoals": "Over 2.5",
+          "correct": true,
+          "goalsCorrect": true,
+          "score": "4-0"
+        }
+      ]
+    }
+  ],
+  "weeklyStats": [],
+  "monthlyStats": [],
+  "lastArchiveDate": "2026-03-12",
+  "summary": {
+    "totalDays": 4,
+    "totalPredictions": 13,
+    "totalWins": 6,
+    "totalLosses": 7,
+    "overallWinRate": 46,
+    "bySport": {
+      "football": {
+        "total": 8,
+        "wins": 6,
+        "losses": 2,
+        "winRate": 75,
+        "details": {
+          "resultats": {
+            "total": 8,
+            "wins": 6,
+            "winRate": 75
+          },
+          "buts": {
+            "total": 8,
+            "wins": 8,
+            "winRate": 100
+          },
+          "btts": {
+            "total": 0,
+            "wins": 0,
+            "winRate": 0
+          }
+        }
+      },
+      "basketball": {
+        "total": 5,
+        "wins": 0,
+        "losses": 5,
+        "winRate": 0,
+        "details": {
+          "resultats": {
+            "total": 5,
+            "wins": 0,
+            "winRate": 0
+          }
+        }
+      },
+      "hockey": {
+        "total": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "details": {
+          "resultats": {
+            "total": 0,
+            "wins": 0,
+            "winRate": 0
+          }
+        }
+      }
+    },
+    "expertAdvisor": {
+      "total": 0,
+      "wins": 0,
+      "losses": 0,
+      "winRate": 0,
+      "highConfidence": {
+        "total": 0,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastUpdated": "2026-03-13T14:16:07.061Z"
+  },
+  "lastUpdated": "2026-03-13T14:02:05.388Z"
+}

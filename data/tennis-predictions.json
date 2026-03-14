@@ -1,0 +1,2596 @@
+{
+  "generatedAt": "2026-03-14T08:15:37.732Z",
+  "totalMatches": 72,
+  "byCategory": {
+    "atp": 7,
+    "wta": 5,
+    "challenger": 60,
+    "itf": 0
+  },
+  "byConfidence": {
+    "very_high": 1,
+    "high": 13,
+    "medium": 39,
+    "low": 19
+  },
+  "bySurface": {
+    "hard": 35,
+    "clay": 28,
+    "grass": 0,
+    "carpet": 9
+  },
+  "predictions": [
+    {
+      "matchId": "betexp_CKrWRxM0",
+      "player1": "Aryna Sabalenka",
+      "player2": "Linda Noskova",
+      "tournament": "Indian Wells",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.730Z",
+      "odds1": 1.2,
+      "odds2": 4.27,
+      "category": "wta",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 75,
+        "confidence": "very_high",
+        "riskPercentage": 15
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.2,
+        "expectedValue": -10
+      },
+      "analysis": {
+        "rankingAdvantage": "Aryna Sabalenka #1 mondial",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Aryna Sabalenka: 1.20"
+      },
+      "keyFactors": [
+        "Aryna Sabalenka #1 mondial vs #21"
+      ],
+      "warnings": []
+    },
+    {
+      "matchId": "betexp_EcYNTzt1",
+      "player1": "Moutet Corentin",
+      "player2": "Giron Marcos",
+      "tournament": "Phoenix",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.732Z",
+      "odds1": 1.17,
+      "odds2": 5.07,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 72,
+        "confidence": "high",
+        "riskPercentage": 25
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.17,
+        "expectedValue": -16
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Moutet Corentin: 1.17"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Moutet Corentin: classement inconnu",
+        "Giron Marcos: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_zLbbDw77",
+      "player1": "Alexander Zverev",
+      "player2": "Jannik Sinner",
+      "tournament": "Indian Wells",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.732Z",
+      "odds1": 5.19,
+      "odds2": 1.17,
+      "category": "atp",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 71,
+        "confidence": "high",
+        "riskPercentage": 25
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.17,
+        "expectedValue": -17
+      },
+      "analysis": {
+        "rankingAdvantage": "Jannik Sinner #1 mondial",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Jannik Sinner: 1.17"
+      },
+      "keyFactors": [],
+      "warnings": []
+    },
+    {
+      "matchId": "betexp_pM6KcmWp",
+      "player1": "Cassone Murphy",
+      "player2": "Kotov Pavel",
+      "tournament": "Cherbourg",
+      "surface": "carpet",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.727Z",
+      "odds1": 1.21,
+      "odds2": 3.94,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 70,
+        "confidence": "high",
+        "riskPercentage": 25
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.21,
+        "expectedValue": -15
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Cassone Murphy: 1.21"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Cassone Murphy: classement inconnu",
+        "Kotov Pavel: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_ziNKlFo4",
+      "player1": "Gonzalez Santiago Pel David",
+      "player2": "Draxl Liam Maginley Jody",
+      "tournament": "Cap Cana",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.727Z",
+      "odds1": 1.23,
+      "odds2": 3.92,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 69,
+        "confidence": "high",
+        "riskPercentage": 25
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.23,
+        "expectedValue": -15
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Gonzalez Santiago Pel David: 1.23"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Gonzalez Santiago Pel David: classement inconnu",
+        "Draxl Liam Maginley Jody: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_02I55qAM",
+      "player1": "Borges Nuno",
+      "player2": "Giron Marcos",
+      "tournament": "Phoenix",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.730Z",
+      "odds1": 1.23,
+      "odds2": 3.72,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 69,
+        "confidence": "high",
+        "riskPercentage": 25
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.23,
+        "expectedValue": -15
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Borges Nuno: 1.23"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Borges Nuno: classement inconnu",
+        "Giron Marcos: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_OGVusOqe",
+      "player1": "Moutet Corentin",
+      "player2": "Basilashvili Nikoloz",
+      "tournament": "Phoenix",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.730Z",
+      "odds1": 1.26,
+      "odds2": 3.63,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 68,
+        "confidence": "high",
+        "riskPercentage": 25
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.26,
+        "expectedValue": -14
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Moutet Corentin: 1.26"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Moutet Corentin: classement inconnu",
+        "Basilashvili Nikoloz: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_OYdfSLZP",
+      "player1": "Nys Hugo Roger Vasselin",
+      "player2": "Edouard Cash Robert Tracy James",
+      "tournament": "Phoenix",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.731Z",
+      "odds1": 4.09,
+      "odds2": 1.2,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 68,
+        "confidence": "high",
+        "riskPercentage": 25
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.2,
+        "expectedValue": -18
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Edouard Cash Robert Tracy James: 1.20"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Nys Hugo Roger Vasselin: classement inconnu",
+        "Edouard Cash Robert Tracy James: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_UXpcWpq1",
+      "player1": "Cazaux Arthur",
+      "player2": "Basilashvili Nikoloz",
+      "tournament": "Phoenix",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.726Z",
+      "odds1": 1.28,
+      "odds2": 3.25,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 67,
+        "confidence": "high",
+        "riskPercentage": 25
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.28,
+        "expectedValue": -14
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Cazaux Arthur: 1.28"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Cazaux Arthur: classement inconnu",
+        "Basilashvili Nikoloz: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_fDLHOKUN",
+      "player1": "Rinderknech Arthur Vacherot Valentin",
+      "player2": "Bhambri Yuki Goransson Andre",
+      "tournament": "Indian Wells",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.728Z",
+      "odds1": 1.28,
+      "odds2": 3.36,
+      "category": "atp",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 67,
+        "confidence": "high",
+        "riskPercentage": 25
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.28,
+        "expectedValue": -14
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Rinderknech Arthur Vacherot Valentin: 1.28"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Rinderknech Arthur Vacherot Valentin: classement inconnu",
+        "Bhambri Yuki Goransson Andre: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_xvMZ256E",
+      "player1": "Melo Marcelo Rojer Jean",
+      "player2": "Julien Schnaitter Jakob Wallner Mark",
+      "tournament": "Cap Cana",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.730Z",
+      "odds1": 3.96,
+      "odds2": 1.21,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 67,
+        "confidence": "high",
+        "riskPercentage": 25
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.21,
+        "expectedValue": -19
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Julien Schnaitter Jakob Wallner Mark: 1.21"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Melo Marcelo Rojer Jean: classement inconnu",
+        "Julien Schnaitter Jakob Wallner Mark: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_dKnjAkqB",
+      "player1": "Harris Billy",
+      "player2": "Quinn Ethan",
+      "tournament": "Phoenix",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.732Z",
+      "odds1": 3.87,
+      "odds2": 1.23,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 67,
+        "confidence": "high",
+        "riskPercentage": 25
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.23,
+        "expectedValue": -18
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Quinn Ethan: 1.23"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Harris Billy: classement inconnu",
+        "Quinn Ethan: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_4fuOTbil",
+      "player1": "Rodionov Jurij",
+      "player2": "Onclin Gauthier",
+      "tournament": "Cherbourg",
+      "surface": "carpet",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.729Z",
+      "odds1": 1.3,
+      "odds2": 3.26,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 66,
+        "confidence": "high",
+        "riskPercentage": 25
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.3,
+        "expectedValue": -14
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Rodionov Jurij: 1.30"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Rodionov Jurij: classement inconnu",
+        "Onclin Gauthier: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_4fmlyhee",
+      "player1": "Rocha Henrique",
+      "player2": "Boscardin Dias Pedro",
+      "tournament": "Santiago",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.731Z",
+      "odds1": 1.3,
+      "odds2": 3.11,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 66,
+        "confidence": "high",
+        "riskPercentage": 25
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.3,
+        "expectedValue": -14
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Rocha Henrique: 1.30"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Rocha Henrique: classement inconnu",
+        "Boscardin Dias Pedro: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_SGWeepUO",
+      "player1": "Kirkov Vasil Stevens Bart",
+      "player2": "Balaji N Sriram Oberleitner Neil",
+      "tournament": "Cap Cana",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.728Z",
+      "odds1": 3.48,
+      "odds2": 1.27,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 65,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.27,
+        "expectedValue": -17
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Balaji N Sriram Oberleitner Neil: 1.27"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Kirkov Vasil Stevens Bart: classement inconnu",
+        "Balaji N Sriram Oberleitner Neil: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_fsPjv6TH",
+      "player1": "Boscardin Dias",
+      "player2": "Pedro Bueno Gonzalo",
+      "tournament": "Santiago",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.727Z",
+      "odds1": 1.35,
+      "odds2": 2.87,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 64,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.35,
+        "expectedValue": -14
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Boscardin Dias: 1.35"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Boscardin Dias: classement inconnu",
+        "Pedro Bueno Gonzalo: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_0II0mDJ7",
+      "player1": "Haverlag Isabelle Santamaria Sabrina",
+      "player2": "Chan Hao Ching Kato Miyu",
+      "tournament": "Austin",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.731Z",
+      "odds1": 1.34,
+      "odds2": 2.95,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 64,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.34,
+        "expectedValue": -14
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Haverlag Isabelle Santamaria Sabrina: 1.34"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Haverlag Isabelle Santamaria Sabrina: classement inconnu",
+        "Chan Hao Ching Kato Miyu: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_S4KhkZle",
+      "player1": "Andreozzi Guido Guinard Manuel",
+      "player2": "Rinderknech Arthur Vacherot Valentin",
+      "tournament": "Indian Wells",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.732Z",
+      "odds1": 1.35,
+      "odds2": 2.93,
+      "category": "atp",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 64,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.35,
+        "expectedValue": -14
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Andreozzi Guido Guinard Manuel: 1.35"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Andreozzi Guido Guinard Manuel: classement inconnu",
+        "Rinderknech Arthur Vacherot Valentin: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_4WCxKrPF",
+      "player1": "Haverlag Isabelle Santamaria Sabrina",
+      "player2": "Petra Marcinko Sutjiadi Aldila",
+      "tournament": "Austin",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.730Z",
+      "odds1": 1.4,
+      "odds2": 2.81,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 63,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.4,
+        "expectedValue": -12
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Haverlag Isabelle Santamaria Sabrina: 1.40"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Haverlag Isabelle Santamaria Sabrina: classement inconnu",
+        "Petra Marcinko Sutjiadi Aldila: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_4dr4NHV7",
+      "player1": "Badosa Paula",
+      "player2": "Andreescu Bianca",
+      "tournament": "Austin",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.730Z",
+      "odds1": 1.39,
+      "odds2": 2.75,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 63,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.39,
+        "expectedValue": -12
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Badosa Paula: 1.39"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Badosa Paula: classement inconnu",
+        "Andreescu Bianca: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_0tapylmR",
+      "player1": "Harper Cleeve Stevenson David",
+      "player2": "Grevelius Erik Heinonen Adam",
+      "tournament": "Cherbourg",
+      "surface": "carpet",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.727Z",
+      "odds1": 1.42,
+      "odds2": 2.7,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 62,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.42,
+        "expectedValue": -12
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Harper Cleeve Stevenson David: 1.42"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Harper Cleeve Stevenson David: classement inconnu",
+        "Grevelius Erik Heinonen Adam: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_dnJz0NXq",
+      "player1": "Hidalgo Diego Trhac Patrik",
+      "player2": "Romboli Fernando Smith John Patrick",
+      "tournament": "Phoenix",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.728Z",
+      "odds1": 1.42,
+      "odds2": 2.64,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 62,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.42,
+        "expectedValue": -12
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Hidalgo Diego Trhac Patrik: 1.42"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Hidalgo Diego Trhac Patrik: classement inconnu",
+        "Romboli Fernando Smith John Patrick: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_tMyfWxed",
+      "player1": "Tararudee Lanlana",
+      "player2": "Birrell Kimberly",
+      "tournament": "Austin",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.729Z",
+      "odds1": 2.95,
+      "odds2": 1.32,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 62,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.32,
+        "expectedValue": -18
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Birrell Kimberly: 1.32"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Tararudee Lanlana: classement inconnu",
+        "Birrell Kimberly: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_j3XXrpFr",
+      "player1": "Gonzalez Santiago Pel David",
+      "player2": "Cukierman Daniel Hilderbrand Trey",
+      "tournament": "Cap Cana",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.729Z",
+      "odds1": 1.4,
+      "odds2": 2.73,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 62,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.4,
+        "expectedValue": -13
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Gonzalez Santiago Pel David: 1.40"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Gonzalez Santiago Pel David: classement inconnu",
+        "Cukierman Daniel Hilderbrand Trey: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_QadfsCMt",
+      "player1": "Vallejo Daniel",
+      "player2": "Monteiro Thiago",
+      "tournament": "Santiago",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.730Z",
+      "odds1": 1.41,
+      "odds2": 2.69,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 62,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.41,
+        "expectedValue": -13
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Vallejo Daniel: 1.41"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Vallejo Daniel: classement inconnu",
+        "Monteiro Thiago: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_MqHMSC7m",
+      "player1": "Quinn Ethan",
+      "player2": "Bonzi Benjamin",
+      "tournament": "Phoenix",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.730Z",
+      "odds1": 2.93,
+      "odds2": 1.36,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 62,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.36,
+        "expectedValue": -16
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Bonzi Benjamin: 1.36"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Quinn Ethan: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_IJGDX9Nh",
+      "player1": "Rodionov Jurij",
+      "player2": "Romano Filippo",
+      "tournament": "Cherbourg",
+      "surface": "carpet",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.731Z",
+      "odds1": 1.41,
+      "odds2": 2.76,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 62,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.41,
+        "expectedValue": -13
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Rodionov Jurij: 1.41"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Rodionov Jurij: classement inconnu",
+        "Romano Filippo: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_6F73AU9D",
+      "player1": "Bautista Agut",
+      "player2": "Roberto Royer Valentin",
+      "tournament": "Cap Cana",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.726Z",
+      "odds1": 2.86,
+      "odds2": 1.36,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 61,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.36,
+        "expectedValue": -17
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Roberto Royer Valentin: 1.36"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Roberto Royer Valentin: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_GSkTVyxi",
+      "player1": "Jack Draper",
+      "player2": "Daniil Medvedev",
+      "tournament": "Indian Wells",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.726Z",
+      "odds1": 2.61,
+      "odds2": 1.43,
+      "category": "atp",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 61,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.43,
+        "expectedValue": -13
+      },
+      "analysis": {
+        "rankingAdvantage": "Daniil Medvedev #6 mondial",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Daniil Medvedev: 1.43"
+      },
+      "keyFactors": [
+        "Daniil Medvedev #6 mondial vs #12"
+      ],
+      "warnings": []
+    },
+    {
+      "matchId": "betexp_fcZJvFzS",
+      "player1": "Navone Mariano",
+      "player2": "Mochizuki Shintaro",
+      "tournament": "Cap Cana",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.727Z",
+      "odds1": 1.43,
+      "odds2": 2.6,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 61,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.43,
+        "expectedValue": -13
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Navone Mariano: 1.43"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Navone Mariano: classement inconnu",
+        "Mochizuki Shintaro: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_zJHRSXOp",
+      "player1": "Bellucci Mattia",
+      "player2": "Collignon Raphael",
+      "tournament": "Cap Cana",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.729Z",
+      "odds1": 1.46,
+      "odds2": 2.56,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 61,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.46,
+        "expectedValue": -11
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Bellucci Mattia: 1.46"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Bellucci Mattia: classement inconnu",
+        "Collignon Raphael: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_KpUg9e35",
+      "player1": "Harper Cleeve Stevenson David",
+      "player2": "Drzewiecki Karol Walkow Szymon",
+      "tournament": "Cherbourg",
+      "surface": "carpet",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.731Z",
+      "odds1": 1.44,
+      "odds2": 2.59,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 61,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.44,
+        "expectedValue": -12
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Harper Cleeve Stevenson David: 1.44"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Harper Cleeve Stevenson David: classement inconnu",
+        "Drzewiecki Karol Walkow Szymon: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_fcmAFvLO",
+      "player1": "Bertran Peter Hardt Nick",
+      "player2": "Schnaitter Jakob Wallner Mark",
+      "tournament": "Cap Cana",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.727Z",
+      "odds1": 2.69,
+      "odds2": 1.43,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 60,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.43,
+        "expectedValue": -14
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Schnaitter Jakob Wallner Mark: 1.43"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Bertran Peter Hardt Nick: classement inconnu",
+        "Schnaitter Jakob Wallner Mark: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_UioLSBPs",
+      "player1": "Arneodo Romain Demoliner Marcelo Barrios",
+      "player2": "Vera Marcelo Tomas Burruchaga Roman Andres",
+      "tournament": "Cap Cana",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.728Z",
+      "odds1": 1.48,
+      "odds2": 2.52,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 60,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.48,
+        "expectedValue": -11
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Arneodo Romain Demoliner Marcelo Barrios: 1.48"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Arneodo Romain Demoliner Marcelo Barrios: classement inconnu",
+        "Vera Marcelo Tomas Burruchaga Roman Andres: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_YX50OrbB",
+      "player1": "Harris Billy",
+      "player2": "Mannarino Adrian",
+      "tournament": "Phoenix",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.728Z",
+      "odds1": 1.49,
+      "odds2": 2.45,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 60,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.49,
+        "expectedValue": -11
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Harris Billy: 1.49"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Harris Billy: classement inconnu",
+        "Mannarino Adrian: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_Q1LrgFKa",
+      "player1": "Chong Eudice Liang En Shuo",
+      "player2": "Chan Hao Ching Kato Miyu",
+      "tournament": "Austin",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.729Z",
+      "odds1": 1.47,
+      "odds2": 2.5,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 60,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.47,
+        "expectedValue": -12
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Chong Eudice Liang En Shuo: 1.47"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Chong Eudice Liang En Shuo: classement inconnu",
+        "Chan Hao Ching Kato Miyu: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_WrpdPw1e",
+      "player1": "Siniakova Katerina Townsend Taylor",
+      "player2": "Danilina Anna Krunic Aleksandra",
+      "tournament": "Indian Wells",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.731Z",
+      "odds1": 2.73,
+      "odds2": 1.4,
+      "category": "wta",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 60,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.4,
+        "expectedValue": -16
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Danilina Anna Krunic Aleksandra: 1.40"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Siniakova Katerina Townsend Taylor: classement inconnu",
+        "Danilina Anna Krunic Aleksandra: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_MqyCty6F",
+      "player1": "Quinn Ethan",
+      "player2": "Mmoh Michael",
+      "tournament": "Phoenix",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.726Z",
+      "odds1": 1.52,
+      "odds2": 2.38,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 59,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.52,
+        "expectedValue": -10
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Quinn Ethan: 1.52"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Quinn Ethan: classement inconnu",
+        "Mmoh Michael: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_r5tOYpZp",
+      "player1": "Reyes Varela Miguel Angel Zeballos Federico",
+      "player2": "Arias Boris Dutra Da Silva Daniel",
+      "tournament": "Santiago",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.728Z",
+      "odds1": 1.51,
+      "odds2": 2.42,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 59,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.51,
+        "expectedValue": -11
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Reyes Varela Miguel Angel Zeballos Federico: 1.51"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Reyes Varela Miguel Angel Zeballos Federico: classement inconnu",
+        "Arias Boris Dutra Da Silva Daniel: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_Sx8f1f0t",
+      "player1": "Monteiro Thiago",
+      "player2": "Olivieri Genaro Alberto",
+      "tournament": "Santiago",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.731Z",
+      "odds1": 1.52,
+      "odds2": 2.41,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 59,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.52,
+        "expectedValue": -10
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Monteiro Thiago: 1.52"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Monteiro Thiago: classement inconnu",
+        "Olivieri Genaro Alberto: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_AezryLxP",
+      "player1": "Reyes Varela Miguel Angel Zeballos Federico",
+      "player2": "Cadenasso Gianluca Saraiva Dos Santos Paulo Andre",
+      "tournament": "Santiago",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.731Z",
+      "odds1": 2.62,
+      "odds2": 1.43,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 59,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.43,
+        "expectedValue": -16
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Cadenasso Gianluca Saraiva Dos Santos Paulo Andre: 1.43"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Reyes Varela Miguel Angel Zeballos Federico: classement inconnu",
+        "Cadenasso Gianluca Saraiva Dos Santos Paulo Andre: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_EZJ1S2Vb",
+      "player1": "Barrientos Nicolas Kittay Benjamin",
+      "player2": "Johnson Luke Zielinski Jan",
+      "tournament": "Phoenix",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.729Z",
+      "odds1": 1.54,
+      "odds2": 2.32,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 58,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.54,
+        "expectedValue": -11
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Barrientos Nicolas Kittay Benjamin: 1.54"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Barrientos Nicolas Kittay Benjamin: classement inconnu",
+        "Johnson Luke Zielinski Jan: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_84LSngGG",
+      "player1": "Elena Rybakina",
+      "player2": "Gael Monfils",
+      "tournament": "Indian Wells",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.730Z",
+      "odds1": 1.56,
+      "odds2": 2.27,
+      "category": "wta",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 58,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.56,
+        "expectedValue": -10
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Elena Rybakina: 1.56"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Gael Monfils: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_fyMwak3M",
+      "player1": "Gonzalez Santiago Pel David",
+      "player2": "Garin Cristian Mejia Nicolas",
+      "tournament": "Cap Cana",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.727Z",
+      "odds1": 1.6,
+      "odds2": 2.25,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 57,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.6,
+        "expectedValue": -9
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Gonzalez Santiago Pel David: 1.60"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Gonzalez Santiago Pel David: classement inconnu",
+        "Garin Cristian Mejia Nicolas: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_hSLAPs34",
+      "player1": "Moreno De Alboran",
+      "player2": "Nicolas Olivieri Genaro Alberto",
+      "tournament": "Santiago",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.729Z",
+      "odds1": 1.58,
+      "odds2": 2.23,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 57,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.58,
+        "expectedValue": -10
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Moreno De Alboran: 1.58"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Moreno De Alboran: classement inconnu",
+        "Nicolas Olivieri Genaro Alberto: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_GUOzoXpT",
+      "player1": "Navone Mariano",
+      "player2": "Royer Valentin",
+      "tournament": "Cap Cana",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.729Z",
+      "odds1": 1.58,
+      "odds2": 2.25,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 57,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.58,
+        "expectedValue": -10
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Navone Mariano: 1.58"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Navone Mariano: classement inconnu",
+        "Royer Valentin: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_AiKs1qyR",
+      "player1": "Kecmanovic Miomir",
+      "player2": "Walton Adam",
+      "tournament": "Cap Cana",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.730Z",
+      "odds1": 1.57,
+      "odds2": 2.24,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 57,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.57,
+        "expectedValue": -11
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Kecmanovic Miomir: 1.57"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Walton Adam: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_d6JgfnKN",
+      "player1": "Hidalgo Diego Trhac Patrik",
+      "player2": "Johnson Luke Zielinski Jan",
+      "tournament": "Phoenix",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.731Z",
+      "odds1": 2.42,
+      "odds2": 1.49,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 57,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.49,
+        "expectedValue": -15
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Johnson Luke Zielinski Jan: 1.49"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Hidalgo Diego Trhac Patrik: classement inconnu",
+        "Johnson Luke Zielinski Jan: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_2w5HDOk3",
+      "player1": "Walton Adam",
+      "player2": "Bellucci Mattia",
+      "tournament": "Cap Cana",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.732Z",
+      "odds1": 2.41,
+      "odds2": 1.52,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 57,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.52,
+        "expectedValue": -13
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Bellucci Mattia: 1.52"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Walton Adam: classement inconnu",
+        "Bellucci Mattia: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_rNepOgwK",
+      "player1": "Miomir Kecmanovic",
+      "player2": "Mackenzie McDonald",
+      "tournament": "Cap Cana",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.727Z",
+      "odds1": 1.67,
+      "odds2": 2.06,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 56,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.67,
+        "expectedValue": -6
+      },
+      "analysis": {
+        "rankingAdvantage": "Miomir Kecmanovic #36 mondial",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Miomir Kecmanovic: 1.67"
+      },
+      "keyFactors": [
+        "Miomir Kecmanovic #36 mondial vs #41"
+      ],
+      "warnings": []
+    },
+    {
+      "matchId": "betexp_CWnu5W0k",
+      "player1": "Nys Hugo Roger Vasselin",
+      "player2": "Edouard Lammons Nathaniel Withrow Jackson",
+      "tournament": "Phoenix",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.727Z",
+      "odds1": 1.63,
+      "odds2": 2.17,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 56,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.63,
+        "expectedValue": -9
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Nys Hugo Roger Vasselin: 1.63"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Nys Hugo Roger Vasselin: classement inconnu",
+        "Edouard Lammons Nathaniel Withrow Jackson: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_2VWZxs8C",
+      "player1": "Gojo Borna",
+      "player2": "Kotov Pavel",
+      "tournament": "Cherbourg",
+      "surface": "carpet",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.731Z",
+      "odds1": 1.64,
+      "odds2": 2.09,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 56,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.64,
+        "expectedValue": -8
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Gojo Borna: 1.64"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Kotov Pavel: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_Ik56857s",
+      "player1": "Kiger Mac Stalder Reese",
+      "player2": "Galloway Robert Winegar Theodore",
+      "tournament": "Phoenix",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.726Z",
+      "odds1": 2.28,
+      "odds2": 1.57,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 55,
+        "confidence": "medium",
+        "riskPercentage": 40
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.57,
+        "expectedValue": -14
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Galloway Robert Winegar Theodore: 1.57"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Kiger Mac Stalder Reese: classement inconnu",
+        "Galloway Robert Winegar Theodore: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_E39pSQbn",
+      "player1": "Granollers Marcel Zeballos Horacio",
+      "player2": "Andreozzi Guido Guinard Manuel",
+      "tournament": "Indian Wells",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.729Z",
+      "odds1": 1.68,
+      "odds2": 2.1,
+      "category": "atp",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 55,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.68,
+        "expectedValue": -8
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Granollers Marcel Zeballos Horacio: 1.68"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Granollers Marcel Zeballos Horacio: classement inconnu",
+        "Andreozzi Guido Guinard Manuel: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_xAWrooTa",
+      "player1": "Monteiro Thiago",
+      "player2": "Dedura Palomero Diego",
+      "tournament": "Santiago",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.726Z",
+      "odds1": 2.21,
+      "odds2": 1.6,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 54,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.6,
+        "expectedValue": -14
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Dedura Palomero Diego: 1.60"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Monteiro Thiago: classement inconnu",
+        "Dedura Palomero Diego: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_OzQLzzz2",
+      "player1": "Blockx Alexander",
+      "player2": "Navone Mariano",
+      "tournament": "Cap Cana",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.731Z",
+      "odds1": 1.72,
+      "odds2": 1.99,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 54,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.72,
+        "expectedValue": -7
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Blockx Alexander: 1.72"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Blockx Alexander: classement inconnu",
+        "Navone Mariano: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_AqIVkLcd",
+      "player1": "Andreescu Bianca",
+      "player2": "Tararudee Lanlana",
+      "tournament": "Austin",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.732Z",
+      "odds1": 1.72,
+      "odds2": 2.06,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 54,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.72,
+        "expectedValue": -7
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Andreescu Bianca: 1.72"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Andreescu Bianca: classement inconnu",
+        "Tararudee Lanlana: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_tjV5UDVI",
+      "player1": "Arneodo Romain Demoliner Marcelo",
+      "player2": "Melo Marcelo Rojer Jean Julien",
+      "tournament": "Cap Cana",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.732Z",
+      "odds1": 2.18,
+      "odds2": 1.61,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 54,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.61,
+        "expectedValue": -13
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Melo Marcelo Rojer Jean Julien: 1.61"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Arneodo Romain Demoliner Marcelo: classement inconnu",
+        "Melo Marcelo Rojer Jean Julien: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_nksbxpbU",
+      "player1": "Jessica Pegula",
+      "player2": "Elena Rybakina",
+      "tournament": "Indian Wells",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.726Z",
+      "odds1": 2.18,
+      "odds2": 1.61,
+      "category": "wta",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 53,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.61,
+        "expectedValue": -15
+      },
+      "analysis": {
+        "rankingAdvantage": "Jessica Pegula #4 mondial",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Elena Rybakina: 1.61"
+      },
+      "keyFactors": [],
+      "warnings": []
+    },
+    {
+      "matchId": "betexp_OAn3ShX9",
+      "player1": "Tabur Clement",
+      "player2": "Romano Filippo",
+      "tournament": "Cherbourg",
+      "surface": "carpet",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.728Z",
+      "odds1": 2.13,
+      "odds2": 1.66,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 53,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.66,
+        "expectedValue": -12
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Romano Filippo: 1.66"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Tabur Clement: classement inconnu",
+        "Romano Filippo: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_rPWHfSe4",
+      "player1": "Blockx Alexander Wong",
+      "player2": "Chak Lam Coleman",
+      "tournament": "Cap Cana",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.728Z",
+      "odds1": 2.07,
+      "odds2": 1.66,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 53,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.66,
+        "expectedValue": -12
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Chak Lam Coleman: 1.66"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Blockx Alexander Wong: classement inconnu",
+        "Chak Lam Coleman: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_jmXeLg5e",
+      "player1": "Drzewiecki Karol Walkow Szymon",
+      "player2": "Sels Jelle Smith Keegan",
+      "tournament": "Cherbourg",
+      "surface": "carpet",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.727Z",
+      "odds1": 2.02,
+      "odds2": 1.73,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 52,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.73,
+        "expectedValue": -10
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Sels Jelle Smith Keegan: 1.73"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Drzewiecki Karol Walkow Szymon: classement inconnu",
+        "Sels Jelle Smith Keegan: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_4zRQIu5D",
+      "player1": "Bertola Remy",
+      "player2": "Gojo Borna",
+      "tournament": "Cherbourg",
+      "surface": "carpet",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.728Z",
+      "odds1": 1.8,
+      "odds2": 1.91,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 52,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.8,
+        "expectedValue": -6
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Bertola Remy: 1.80"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Bertola Remy: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_xU0wVXFN",
+      "player1": "Moutet Corentin",
+      "player2": "Halys Quentin",
+      "tournament": "Phoenix",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.727Z",
+      "odds1": 1.84,
+      "odds2": 1.86,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 51,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.84,
+        "expectedValue": -6
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Moutet Corentin: 1.84"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Moutet Corentin: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_WWJe02in",
+      "player1": "Cadenasso Gianluca Saraiva Dos Santos Paulo Andre",
+      "player2": "Becerra Otarola Ignacio Antonio Nunez Daniel Antonio",
+      "tournament": "Santiago",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.728Z",
+      "odds1": 1.84,
+      "odds2": 1.84,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 51,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.84,
+        "expectedValue": -6
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Cadenasso Gianluca Saraiva Dos Santos Paulo Andre: 1.84"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Cadenasso Gianluca Saraiva Dos Santos Paulo Andre: classement inconnu",
+        "Becerra Otarola Ignacio Antonio Nunez Daniel Antonio: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_CGf2ujig",
+      "player1": "Polmans Marc Seggerman Ryan",
+      "player2": "Kiger Mac Stalder Reese",
+      "tournament": "Phoenix",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.729Z",
+      "odds1": 1.97,
+      "odds2": 1.74,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 51,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.74,
+        "expectedValue": -11
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Kiger Mac Stalder Reese: 1.74"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Polmans Marc Seggerman Ryan: classement inconnu",
+        "Kiger Mac Stalder Reese: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_UsUnpdQs",
+      "player1": "Nys Hugo Roger Vasselin",
+      "player2": "Edouard Polmans Marc Seggerman Ryan",
+      "tournament": "Phoenix",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.732Z",
+      "odds1": 2,
+      "odds2": 1.72,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 51,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.72,
+        "expectedValue": -12
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Edouard Polmans Marc Seggerman Ryan: 1.72"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Nys Hugo Roger Vasselin: classement inconnu",
+        "Edouard Polmans Marc Seggerman Ryan: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_l0M0GsKD",
+      "player1": "Carlos Alcaraz",
+      "player2": "Cameron Norrie",
+      "tournament": "Indian Wells",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.727Z",
+      "odds1": 2.53,
+      "odds2": 1.48,
+      "category": "atp",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 50,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.48,
+        "expectedValue": -26
+      },
+      "analysis": {
+        "rankingAdvantage": "Carlos Alcaraz #3 mondial",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Cameron Norrie: 1.48"
+      },
+      "keyFactors": [
+        "Carlos Alcaraz #3 mondial vs #29"
+      ],
+      "warnings": []
+    },
+    {
+      "matchId": "betexp_Ak1BxVOb",
+      "player1": "Sanchez Izquierdo",
+      "player2": "Nikolas Rocha Henrique",
+      "tournament": "Santiago",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.728Z",
+      "odds1": 1.9,
+      "odds2": 1.82,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 50,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.9,
+        "expectedValue": -5
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Sanchez Izquierdo: 1.90"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Sanchez Izquierdo: classement inconnu",
+        "Nikolas Rocha Henrique: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_p6I5ZVht",
+      "player1": "Cukierman Daniel Hilderbrand Trey",
+      "player2": "Balaji N Sriram Oberleitner Neil",
+      "tournament": "Cap Cana",
+      "surface": "clay",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.731Z",
+      "odds1": 1.89,
+      "odds2": 1.81,
+      "category": "challenger",
+      "prediction": {
+        "winner": "player1",
+        "winProbability": 50,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.89,
+        "expectedValue": -6
+      },
+      "analysis": {
+        "rankingAdvantage": "Données insuffisantes",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Cukierman Daniel Hilderbrand Trey: 1.89"
+      },
+      "keyFactors": [],
+      "warnings": [
+        "Cukierman Daniel Hilderbrand Trey: classement inconnu",
+        "Balaji N Sriram Oberleitner Neil: classement inconnu"
+      ]
+    },
+    {
+      "matchId": "betexp_AXTmu2E7",
+      "player1": "Carlos Alcaraz",
+      "player2": "Daniil Medvedev",
+      "tournament": "Indian Wells",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.732Z",
+      "odds1": 1.99,
+      "odds2": 1.73,
+      "category": "atp",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 50,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.73,
+        "expectedValue": -13
+      },
+      "analysis": {
+        "rankingAdvantage": "Carlos Alcaraz #3 mondial",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Daniil Medvedev: 1.73"
+      },
+      "keyFactors": [],
+      "warnings": []
+    },
+    {
+      "matchId": "betexp_rVLW9tkS",
+      "player1": "Aryna Sabalenka",
+      "player2": "Elena Rybakina",
+      "tournament": "Indian Wells",
+      "surface": "hard",
+      "round": "Match",
+      "date": "2026-03-14T08:15:37.732Z",
+      "odds1": 2.03,
+      "odds2": 1.71,
+      "category": "wta",
+      "prediction": {
+        "winner": "player2",
+        "winProbability": 50,
+        "confidence": "low",
+        "riskPercentage": 50
+      },
+      "betting": {
+        "recommendedBet": false,
+        "kellyStake": 0,
+        "winnerOdds": 1.71,
+        "expectedValue": -15
+      },
+      "analysis": {
+        "rankingAdvantage": "Aryna Sabalenka #1 mondial",
+        "surfaceAdvantage": "Équilibré",
+        "formAdvantage": "Équilibré",
+        "h2hAdvantage": "Pas d'historique",
+        "oddsValue": "Cote Elena Rybakina: 1.71"
+      },
+      "keyFactors": [
+        "Aryna Sabalenka #1 mondial vs #6"
+      ],
+      "warnings": []
+    }
+  ],
+  "modelVersion": "tennis-ml-v1.0"
+}

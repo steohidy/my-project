@@ -1,0 +1,42 @@
+{
+  "thresholds": {
+    "edgeThreshold": 0.03,
+    "injuryImpactFactor": 1.0,
+    "formWeight": 0.05,
+    "xgWeight": 0.03,
+    "netRatingWeight": 0.03,
+    "confidenceWeights": {
+      "very_high": 0.5,
+      "high": 0.4,
+      "medium": 0.25,
+      "low": 0.1
+    },
+    "minDataQuality": 50,
+    "sportSpecific": {
+      "football": {
+        "h2hWeight": 0.02,
+        "disciplineWeight": 0.01
+      },
+      "basketball": {
+        "paceWeight": 0.02,
+        "restDaysWeight": 0.01
+      }
+    },
+    "version": "1.0.0",
+    "lastUpdated": "",
+    "samplesUsed": 0,
+    "accuracy": 0
+  },
+  "featureWeights": {
+    "edge": 0.25,
+    "dataQuality": 0.2,
+    "injuries": 0.15,
+    "form": 0.15,
+    "xG": 0.1,
+    "netRating": 0.1,
+    "confidence": 0.05
+  },
+  "sportAdjustments": {},
+  "confidence": 0.5,
+  "trainingHistory": []
+}
