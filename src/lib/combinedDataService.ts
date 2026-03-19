@@ -11,6 +11,7 @@
 // Cache pour les matchs ESPN
 let espnCache: any[] = [];
 let espnCacheTime = 0;
+let espnCacheDate = '';
 const ESPN_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 /**
@@ -79,6 +80,14 @@ export async function getMatchesWithRealOdds(): Promise<any[]> {
   console.log('🔄 Récupération matchs depuis ESPN (GRATUIT)...');
   
   const now = Date.now();
+  const today = new Date().toDateString();
+  
+  // Invalider le cache si le jour a changé
+  if (espnCacheDate && espnCacheDate !== today) {
+    console.log('🔄 Nouveau jour détecté - Invalidation du cache');
+    espnCache = [];
+    espnCacheTime = 0;
+  }
   
   // Utiliser le cache si valide
   if (espnCache.length > 0 && (now - espnCacheTime) < ESPN_CACHE_TTL) {
@@ -172,8 +181,24 @@ export async function getMatchesWithRealOdds(): Promise<any[]> {
       }
     }
     
-    espnCache = allMatches;
+    // Filtrer pour ne garder que les matchs d'aujourd'hui et en cours
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+    
+    const filteredMatches = allMatches.filter(match => {
+      const matchDate = new Date(match.date);
+      // Garder les matchs d'aujourd'hui (live ou à venir)
+      if (matchDate >= todayStart && matchDate <= todayEnd) return true;
+      // Garder les matchs en cours (même s'ils ont commencé hier)
+      if (match.isLive) return true;
+      return false;
+    });
+    
+    espnCache = filteredMatches;
     espnCacheTime = now;
+    espnCacheDate = today;
     
     console.log(`✅ ESPN: ${allMatches.length} matchs (${matchesWithOdds} avec cotes DraftKings) - GRATUIT ET ILLIMITÉ`);
     

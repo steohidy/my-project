@@ -76,15 +76,15 @@ interface ProPrediction {
 // ============================================
 
 const SAFE_THRESHOLD = {
-  minProbability: 70,    // STRICT: minimum 70%
-  maxOdds: 1.80,         // STRICT: maximum 1.80
-  minConfidence: 'high'  // Only high or very_high
+  minProbability: 60,    // Baissé de 70 à 60 pour inclure plus de prédictions
+  maxOdds: 2.00,         // Remonté de 1.80 à 2.00
+  minConfidence: 'high'  // high or very_high
 };
 
 const FUN_THRESHOLD = {
-  minProbability: 55,
-  minOdds: 1.40,
-  minValue: 10           // Minimum 10% de valeur attendue
+  minProbability: 50,    // Baissé de 55 à 50
+  minOdds: 1.35,         // Baissé de 1.40 à 1.35
+  minValue: 8            // Baissé de 10 à 8
 };
 
 // ============================================
@@ -149,6 +149,36 @@ async function loadTennisRankings(): Promise<Map<string, { rank: number; name: s
   } catch (e) {}
   
   return rankingsMap;
+}
+
+// NOUVEAU: Charger les matchs live depuis l'API
+async function loadLiveMatches(): Promise<any[]> {
+  try {
+    const baseUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : 'http://localhost:3000';
+    
+    const response = await fetch(`${baseUrl}/api/matches`, {
+      cache: 'no-store'
+    });
+    const data = await response.json();
+    
+    // Filtrer pour les matchs d'aujourd'hui et en cours
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const todayMatches = (data.matches || []).filter((m: any) => {
+      const matchDate = new Date(m.date);
+      matchDate.setHours(0, 0, 0, 0);
+      return matchDate.getTime() === today.getTime() || m.isLive;
+    });
+    
+    console.log(`📡 Live matches: ${todayMatches.length} matchs aujourd'hui/en cours`);
+    return todayMatches;
+  } catch (e) {
+    console.error('Erreur chargement live matches:', e);
+    return [];
+  }
 }
 
 // ============================================
@@ -342,10 +372,10 @@ function classifyPick(
   value: number
 ): 'safe' | 'fun' | null {
   
-  // SAFE: Critères STRICTS
+  // SAFE: Critères assouplis pour inclure medium
   if (winProbability >= SAFE_THRESHOLD.minProbability &&
       odds <= SAFE_THRESHOLD.maxOdds &&
-      (confidence === 'high' || confidence === 'very_high')) {
+      (confidence === 'high' || confidence === 'very_high' || confidence === 'medium')) {
     return 'safe';
   }
   
@@ -366,13 +396,131 @@ function classifyPick(
 async function generatePicks(): Promise<BasePick[]> {
   const picks: BasePick[] = [];
   
-  const [tennisPredictions, expertAdvices, tennisRankings] = await Promise.all([
+  const [tennisPredictions, expertAdvices, tennisRankings, liveMatches] = await Promise.all([
     loadTennisPredictions(),
     loadExpertAdvices(),
-    loadTennisRankings()
+    loadTennisRankings(),
+    loadLiveMatches()  // NOUVEAU: Charger les matchs live
   ]);
   
-  console.log(`📊 Données: ${tennisPredictions.length} tennis, ${expertAdvices.length} expert, ${tennisRankings.size} classements`);
+  console.log(`📊 Données: ${tennisPredictions.length} tennis, ${expertAdvices.length} expert, ${tennisRankings.size} classements, ${liveMatches.length} live matches`);
+  
+  // ==========================================
+  // NOUVEAU: TRAITER LES MATCHS LIVE (FOOTBALL + BASKET)
+  // ==========================================
+  
+  for (const match of liveMatches) {
+    // Ignorer les matchs terminés
+    if (match.status === 'finished' || match.isFinished) continue;
+    
+    const sport = match.sport === 'Basket' ? 'basketball' : 'football';
+    
+    // Calculer les probabilités depuis les cotes
+    const oddsHome = match.oddsHome || 2.0;
+    const oddsAway = match.oddsAway || 2.0;
+    const oddsDraw = match.oddsDraw || 3.3;
+    
+    const totalImplied = (1/oddsHome) + (1/oddsAway) + (1/oddsDraw);
+    const homeProb = Math.round((1/oddsHome) / totalImplied * 100);
+    const awayProb = Math.round((1/oddsAway) / totalImplied * 100);
+    const drawProb = Math.round((1/oddsDraw) / totalImplied * 100);
+    
+    // Déterminer le favori
+    const favorite = oddsHome < oddsAway ? 'home' : 'away';
+    const favoriteOdds = favorite === 'home' ? oddsHome : oddsAway;
+    const favoriteProb = favorite === 'home' ? homeProb : awayProb;
+    const favoriteTeam = favorite === 'home' ? match.homeTeam : match.awayTeam;
+    
+    // Calculer la confiance
+    let confidence: 'very_high' | 'high' | 'medium' | 'low';
+    if (favoriteProb >= 70 && favoriteOdds < 1.5) {
+      confidence = 'very_high';
+    } else if (favoriteProb >= 60 && favoriteOdds < 1.8) {
+      confidence = 'high';
+    } else if (favoriteProb >= 50) {
+      confidence = 'medium';
+    } else {
+      confidence = 'low';
+    }
+    
+    // Double chance probability
+    const doubleChanceProb = favorite === 'home' ? homeProb + drawProb : awayProb + drawProb;
+    
+    // Choisir le meilleur pari
+    let betType = '';
+    let betLabel = '';
+    let winProbability = 0;
+    let selectedOdds = 0;
+    let reasoning: string[] = [];
+    
+    if (favoriteOdds < 1.5 && favoriteProb >= 65) {
+      // Victoire sèche recommandée
+      betType = favorite;
+      betLabel = `Victoire ${favoriteTeam}`;
+      winProbability = favoriteProb;
+      selectedOdds = favoriteOdds;
+      reasoning.push(`Favori solide: ${favoriteProb}% (${favoriteOdds})`);
+    } else if (favoriteOdds < 2.0 && doubleChanceProb >= 70) {
+      // Double chance recommandée
+      betType = favorite === 'home' ? '1X' : 'X2';
+      betLabel = `${favoriteTeam} ou Nul`;
+      winProbability = doubleChanceProb;
+      selectedOdds = favorite === 'home' ? 
+        Math.round((1 / ((homeProb + drawProb) / 100)) * 100) / 100 :
+        Math.round((1 / ((awayProb + drawProb) / 100)) * 100) / 100;
+      reasoning.push(`Double chance sûre: ${doubleChanceProb}%`);
+    } else if (favoriteProb >= 55) {
+      // Pari modéré sur le favori
+      betType = favorite;
+      betLabel = `Victoire ${favoriteTeam}`;
+      winProbability = favoriteProb;
+      selectedOdds = favoriteOdds;
+      reasoning.push(`Favori modéré: ${favoriteProb}% (${favoriteOdds})`);
+    } else {
+      // Match serré - sauter
+      continue;
+    }
+    
+    // Calculer la valeur
+    const value = Math.round((winProbability / 100 * selectedOdds - 1) * 100);
+    
+    // Classifier
+    const type = classifyPick(winProbability, selectedOdds, confidence, value);
+    if (!type) continue;
+    
+    // Score de qualité
+    const qualityScore = Math.round(
+      (winProbability * 0.4) +
+      ((confidence === 'very_high' ? 100 : confidence === 'high' ? 75 : confidence === 'medium' ? 50 : 25) * 0.3) +
+      (Math.max(0, value) * 0.3)
+    );
+    
+    // Ajouter le data source
+    reasoning.push(match.hasRealOdds ? 'Cotes ESPN DraftKings' : 'Cotes estimées');
+    if (match.isLive) {
+      reasoning.push('🔥 Match en cours');
+    }
+    
+    picks.push({
+      id: `live_${match.id}`,
+      matchId: match.id,
+      sport,
+      league: match.league || 'Unknown',
+      homeTeam: match.homeTeam,
+      awayTeam: match.awayTeam,
+      date: match.date || new Date().toISOString(),
+      bet: betType,
+      betLabel,
+      odds: selectedOdds,
+      confidence,
+      winProbability,
+      value,
+      type,
+      reasoning,
+      qualityScore,
+      result: 'pending'
+    });
+  }
   
   // ==========================================
   // TENNIS - Avec vrais classements ATP/WTA
