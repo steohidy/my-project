@@ -2870,8 +2870,10 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
           <NavButton icon="📡" label="API" active={activeSection === 'apistatus'} onClick={() => setActiveSection('apistatus')} color="#22c55e" />
         )}
         
-        {/* Pronostiqueur Pro - Visible pour tous */}
-        <NavButton icon="🎯" label="Pro" active={activeSection === 'pronostiqueur'} onClick={() => setActiveSection('pronostiqueur')} color="#f97316" />
+        {/* Pronostiqueur Pro - Visible uniquement pour les admins */}
+        {userInfo?.role === 'admin' && (
+          <NavButton icon="🎯" label="Pro" active={activeSection === 'pronostiqueur'} onClick={() => setActiveSection('pronostiqueur')} color="#f97316" />
+        )}
         
         {/* Admin Button - Visible uniquement pour les admins */}
         {userInfo?.role === 'admin' && (
@@ -3109,13 +3111,13 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
           <TennisSection />
         )}
 
-        {/* Section API Status - Visible pour tous */}
-        {activeSection === 'apistatus' && (
+        {/* Section API Status - Visible uniquement pour les admins */}
+        {activeSection === 'apistatus' && userInfo?.role === 'admin' && (
           <ApiStatusSection />
         )}
 
-        {/* Section Pronostiqueur Pro - Visible pour tous */}
-        {activeSection === 'pronostiqueur' && (
+        {/* Section Pronostiqueur Pro - Visible uniquement pour les admins */}
+        {activeSection === 'pronostiqueur' && userInfo?.role === 'admin' && (
           <PronostiqueurProSection />
         )}
 

@@ -16,6 +16,31 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // ============================================
+// ADMIN AUTHENTICATION
+// ============================================
+
+/**
+ * Vérifie si l'utilisateur est admin via le cookie de session
+ */
+function isAdmin(request: NextRequest): { isAdmin: boolean; username?: string } {
+  const sessionData = request.cookies.get('steo_elite_session_data');
+
+  if (!sessionData) {
+    return { isAdmin: false };
+  }
+
+  try {
+    const data = JSON.parse(decodeURIComponent(sessionData.value));
+    return {
+      isAdmin: data.role === 'admin',
+      username: data.user
+    };
+  } catch {
+    return { isAdmin: false };
+  }
+}
+
+// ============================================
 // INTERFACES
 // ============================================
 
@@ -871,6 +896,12 @@ function saveProDatabase(db: ProDatabase): void {
 // ============================================
 
 export async function GET(request: NextRequest) {
+  // Vérification admin
+  const { isAdmin: admin } = isAdmin(request);
+  if (!admin) {
+    return NextResponse.json({ error: 'Accès non autorisé - Admin uniquement' }, { status: 403 });
+  }
+
   const { searchParams } = new URL(request.url);
   const action = searchParams.get('action') || 'predictions';
   
@@ -930,6 +961,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // Vérification admin
+  const { isAdmin: admin } = isAdmin(request);
+  if (!admin) {
+    return NextResponse.json({ error: 'Accès non autorisé - Admin uniquement' }, { status: 403 });
+  }
+
   const body = await request.json();
   const { action, predictionId, results, prediction } = body;
   
