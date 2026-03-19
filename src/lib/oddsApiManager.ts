@@ -17,8 +17,8 @@ const BASE_URL = 'https://api.the-odds-api.com/v4';
 
 // Quota mensuel
 const MONTHLY_QUOTA = 500;
-const DAILY_BUDGET = 15; // Max requêtes par jour
-const CACHE_DURATION_MS = 2 * 60 * 60 * 1000; // 2 heures de cache
+const DAILY_BUDGET = 5; // Max 5 requêtes par jour (très conservateur)
+const CACHE_DURATION_MS = 6 * 60 * 60 * 1000; // 6 heures de cache (était 2h)
 
 // Cache global en mémoire (persiste entre les requêtes sur la même instance)
 declare global {

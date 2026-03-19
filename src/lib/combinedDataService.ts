@@ -15,7 +15,7 @@ import { getMatchesFromCache, fetchAndCacheOdds, findOddsForMatch, getQuotaInfo 
 // Cache pour les matchs ESPN
 let espnCache: any[] = [];
 let espnCacheTime = 0;
-const ESPN_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const ESPN_CACHE_TTL = 10 * 60 * 1000; // 10 minutes (était 5 min)
 
 // Mapping sports ESPN vers The Odds API
 const SPORT_MAPPING: Record<string, string> = {
@@ -38,23 +38,23 @@ export async function getMatchesWithRealOdds(): Promise<any[]> {
   // 1. D'abord récupérer les matchs ESPN (avec cotes DraftKings gratuites)
   const espnMatches = await fetchESPNMatches();
   const espnWithOdds = espnMatches.filter((m: any) => m.hasRealOdds).length;
-  console.log(`📺 ESPN: ${espnMatches.length} matchs (${espnWithOdds} avec cotes DraftKings)`);
+  const espnWithoutOdds = espnMatches.length - espnWithOdds;
+  console.log(`📺 ESPN: ${espnMatches.length} matchs (${espnWithOdds} avec cotes DraftKings, ${espnWithoutOdds} sans cotes)`);
   
-  // 2. Ne PAS appeler The Odds API si ESPN a déjà des cotes pour la plupart des matchs
-  // Seulement appeler si moins de 50% des matchs ont des cotes ESPN
-  const needOddsApi = espnWithOdds < espnMatches.length * 0.5;
-  
+  // 2. Toujours appeler The Odds API pour les matchs sans cotes ESPN
+  // Mais avec un cache intelligent pour économiser le quota
   let oddsMatches: any[] = [];
   let quotaInfo = { remaining: 500 };
   
-  if (needOddsApi) {
-    console.log('📡 ESPN insuffisant, appel The Odds API...');
+  // Vérifier si on a besoin d'appeler l'API (matchs sans cotes ESPN)
+  if (espnWithoutOdds > 0) {
+    console.log(`📡 ${espnWithoutOdds} matchs sans cotes ESPN, appel The Odds API...`);
     await fetchAndCacheOdds();
     oddsMatches = getMatchesFromCache();
     quotaInfo = getQuotaInfo();
-    console.log(`📊 The Odds API: ${oddsMatches.length} matchs, ${quotaInfo.remaining} requêtes restantes`);
+    console.log(`📊 The Odds API: ${oddsMatches.length} matchs disponibles, ${quotaInfo.remaining} requêtes restantes`);
   } else {
-    console.log('✅ ESPN fournit suffisamment de cotes, The Odds API non sollicité (quota économisé!)');
+    console.log('✅ Tous les matchs ont des cotes ESPN DraftKings, pas besoin de The Odds API');
   }
   
   // 3. Fusionner les données - utiliser ESPN odds comme source principale
