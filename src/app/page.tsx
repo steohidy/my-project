@@ -3600,51 +3600,72 @@ function FootballMatchCard({ match, index }: { match: Match; index: number }) {
   const riskColor = riskPercentage <= 40 ? '#22c55e' : riskPercentage <= 50 ? '#f97316' : '#ef4444';
   const riskLabel = riskPercentage <= 40 ? 'Sûr' : riskPercentage <= 50 ? 'Modéré' : 'Audacieux';
   
-  // Calcul des probabilités implicites
-  const homeProb = Math.round((1 / match.oddsHome) / ((1 / match.oddsHome) + (1 / match.oddsAway) + (match.oddsDraw ? 1 / match.oddsDraw : 0)) * 100);
-  const awayProb = Math.round((1 / match.oddsAway) / ((1 / match.oddsHome) + (1 / match.oddsAway) + (match.oddsDraw ? 1 / match.oddsDraw : 0)) * 100);
-  const drawProb = match.oddsDraw ? Math.round((1 / match.oddsDraw) / ((1 / match.oddsHome) + (1 / match.oddsAway) + (1 / match.oddsDraw)) * 100) : 0;
+  // Validation des cotes - éviter NaN
+  const validOddsHome = (match.oddsHome && match.oddsHome > 1) ? match.oddsHome : 2.0;
+  const validOddsAway = (match.oddsAway && match.oddsAway > 1) ? match.oddsAway : 2.0;
+  const validOddsDraw = (match.oddsDraw && match.oddsDraw > 1) ? match.oddsDraw : 3.3;
+  
+  // Calcul des probabilités implicites (avec validation)
+  const totalImplied = (1 / validOddsHome) + (1 / validOddsAway) + (validOddsDraw ? 1 / validOddsDraw : 0);
+  const homeProb = Math.round((1 / validOddsHome) / totalImplied * 100);
+  const awayProb = Math.round((1 / validOddsAway) / totalImplied * 100);
+  const drawProb = validOddsDraw ? Math.round((1 / validOddsDraw) / totalImplied * 100) : 0;
   
   // Déterminer le favori et la recommandation
-  const favorite = match.oddsHome < match.oddsAway ? 'home' : 'away';
+  const favorite = validOddsHome < validOddsAway ? 'home' : 'away';
   const favoriteTeam = favorite === 'home' ? match.homeTeam : match.awayTeam;
   const favoriteProb = favorite === 'home' ? homeProb : awayProb;
-  const favoriteOdds = favorite === 'home' ? match.oddsHome : match.oddsAway;
+  const favoriteOdds = favorite === 'home' ? validOddsHome : validOddsAway;
   
-  // Victoire ou Nul (Double Chance)
-  const homeOrDrawProb = homeProb + drawProb;
-  const awayOrDrawProb = awayProb + drawProb;
+  // ==========================================
+  // OPTIONS DE PARIS COMPLÈTES
+  // ==========================================
   
-  // Draw No Bet (probabilités ajustées sans le nul)
+  // 1. VICTOIRE SÈCHE (1, X, 2)
+  const homeWinClean = homeProb;      // Victoire Domicile
+  const awayWinClean = awayProb;      // Victoire Extérieur
+  const drawClean = drawProb;         // Match Nul
+  
+  // 2. DOUBLE CHANCE (1X, X2, 12)
+  const homeOrDrawProb = homeProb + drawProb;   // 1X: Domicile ou Nul
+  const awayOrDrawProb = awayProb + drawProb;   // X2: Extérieur ou Nul
+  const homeOrAwayProb = homeProb + awayProb;   // 12: Pas de nul
+  
+  // 3. DRAW NO BET (DNB) - Remboursé si nul
   const totalNoDraw = homeProb + awayProb;
-  const dnbHome = Math.round((homeProb / totalNoDraw) * 100);
-  const dnbAway = Math.round((awayProb / totalNoDraw) * 100);
+  const dnbHome = totalNoDraw > 0 ? Math.round((homeProb / totalNoDraw) * 100) : 50;
+  const dnbAway = totalNoDraw > 0 ? Math.round((awayProb / totalNoDraw) * 100) : 50;
   const drawNoBetOdds = {
-    home: totalNoDraw > 0 ? Math.round((100 / dnbHome) * 100) / 100 : 1.5,
-    away: totalNoDraw > 0 ? Math.round((100 / dnbAway) * 100) / 100 : 2.5
+    home: dnbHome > 0 ? Math.round((100 / dnbHome) * 100) / 100 : 1.5,
+    away: dnbAway > 0 ? Math.round((100 / dnbAway) * 100) / 100 : 2.5
   };
   
   // Recommandation intelligente
   let recommendation = '';
   let recColor = '#22c55e';
   let recommendationProb = 0; // Probabilité RÉELLE de la recommandation
+  let recommendationType = ''; // Type de pari recommandé
   
   if (favoriteOdds < 1.5 && favoriteProb >= 65) {
     recommendation = `✅ Victoire ${favoriteTeam}`;
     recommendationProb = favoriteProb; // Probabilité de victoire du favori
+    recommendationType = 'clean-win';
     recColor = '#22c55e';
   } else if (favoriteOdds < 2.0 && favoriteProb >= 50) {
     recommendation = `✅ ${favoriteTeam} ou Nul`;
     // Probabilité = victoire favori + nul
     recommendationProb = favorite === 'home' ? homeOrDrawProb : awayOrDrawProb;
+    recommendationType = 'double-chance';
     recColor = '#22c55e';
   } else if (drawProb >= 30) {
     recommendation = `⚠️ Risque de Nul`;
     recommendationProb = drawProb;
+    recommendationType = 'draw-risk';
     recColor = '#f97316';
   } else {
     recommendation = `⏳ Match serré`;
     recommendationProb = Math.max(homeProb, awayProb);
+    recommendationType = 'tight-match';
     recColor = '#f97316';
   }
   
@@ -3800,7 +3821,7 @@ function FootballMatchCard({ match, index }: { match: Match; index: number }) {
         gap: '6px',
         marginTop: '8px'
       }}>
-        {/* Double Chance */}
+        {/* VICTOIRE SÈCHE (1, X, 2) */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -3810,10 +3831,32 @@ function FootballMatchCard({ match, index }: { match: Match; index: number }) {
           borderRadius: '6px',
           fontSize: '10px'
         }}>
+          <span style={{ fontSize: '14px' }}>🏆</span>
+          <div>
+            <div style={{ color: '#f97316', fontWeight: 'bold' }}>Victoire Sèche</div>
+            <div style={{ color: '#888', fontSize: '9px' }}>
+              1: {homeWinClean}% | X: {drawClean}% | 2: {awayWinClean}%
+            </div>
+          </div>
+        </div>
+        
+        {/* DOUBLE CHANCE (1X, X2) */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '8px',
+          background: recommendationType === 'double-chance' ? '#22c55e15' : '#1a1a1a',
+          borderRadius: '6px',
+          fontSize: '10px',
+          border: recommendationType === 'double-chance' ? '1px solid #22c55e30' : 'none'
+        }}>
           <span style={{ fontSize: '14px' }}>🎲</span>
           <div>
             <div style={{ color: '#22c55e', fontWeight: 'bold' }}>Double Chance</div>
-            <div style={{ color: '#888', fontSize: '9px' }}>{favoriteTeam} ou Nul: {Math.round(favoriteProb + drawProb)}%</div>
+            <div style={{ color: '#888', fontSize: '9px' }}>
+              1X: {homeOrDrawProb}% | X2: {awayOrDrawProb}%
+            </div>
           </div>
         </div>
         
@@ -3987,6 +4030,48 @@ function FootballMatchCard({ match, index }: { match: Match; index: number }) {
           borderRadius: '8px',
           border: '1px solid #222'
         }}>
+          {/* VICTOIRE SÈCHE (1, X, 2) */}
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ color: '#f97316', fontSize: '11px', fontWeight: 'bold', marginBottom: '6px' }}>
+              🏆 Victoire Sèche (Résultat Exact)
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+              <div style={{ 
+                padding: '8px', 
+                background: homeWinClean >= 50 ? '#f9731615' : '#1a1a1a',
+                border: homeWinClean >= 50 ? '1px solid #f9731630' : 'none',
+                borderRadius: '4px', 
+                textAlign: 'center' 
+              }}>
+                <div style={{ fontSize: '9px', color: '#888' }}>1 (Domicile)</div>
+                <div style={{ fontWeight: 'bold', color: homeWinClean >= 50 ? '#f97316' : '#fff', fontSize: '14px' }}>{homeWinClean}%</div>
+                <div style={{ fontSize: '8px', color: '#666' }}>@{validOddsHome.toFixed(2)}</div>
+              </div>
+              <div style={{ 
+                padding: '8px', 
+                background: drawClean >= 30 ? '#eab30815' : '#1a1a1a',
+                border: drawClean >= 30 ? '1px solid #eab30830' : 'none',
+                borderRadius: '4px', 
+                textAlign: 'center' 
+              }}>
+                <div style={{ fontSize: '9px', color: '#888' }}>X (Nul)</div>
+                <div style={{ fontWeight: 'bold', color: drawClean >= 30 ? '#eab308' : '#fff', fontSize: '14px' }}>{drawClean}%</div>
+                <div style={{ fontSize: '8px', color: '#666' }}>@{validOddsDraw.toFixed(2)}</div>
+              </div>
+              <div style={{ 
+                padding: '8px', 
+                background: awayWinClean >= 50 ? '#3b82f615' : '#1a1a1a',
+                border: awayWinClean >= 50 ? '1px solid #3b82f630' : 'none',
+                borderRadius: '4px', 
+                textAlign: 'center' 
+              }}>
+                <div style={{ fontSize: '9px', color: '#888' }}>2 (Extérieur)</div>
+                <div style={{ fontWeight: 'bold', color: awayWinClean >= 50 ? '#3b82f6' : '#fff', fontSize: '14px' }}>{awayWinClean}%</div>
+                <div style={{ fontSize: '8px', color: '#666' }}>@{validOddsAway.toFixed(2)}</div>
+              </div>
+            </div>
+          </div>
+          
           {/* DOUBLE CHANCE */}
           <div style={{ marginBottom: '12px' }}>
             <div style={{ color: '#3b82f6', fontSize: '11px', fontWeight: 'bold', marginBottom: '6px' }}>
@@ -4022,7 +4107,7 @@ function FootballMatchCard({ match, index }: { match: Match; index: number }) {
                 textAlign: 'center' 
               }}>
                 <div style={{ fontSize: '9px', color: '#888' }}>12</div>
-                <div style={{ fontWeight: 'bold', color: '#fff', fontSize: '12px' }}>{homeProb + awayProb}%</div>
+                <div style={{ fontWeight: 'bold', color: '#fff', fontSize: '12px' }}>{homeOrAwayProb}%</div>
                 <div style={{ fontSize: '8px', color: '#666' }}>Pas de nul</div>
               </div>
             </div>

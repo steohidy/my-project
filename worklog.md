@@ -313,3 +313,23 @@ Système de prédiction:
 - unifiedPredictionService.ts: ✅ Créé  
 - expertAdvisor.ts: ✅ Mis à jour V3
 - npm run lint: ✅ 0 errors
+- git push: ✅ Effectué sur master
+- Vercel deploy: 🔄 En cours...
+
+---
+Task ID: 2
+Agent: full-stack-developer
+Task: Fix oddsDraw.toFixed error and improve ML integration
+
+Work Log:
+- Created /src/lib/formatUtils.ts with safe formatting functions
+- Verified existing null checks in MatchCard.tsx, AntiTrap.tsx, sportsApi.ts
+- Created /src/lib/unifiedPredictionService.ts V3 with comprehensive ML integration
+- Updated /src/lib/expertAdvisor.ts to V3 with unified service integration
+- Fixed type errors: H2HHistory.homeWins → team1Wins, FormGuide.results → form
+- Build successful: npm run build completed with 0 errors
+
+Stage Summary:
+- Bug fix verified but was already handled
+- New unified prediction service integrates ESPN, Dixon-Coles, ML, Context
+- Build compiles successfully
