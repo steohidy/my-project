@@ -3210,11 +3210,18 @@ function NBAMatchCard({ match, index }: { match: Match; index: number }) {
   const riskColor = riskPercentage <= 40 ? '#22c55e' : riskPercentage <= 50 ? '#f97316' : '#ef4444';
   const riskLabel = riskPercentage <= 40 ? 'Sûr' : riskPercentage <= 50 ? 'Modéré' : 'Audacieux';
   
-  // Données NBA
+  // Données NBA - avec fallbacks si pas de nbaPredictions
   const nba = match.nbaPredictions;
-  const isHomeFavorite = nba?.predictedWinner === 'home';
-  const winnerProb = nba?.winnerProb || 50;
-  const confidenceColor = nba?.confidence === 'high' ? '#22c55e' : nba?.confidence === 'medium' ? '#f97316' : '#ef4444';
+  
+  // Calculer les probabilités depuis les cotes si pas de nbaPredictions
+  const homeProbFromOdds = match.oddsHome > 1 ? Math.round((1 / match.oddsHome) * 100 / ((1/match.oddsHome) + (1/match.oddsAway))) : 50;
+  const awayProbFromOdds = 100 - homeProbFromOdds;
+  
+  const isHomeFavorite = nba?.predictedWinner === 'home' || (!nba && match.oddsHome < match.oddsAway);
+  const winnerProb = nba?.winnerProb || (isHomeFavorite ? homeProbFromOdds : awayProbFromOdds);
+  const winnerTeam = nba?.winnerTeam || (isHomeFavorite ? match.homeTeam : match.awayTeam);
+  const confidence = nba?.confidence || (Math.abs(homeProbFromOdds - awayProbFromOdds) > 20 ? 'high' : Math.abs(homeProbFromOdds - awayProbFromOdds) > 10 ? 'medium' : 'low');
+  const confidenceColor = confidence === 'high' ? '#22c55e' : confidence === 'medium' ? '#f97316' : '#ef4444';
   
   // Scores live
   const isLive = match.isLive;
@@ -3225,6 +3232,24 @@ function NBAMatchCard({ match, index }: { match: Match; index: number }) {
   
   // Formatter le quart-temps
   const periodLabel = period ? (period <= 4 ? `Q${period}` : `OT${period - 4}`) : '';
+  
+  // Calculer spread depuis les cotes si pas disponible
+  const spreadLine = nba?.spread?.line ?? (isHomeFavorite ? Math.round((awayProbFromOdds - homeProbFromOdds) / 3) : Math.round((homeProbFromOdds - awayProbFromOdds) / 3));
+  const spreadFavorite = nba?.spread?.favorite || (isHomeFavorite ? match.homeTeam : match.awayTeam);
+  const spreadConfidence = nba?.spread?.confidence ?? (Math.abs(spreadLine) >= 7 ? 65 : 55);
+  
+  // Total points par défaut pour NBA
+  const totalPointsPredicted = nba?.totalPoints?.predicted ?? 220;
+  const totalPointsOverProb = nba?.totalPoints?.overProb ?? 50;
+  const totalPointsRec = nba?.totalPoints?.recommendation || (totalPointsOverProb >= 55 ? 'Over' : 'Under');
+  
+  // Top scorer fallback
+  const topScorerPlayer = nba?.topScorer?.player || (isHomeFavorite ? match.homeTeam : match.awayTeam) + ' Star';
+  const topScorerTeam = nba?.topScorer?.team || (isHomeFavorite ? match.homeTeam : match.awayTeam);
+  const topScorerPoints = nba?.topScorer?.predictedPoints ?? 25;
+  
+  // Key matchup fallback
+  const keyMatchup = nba?.keyMatchup || `${match.homeTeam} vs ${match.awayTeam}`;
   
   return (
     <div style={{
@@ -3423,7 +3448,7 @@ function NBAMatchCard({ match, index }: { match: Match; index: number }) {
               fontWeight: 'bold', 
               color: isHomeFavorite ? '#f97316' : '#3b82f6' 
             }}>
-              ⭐ {nba?.winnerTeam}
+              ⭐ {winnerTeam}
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
@@ -3431,7 +3456,7 @@ function NBAMatchCard({ match, index }: { match: Match; index: number }) {
               {winnerProb}%
             </div>
             <div style={{ fontSize: '9px', color: '#888' }}>
-              Confiance: {nba?.confidence === 'high' ? 'Haute' : nba?.confidence === 'medium' ? 'Moyenne' : 'Faible'}
+              Confiance: {confidence === 'high' ? 'Haute' : confidence === 'medium' ? 'Moyenne' : 'Faible'}
             </div>
           </div>
         </div>
@@ -3439,7 +3464,7 @@ function NBAMatchCard({ match, index }: { match: Match; index: number }) {
       
       {/* TAG DE STATUT AUTOMATIQUE NBA - Basé sur le backtest */}
       {(() => {
-        const nbaConfidence = nba?.confidence ?? 'medium';
+        const nbaConfidence = confidence;
         const isLow = nbaConfidence === 'low';
         const isMedium = nbaConfidence === 'medium';
         const isHigh = nbaConfidence === 'high';
@@ -3529,10 +3554,10 @@ function NBAMatchCard({ match, index }: { match: Match; index: number }) {
         }}>
           <div style={{ fontSize: '10px', color: '#888', marginBottom: '4px' }}>📊 SPREAD</div>
           <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#22c55e' }}>
-            {nba?.spread?.favorite} ({(nba?.spread?.line ?? 0) > 0 ? '-' : '+'}{Math.abs(nba?.spread?.line ?? 0)})
+            {spreadFavorite} ({spreadLine > 0 ? '-' : '+'}{Math.abs(spreadLine)})
           </div>
           <div style={{ fontSize: '9px', color: '#666' }}>
-            Confiance: {nba?.spread?.confidence}%
+            Confiance: {spreadConfidence}%
           </div>
         </div>
         
@@ -3543,11 +3568,11 @@ function NBAMatchCard({ match, index }: { match: Match; index: number }) {
           padding: '10px'
         }}>
           <div style={{ fontSize: '10px', color: '#888', marginBottom: '4px' }}>📈 TOTAL POINTS</div>
-          <div style={{ fontSize: '14px', fontWeight: 'bold', color: (nba?.totalPoints?.overProb ?? 0) >= 55 ? '#22c55e' : '#f97316' }}>
-            {nba?.totalPoints?.recommendation}
+          <div style={{ fontSize: '14px', fontWeight: 'bold', color: totalPointsOverProb >= 55 ? '#22c55e' : '#f97316' }}>
+            {totalPointsRec} {totalPointsPredicted}
           </div>
           <div style={{ fontSize: '9px', color: '#666' }}>
-            Prédit: {nba?.totalPoints?.predicted} pts ({nba?.totalPoints?.overProb}% over)
+            Prédit: {totalPointsPredicted} pts ({totalPointsOverProb}% over)
           </div>
         </div>
         
@@ -3559,10 +3584,10 @@ function NBAMatchCard({ match, index }: { match: Match; index: number }) {
         }}>
           <div style={{ fontSize: '10px', color: '#888', marginBottom: '4px' }}>🏀 TOP SCOREUR</div>
           <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#eab308' }}>
-            {nba?.topScorer?.player}
+            {topScorerPlayer}
           </div>
           <div style={{ fontSize: '9px', color: '#666' }}>
-            {nba?.topScorer?.team} • ~{nba?.topScorer?.predictedPoints} pts
+            {topScorerTeam} • ~{topScorerPoints} pts
           </div>
         </div>
         
@@ -3574,7 +3599,7 @@ function NBAMatchCard({ match, index }: { match: Match; index: number }) {
         }}>
           <div style={{ fontSize: '10px', color: '#888', marginBottom: '4px' }}>⚔️ DUEL CLÉ</div>
           <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#a855f7' }}>
-            {nba?.keyMatchup}
+            {keyMatchup}
           </div>
           <div style={{ fontSize: '9px', color: '#666' }}>
             Impact sur le résultat
@@ -3618,8 +3643,8 @@ function NBAMatchCard({ match, index }: { match: Match; index: number }) {
 
 // Composant MatchCardCompact - Wrapper qui choisit le bon composant selon le sport
 function MatchCardCompact({ match, index }: { match: Match; index: number }) {
-  // Si c'est un match NBA avec prédictions, utiliser le composant spécifique
-  if (match.sport === 'Basket' && match.nbaPredictions) {
+  // Si c'est un match de Basket, utiliser le composant spécifique (avec ou sans nbaPredictions)
+  if (match.sport === 'Basket' || match.sport === 'Basketball') {
     return <NBAMatchCard match={match} index={index} />;
   }
   
