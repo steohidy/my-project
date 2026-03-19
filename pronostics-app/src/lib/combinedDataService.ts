@@ -40,19 +40,27 @@ export async function getMatchesWithRealOdds(): Promise<any[]> {
   const oddsMatches = getMatchesFromCache();
   const quotaInfo = getQuotaInfo();
   
-  console.log(`📊 Cotes: ${oddsMatches.length} matchs, ${quotaInfo.remaining} requêtes restantes`);
+  console.log(`📊 The Odds API: ${oddsMatches.length} matchs, ${quotaInfo.remaining} requêtes restantes`);
   
-  // 2. Récupérer les matchs ESPN
+  // 2. Récupérer les matchs ESPN (avec cotes DraftKings intégrées)
   const espnMatches = await fetchESPNMatches();
-  console.log(`📺 ESPN: ${espnMatches.length} matchs`);
+  const espnWithOdds = espnMatches.filter(m => m.hasRealOdds).length;
+  console.log(`📺 ESPN: ${espnMatches.length} matchs (${espnWithOdds} avec cotes DraftKings)`);
   
-  // 3. Fusionner les données
+  // 3. Fusionner les données - utiliser ESPN odds comme source principale
   const mergedMatches = espnMatches.map((match: any) => {
-    // Chercher les cotes correspondantes
+    // Si ESPN a déjà des cotes, les utiliser directement
+    if (match.hasRealOdds && match.oddsHome > 0) {
+      return {
+        ...match,
+        oddsSource: match.oddsSource || 'ESPN (DraftKings)',
+      };
+    }
+    
+    // Sinon, chercher dans The Odds API
     const odds = findOddsForMatch(match.homeTeam, match.awayTeam);
     
     if (odds) {
-      // Vraies cotes disponibles
       return {
         ...match,
         oddsHome: odds.odds.home,
@@ -65,7 +73,7 @@ export async function getMatchesWithRealOdds(): Promise<any[]> {
       };
     }
     
-    // Pas de cotes réelles - utiliser estimation basée sur les stats ESPN
+    // Pas de cotes - estimation
     return {
       ...match,
       hasRealOdds: false,
@@ -73,7 +81,7 @@ export async function getMatchesWithRealOdds(): Promise<any[]> {
     };
   });
   
-  // 4. Ajouter les matchs qui sont uniquement dans The Odds API
+  // 4. Ajouter les matchs qui sont uniquement dans The Odds API (non présents dans ESPN)
   const espnTeams = new Set(espnMatches.flatMap((m: any) => [normalizeTeam(m.homeTeam), normalizeTeam(m.awayTeam)]));
   
   for (const oddsMatch of oddsMatches) {
@@ -105,6 +113,50 @@ export async function getMatchesWithRealOdds(): Promise<any[]> {
   console.log(`✅ ${mergedMatches.length} matchs au total (${realOddsCount} avec vraies cotes)`);
   
   return mergedMatches;
+}
+
+/**
+ * Convertit les cotes américaines en cotes décimales
+ */
+function americanToDecimal(americanOdds: string | number): number {
+  if (!americanOdds) return 0;
+  
+  const odds = typeof americanOdds === 'string' ? parseFloat(americanOdds.replace('+', '')) : americanOdds;
+  
+  if (isNaN(odds) || odds === 0) return 0;
+  
+  if (odds > 0) {
+    // Positive odds: profit = odds/100, decimal = 1 + odds/100
+    return Math.round((1 + odds / 100) * 100) / 100;
+  } else {
+    // Negative odds: risk = |odds| to win 100, decimal = 1 + 100/|odds|
+    return Math.round((1 + 100 / Math.abs(odds)) * 100) / 100;
+  }
+}
+
+/**
+ * Extrait les cotes depuis les données ESPN
+ */
+function extractEspnOdds(event: any): { oddsHome: number; oddsDraw: number | null; oddsAway: number; bookmaker: string } {
+  const odds = event.competitions?.[0]?.odds?.[0];
+  
+  if (!odds) {
+    return { oddsHome: 0, oddsDraw: null, oddsAway: 0, bookmaker: 'None' };
+  }
+  
+  const bookmaker = odds.provider?.name || 'ESPN';
+  
+  // Extraire les cotes moneyline
+  const homeOdds = odds.moneyline?.home?.close?.odds || odds.moneyline?.home?.open?.odds;
+  const awayOdds = odds.moneyline?.away?.close?.odds || odds.moneyline?.away?.open?.odds;
+  const drawOdds = odds.moneyline?.draw?.close?.odds || odds.moneyline?.draw?.open?.odds || odds.drawOdds;
+  
+  return {
+    oddsHome: americanToDecimal(homeOdds),
+    oddsDraw: drawOdds ? americanToDecimal(drawOdds) : null,
+    oddsAway: americanToDecimal(awayOdds),
+    bookmaker,
+  };
 }
 
 /**
@@ -156,7 +208,7 @@ async function fetchESPNMatches(): Promise<any[]> {
       if (result.status === 'fulfilled' && result.value?.data?.events) {
         // Déterminer le sport principal (pas le nom de la ligue)
         const sportKey = result.value.data?.sports?.[0]?.slug || '';
-        const leagueName = result.value.sport;
+        const leagueName = result.value.sport; // Nom de la ligue depuis la config (ex: "Europa League")
         
         // Mapper le sport correctement
         let mainSport = 'Autre';
@@ -186,12 +238,18 @@ async function fetchESPNMatches(): Promise<any[]> {
           const isLive = statusType?.state === 'in';
           const isFinished = statusType?.completed === true;
           
+          // Récupérer le nom de la ligue depuis event.competition ou utiliser leagueName
+          const eventLeague = event.competition?.name || event.league?.name || leagueName;
+          
+          // Extraire les cotes depuis ESPN (DraftKings)
+          const espnOdds = extractEspnOdds(event);
+          
           allMatches.push({
             id: `espn_${event.id}`,
             homeTeam: home?.team?.displayName || 'TBD',
             awayTeam: away?.team?.displayName || 'TBD',
             sport: mainSport, // Utiliser le sport mappé (Foot, Basket, etc.)
-            league: event.competition?.name || leagueName, // Nom de la ligue/compétition
+            league: eventLeague, // Nom de la ligue/compétition
             date: event.date,
             status: isLive ? 'live' : isFinished ? 'finished' : 'upcoming',
             isLive,
@@ -201,6 +259,13 @@ async function fetchESPNMatches(): Promise<any[]> {
             period: event.status?.period,
             homeRecord: home?.records?.[0]?.summary,
             awayRecord: away?.records?.[0]?.summary,
+            // Ajouter les cotes ESPN
+            oddsHome: espnOdds.oddsHome,
+            oddsDraw: espnOdds.oddsDraw,
+            oddsAway: espnOdds.oddsAway,
+            bookmaker: espnOdds.bookmaker,
+            hasRealOdds: espnOdds.oddsHome > 0,
+            oddsSource: espnOdds.oddsHome > 0 ? `ESPN (${espnOdds.bookmaker})` : 'Estimation',
           });
         }
       }
