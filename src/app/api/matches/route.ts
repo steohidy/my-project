@@ -288,23 +288,9 @@ export async function GET(request: Request) {
           prediction: over25Prob >= 55 ? 'Over 2.5' : 'Under 2.5',
         },
         
-        // Cards prediction (estimation basée sur l'intensité)
-        cardsPrediction: {
-          total: Math.round(3.5 + goalIntensity * 1.5),
-          over45: Math.round(35 + goalIntensity * 20),
-          under45: Math.round(65 - goalIntensity * 20),
-          redCardRisk: Math.round(10 + (100 - analysis.probabilities.draw) * 0.15),
-          prediction: goalIntensity > 0.6 ? 'Over 4.5 cartons' : 'Under 4.5 cartons',
-        },
-        
-        // Corners prediction
-        cornersPrediction: {
-          total: Math.round(8 + goalIntensity * 2),
-          over85: Math.round(45 + goalIntensity * 15),
-          under85: Math.round(55 - goalIntensity * 15),
-          over95: Math.round(30 + goalIntensity * 15),
-          prediction: goalIntensity > 0.5 ? 'Over 8.5 corners' : 'Under 8.5 corners',
-        },
+        // Cards & Corners predictions REMOVED - No real data source available
+        // These predictions were pure estimation without actual statistics
+        // To re-enable: integrate API-Football or similar service with cards/corners data
         
         // ML analysis details
         mlAnalysis: {

@@ -125,10 +125,12 @@ const getTodayBetTypeStats = (predictions: Prediction[]): BetTypeStat[] => {
     trend: bttsWon > bttsLost ? 'up' : bttsWon < bttsLost ? 'down' : 'stable'
   });
 
-  // 4. Cartons (simulation - données non disponibles actuellement)
+  // 4. Cartons (DONNÉES NON DISPONIBLES)
+  // Note: Cards predictions removed - no real data source
+  // Keeping stats entry for future integration
   stats.push({
     type: 'cards',
-    label: 'Cartons',
+    label: 'Cartons (Indispo)',
     icon: <AlertCircle className="h-4 w-4" />,
     total: 0,
     won: 0,

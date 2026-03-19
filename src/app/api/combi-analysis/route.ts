@@ -48,8 +48,7 @@ interface AnalysisResult {
   // Prédictions détaillées
   predictions?: {
     betType: string; // "Victoire" ou "Victoire/Nul"
-    corners: { total: number; over85: number; prediction: string };
-    cards: { total: number; over45: number; prediction: string };
+    // corners et cards retirés - pas de données réelles disponibles
     goals: { total: number; over25: number; prediction: string };
   };
   // Données enrichies
@@ -257,21 +256,10 @@ function calculatePredictions(match: any): AnalysisResult['predictions'] {
   
   // Use existing predictions from match if available
   const goalsPrediction = match.goalsPrediction || calculateGoals(oddsHome, oddsAway, oddsDraw);
-  const cardsPrediction = match.cardsPrediction || calculateCards(oddsHome, oddsAway, oddsDraw);
-  const cornersPrediction = match.cornersPrediction || calculateCorners(oddsHome, oddsAway, oddsDraw);
+  // Cards and Corners retirés - pas de données réelles disponibles
   
   return {
     betType,
-    corners: {
-      total: cornersPrediction.total,
-      over85: cornersPrediction.over85,
-      prediction: cornersPrediction.prediction
-    },
-    cards: {
-      total: cardsPrediction.total,
-      over45: cardsPrediction.over45,
-      prediction: cardsPrediction.prediction
-    },
     goals: {
       total: goalsPrediction.total,
       over25: goalsPrediction.over25,
@@ -307,39 +295,9 @@ function calculateGoals(oddsHome: number, oddsAway: number, oddsDraw: number | n
   return { total: Math.round(expectedGoals * 10) / 10, over25, prediction };
 }
 
-/**
- * Calculate cards prediction
- */
-function calculateCards(oddsHome: number, oddsAway: number, oddsDraw: number | null): any {
-  const baseCards = 4.0;
-  const ratio = Math.max(oddsHome, oddsAway) / Math.min(oddsHome, oddsAway);
-  
-  let expectedCards = baseCards;
-  if (ratio < 1.5) expectedCards += 0.5;
-  else if (ratio > 2.5) expectedCards += 0.3;
-  
-  const over45 = Math.round(Math.min(50 + (expectedCards - 4) * 15, 75));
-  const prediction = over45 >= 55 ? 'Over 4.5' : over45 <= 40 ? 'Under 4.5' : 'Match normal';
-  
-  return { total: Math.round(expectedCards * 10) / 10, over45, prediction };
-}
-
-/**
- * Calculate corners prediction
- */
-function calculateCorners(oddsHome: number, oddsAway: number, oddsDraw: number | null): any {
-  const baseCorners = 9.0;
-  const ratio = Math.max(oddsHome, oddsAway) / Math.min(oddsHome, oddsAway);
-  
-  let expectedCorners = baseCorners;
-  if (ratio < 1.5) expectedCorners += 1.0;
-  else if (ratio > 2.5) expectedCorners -= 0.5;
-  
-  const over85 = Math.round(Math.min(45 + (expectedCorners - 8.5) * 12, 75));
-  const prediction = over85 >= 60 ? 'Over 8.5' : 'Under 8.5';
-  
-  return { total: Math.round(expectedCorners * 10) / 10, over85, prediction };
-}
+// Cards and Corners prediction functions REMOVED
+// Reason: No real data source available for these statistics
+// To re-enable: Integrate API-Football or similar service
 
 /**
  * Generate recommendation based on match data

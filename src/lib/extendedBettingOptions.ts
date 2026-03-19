@@ -423,34 +423,40 @@ export function calculateBasketballBettingOptions(
   const expectedTotal = 220 + (Math.abs(homeProb - awayProb) > 0.15 ? -5 : 5);
   const line = Math.round(expectedTotal / 5) * 5;
   
+  // Probabilité calculée (pas de random)
+  const overProb = Math.round(45 + (expectedTotal - line) * 2);
+  const underProb = 100 - overProb;
+  
   const totalPoints = {
     line,
     expected: expectedTotal,
-    overProb: Math.round(45 + Math.random() * 15),  // Simplifié
-    underProb: Math.round(40 + Math.random() * 15),
+    overProb,
+    underProb,
     recommendation: expectedTotal > line ? 'over' as const : 'under' as const
   };
   
-  // ===== 4. QUARTERS =====
+  // ===== 4. QUARTERS - REMOVED RANDOM VALUES =====
+  // Quarter predictions removed - no real data source
+  // Using main game probabilities as baseline
   const quarters = {
     q1: { 
-      home: Math.round(homeProb * 100 + (Math.random() * 10 - 5)),
-      away: Math.round(awayProb * 100 + (Math.random() * 10 - 5))
+      home: Math.round(homeProb * 100),
+      away: Math.round(awayProb * 100)
     },
     q2: { 
-      home: Math.round(homeProb * 100 + (Math.random() * 10 - 5)),
-      away: Math.round(awayProb * 100 + (Math.random() * 10 - 5))
+      home: Math.round(homeProb * 100),
+      away: Math.round(awayProb * 100)
     },
     q3: { 
-      home: Math.round(homeProb * 100 + (Math.random() * 10 - 5)),
-      away: Math.round(awayProb * 100 + (Math.random() * 10 - 5))
+      home: Math.round(homeProb * 100),
+      away: Math.round(awayProb * 100)
     },
     q4: { 
-      home: Math.round(homeProb * 100 + (Math.random() * 10 - 5)),
-      away: Math.round(awayProb * 100 + (Math.random() * 10 - 5))
+      home: Math.round(homeProb * 100),
+      away: Math.round(awayProb * 100)
     },
     mostLikelyWinner: {
-      quarter: 'Q' + (Math.floor(Math.random() * 4) + 1),
+      quarter: 'Q1',
       team: homeProb > awayProb ? 'home' as const : 'away' as const
     }
   };

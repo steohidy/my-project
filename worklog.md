@@ -333,3 +333,25 @@ Stage Summary:
 - Bug fix verified but was already handled
 - New unified prediction service integrates ESPN, Dixon-Coles, ML, Context
 - Build compiles successfully
+
+---
+Task ID: 3
+Agent: main
+Task: Fix NaN% display in betting options + improve betting options display
+
+Work Log:
+- Identified the root cause: odds values (0, undefined, null) causing NaN in calculations
+- Added validation for oddsHome, oddsAway, oddsDraw before probability calculations
+- Added new 'Victoire Sèche' section showing 1/X/2 probabilities with odds
+- Improved 'Double Chance' display to show 1X, X2, 12 options clearly
+- Added highlight borders for recommended betting options
+- Build successful and pushed to production
+
+Stage Summary:
+- NaN% issue fixed with proper validation
+- Betting options now show:
+  * Victoire Sèche: 1 (Domicile), X (Nul), 2 (Extérieur)
+  * Double Chance: 1X, X2, 12
+  * Draw No Bet (DNB)
+- All percentages display correctly
+- Visual highlighting for recommended options

@@ -3920,61 +3920,11 @@ function FootballMatchCard({ match, index }: { match: Match; index: number }) {
           </div>
         )}
         
-        {/* CARTONS */}
-        {match.cardsPrediction && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '8px',
-            background: '#1a1a1a',
-            borderRadius: '6px',
-            fontSize: '10px'
-          }}>
-            <span style={{ fontSize: '14px' }}>🟨</span>
-            <div>
-              <div style={{ color: '#eab308', fontWeight: 'bold' }}>
-                {match.cardsPrediction.over45 >= 55 ? 'Plus de 4.5 cartons ✓' : 'Moins de 4.5 cartons ✓'}
-              </div>
-              <div style={{ color: '#888', fontSize: '9px' }}>
-                {match.cardsPrediction.over45 >= 55 
-                  ? `Plus de 4.5 cartons: ${match.cardsPrediction.over45}% de chance`
-                  : `Moins de 4.5 cartons: ${match.cardsPrediction.under45}% de chance`}
-              </div>
-              <div style={{ color: '#666', fontSize: '8px', marginTop: '2px' }}>
-                {match.cardsPrediction.total} cartons attendus • Carton rouge: {match.cardsPrediction.redCardRisk}% de risque
-              </div>
-            </div>
-          </div>
-        )}
+        {/* CARTONS - REMOVED: No real data source */}
+        {/* Previously showed pure estimation without actual card statistics */}
         
-        {/* CORNERS */}
-        {match.cornersPrediction && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '8px',
-            background: '#1a1a1a',
-            borderRadius: '6px',
-            fontSize: '10px'
-          }}>
-            <span style={{ fontSize: '14px' }}>🚩</span>
-            <div>
-              <div style={{ color: '#3b82f6', fontWeight: 'bold' }}>
-                {match.cornersPrediction.over85 >= 55 ? 'Plus de 8.5 corners ✓' : 'Moins de 8.5 corners ✓'}
-              </div>
-              <div style={{ color: '#888', fontSize: '9px' }}>
-                {match.cornersPrediction.over85 >= 55 
-                  ? `Plus de 8.5 corners: ${match.cornersPrediction.over85}% de chance`
-                  : `Moins de 8.5 corners: ${match.cornersPrediction.under85}% de chance`}
-              </div>
-              <div style={{ color: '#666', fontSize: '8px', marginTop: '2px' }}>
-                {match.cornersPrediction.total} corners attendus dans le match
-              </div>
-            </div>
-          </div>
-        )}
+        {/* CORNERS - REMOVED: No real data source */}
+        {/* Previously showed pure estimation without actual corner statistics */}
         
         {/* Value Bet */}
         {(match.insight?.valueBetDetected ?? false) && (
