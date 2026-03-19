@@ -14,6 +14,7 @@ import {
   generateBettingRecommendations,
   type MatchAnalysis
 } from '@/lib/mlAnalysisCache';
+import { predictMatch } from '@/lib/dixonColesModel';
 
 // In-memory cache for quick access
 let cachedData: any = null;
@@ -42,10 +43,113 @@ function calculateImpliedProbabilities(oddsHome: number, oddsDraw: number | null
 }
 
 /**
+ * Generate default team stats from odds (fallback when no real stats available)
+ */
+function generateDefaultStatsFromOdds(
+  teamName: string,
+  isFavorite: boolean,
+  odds: number
+) {
+  // Estimer les stats basées sur les cotes
+  const impliedProb = 1 / odds;
+  const strength = isFavorite ? 1.3 + (impliedProb - 0.33) : 0.8 + (impliedProb - 0.33);
+  
+  return {
+    name: teamName,
+    goalsScored: Math.round(50 * strength),
+    goalsConceded: Math.round(40 / strength),
+    matches: 30,
+    homeGoalsScored: Math.round(25 * strength * 1.15),
+    homeGoalsConceded: Math.round(20 / strength),
+    homeMatches: 15,
+    awayGoalsScored: Math.round(25 * strength),
+    awayGoalsConceded: Math.round(20 / strength * 1.1),
+    awayMatches: 15,
+    form: isFavorite ? [1, 1, 0.5, 1, 0.5] : [0.5, 0, 0.5, 1, 0] // W=1, D=0.5, L=0
+  };
+}
+
+/**
+ * Calculate Dixon-Coles prediction if possible
+ */
+function calculateDixonColesPrediction(
+  homeTeam: string,
+  awayTeam: string,
+  league: string,
+  oddsHome: number,
+  oddsDraw: number,
+  oddsAway: number
+): { homeProb: number; drawProb: number; awayProb: number; expectedGoals: number; over25: number } | null {
+  try {
+    // Déterminer le favori
+    const isHomeFavorite = oddsHome < oddsAway;
+    
+    // Générer des stats par défaut basées sur les cotes
+    const homeStats = generateDefaultStatsFromOdds(homeTeam, isHomeFavorite, oddsHome);
+    const awayStats = generateDefaultStatsFromOdds(awayTeam, !isHomeFavorite, oddsAway);
+    
+    // Utiliser le modèle Dixon-Coles
+    const prediction = predictMatch(
+      homeStats,
+      awayStats,
+      league,
+      oddsHome,
+      oddsDraw || 3.3,
+      oddsAway
+    );
+    
+    return {
+      homeProb: prediction.homeWinProb,
+      drawProb: prediction.drawProb,
+      awayProb: prediction.awayWinProb,
+      expectedGoals: prediction.expectedHomeGoals + prediction.expectedAwayGoals,
+      over25: prediction.over25
+    };
+  } catch (error) {
+    console.log('Erreur Dixon-Coles:', error);
+    return null;
+  }
+}
+
+/**
  * Analyze a match and generate predictions
  */
 function analyzeMatch(match: any): MatchAnalysis {
-  const probs = calculateImpliedProbabilities(match.oddsHome, match.oddsDraw, match.oddsAway);
+  // Calculer les probabilités implicites du marché
+  const marketProbs = calculateImpliedProbabilities(match.oddsHome, match.oddsDraw, match.oddsAway);
+  
+  // Calculer les probabilités Dixon-Coles si possible
+  const dcPrediction = calculateDixonColesPrediction(
+    match.homeTeam,
+    match.awayTeam,
+    match.league || 'default',
+    match.oddsHome,
+    match.oddsDraw || 3.3,
+    match.oddsAway
+  );
+  
+  // Combiner les probabilités (moyenne pondérée si Dixon-Coles disponible)
+  let probs: { home: number; draw: number; away: number };
+  let usedDixonColes = false;
+  
+  if (dcPrediction) {
+    // Moyenne pondérée: 55% Dixon-Coles, 45% marché
+    probs = {
+      home: Math.round(dcPrediction.homeProb * 0.55 + marketProbs.home * 0.45),
+      draw: Math.round(dcPrediction.drawProb * 0.55 + marketProbs.draw * 0.45),
+      away: Math.round(dcPrediction.awayProb * 0.55 + marketProbs.away * 0.45)
+    };
+    // Normaliser
+    const total = probs.home + probs.draw + probs.away;
+    probs = {
+      home: Math.round((probs.home / total) * 100),
+      draw: Math.round((probs.draw / total) * 100),
+      away: 100 - probs.home - probs.draw
+    };
+    usedDixonColes = true;
+  } else {
+    probs = marketProbs;
+  }
   
   // Calculate risk based on probability distribution
   const maxProb = Math.max(probs.home, probs.away, probs.draw);
@@ -55,11 +159,15 @@ function analyzeMatch(match: any): MatchAnalysis {
   let confidence: 'very_high' | 'high' | 'medium' | 'low';
   const hasRealOdds = match.hasRealOdds;
   
-  if (riskPercentage <= 30 && hasRealOdds) {
+  // Améliorer la confiance si Dixon-Coles a été utilisé
+  const confidenceBonus = usedDixonColes ? 5 : 0;
+  const adjustedRisk = riskPercentage - confidenceBonus;
+  
+  if (adjustedRisk <= 30 && hasRealOdds) {
     confidence = 'very_high';
-  } else if (riskPercentage <= 40 && hasRealOdds) {
+  } else if (adjustedRisk <= 40 && hasRealOdds) {
     confidence = 'high';
-  } else if (riskPercentage <= 55) {
+  } else if (adjustedRisk <= 55) {
     confidence = 'medium';
   } else {
     confidence = 'low';
