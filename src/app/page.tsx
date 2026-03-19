@@ -1578,6 +1578,7 @@ function ApiStatusSection() {
   const [loadingEuropa, setLoadingEuropa] = useState(false);
   const [refreshingApi, setRefreshingApi] = useState(false);
   const [message, setMessage] = useState('');
+  const [cacheInfo, setCacheInfo] = useState<{ fromCache: boolean; expiresAt: string } | null>(null);
 
   // Charger le statut API
   const loadApiStatus = async () => {
@@ -1610,15 +1611,23 @@ function ApiStatusSection() {
     }
   };
 
-  // Mettre à jour les matchs européens
-  const refreshEuropaMatches = async () => {
+  // Mettre à jour les matchs européens (avec cache)
+  const refreshEuropaMatches = async (forceRefresh: boolean = false) => {
     setLoadingEuropa(true);
     try {
-      const res = await fetch('/api/europa-update');
+      const url = forceRefresh ? '/api/europa-update?force=true' : '/api/europa-update';
+      const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
         setEuropaMatches(data.matches);
-        setMessage(`✅ ${data.matches.length} matchs européens trouvés`);
+        setCacheInfo({
+          fromCache: data.fromCache || false,
+          expiresAt: data.cacheExpiresAt || ''
+        });
+        const cacheMsg = data.fromCache 
+          ? ` (cache - expire dans ${Math.round((new Date(data.cacheExpiresAt).getTime() - Date.now()) / 60000)} min)`
+          : ' (API fraîche)';
+        setMessage(`✅ ${data.matches.length} matchs européens${cacheMsg}`);
         setTimeout(() => setMessage(''), 5000);
       } else {
         setMessage('❌ Erreur lors de la récupération');
@@ -1753,26 +1762,71 @@ function ApiStatusSection() {
             <span style={{ fontSize: '18px' }}>🏆</span>
             <div>
               <h3 style={{ margin: 0, fontSize: '14px', color: '#a855f7', fontWeight: 'bold' }}>Compétitions Européennes</h3>
-              <span style={{ fontSize: '10px', color: '#888' }}>Europa League • Conference League • Champions League</span>
+              <span style={{ fontSize: '10px', color: '#888' }}>
+                Europa League • Conference League • Champions League
+                {cacheInfo?.fromCache && (
+                  <span style={{ color: '#22c55e', marginLeft: '6px' }}>
+                    📦 Cache actif
+                  </span>
+                )}
+              </span>
             </div>
           </div>
-          <button
-            onClick={refreshEuropaMatches}
-            disabled={loadingEuropa}
-            style={{
-              padding: '8px 14px',
-              borderRadius: '6px',
-              border: '1px solid #a855f7',
-              background: loadingEuropa ? '#333' : '#a855f7',
-              color: '#fff',
-              cursor: loadingEuropa ? 'wait' : 'pointer',
-              fontSize: '11px',
-              fontWeight: 'bold'
-            }}
-          >
-            {loadingEuropa ? '⏳ Chargement...' : '🔄 Charger Matchs CE'}
-          </button>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {cacheInfo?.fromCache && (
+              <button
+                onClick={() => refreshEuropaMatches(true)}
+                disabled={loadingEuropa}
+                title="Forcer le rafraîchissement (consomme 3 requêtes API)"
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  border: '1px solid #f97316',
+                  background: 'transparent',
+                  color: '#f97316',
+                  cursor: loadingEuropa ? 'wait' : 'pointer',
+                  fontSize: '10px'
+                }}
+              >
+                🔄 Forcer
+              </button>
+            )}
+            <button
+              onClick={() => refreshEuropaMatches(false)}
+              disabled={loadingEuropa}
+              style={{
+                padding: '8px 14px',
+                borderRadius: '6px',
+                border: '1px solid #a855f7',
+                background: loadingEuropa ? '#333' : '#a855f7',
+                color: '#fff',
+                cursor: loadingEuropa ? 'wait' : 'pointer',
+                fontSize: '11px',
+                fontWeight: 'bold'
+              }}
+            >
+              {loadingEuropa ? '⏳ Chargement...' : '🔄 Charger Matchs CE'}
+            </button>
+          </div>
         </div>
+
+        {/* Indicateur cache */}
+        {cacheInfo && (
+          <div style={{ 
+            marginBottom: '8px', 
+            padding: '4px 8px', 
+            background: cacheInfo.fromCache ? '#22c55e15' : '#3b82f615', 
+            borderRadius: '4px',
+            fontSize: '9px',
+            color: cacheInfo.fromCache ? '#22c55e' : '#3b82f6'
+          }}>
+            {cacheInfo.fromCache ? (
+              <>📦 Données en cache (expire à {new Date(cacheInfo.expiresAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })})</>
+            ) : (
+              <>📡 Données fraîches de l'API</>
+            )}
+          </div>
+        )}
 
         {/* Matchs européens */}
         {europaMatches.length > 0 && (

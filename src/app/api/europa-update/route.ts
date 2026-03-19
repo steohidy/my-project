@@ -1,14 +1,20 @@
 import { NextResponse } from 'next/server';
+import { readFile, writeFile } from 'fs/promises';
+import path from 'path';
 
 /**
  * API pour mettre à jour manuellement les matchs européens
  * - Europa League
  * - Conference League
  * - Champions League
+ * 
+ * AVEC CACHE: TTL 30 minutes pour économiser le quota API
  */
 
 const ODDS_API_KEY = process.env.THE_ODDS_API_KEY || 'fcf0d3cbc8958a44007b0520751f8431';
 const BASE_URL = 'https://api.the-odds-api.com/v4';
+const CACHE_FILE = path.join(process.cwd(), 'data', 'europa-cache.json');
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes en millisecondes
 
 // Sports européens à surveiller
 const EUROPEAN_SPORTS = [
@@ -91,10 +97,61 @@ function calculatePredictions(match: Match) {
 }
 
 /**
- * GET - Récupérer les matchs européens
+ * Lire le cache
+ */
+async function readCache() {
+  try {
+    const data = await readFile(CACHE_FILE, 'utf-8');
+    return JSON.parse(data);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Écrire le cache
+ */
+async function writeCache(data: any) {
+  try {
+    await writeFile(CACHE_FILE, JSON.stringify(data, null, 2));
+  } catch (error) {
+    console.error('Erreur écriture cache:', error);
+  }
+}
+
+/**
+ * Vérifier si le cache est encore valide
+ */
+function isCacheValid(cache: any): boolean {
+  if (!cache || !cache.expiresAt) return false;
+  return new Date(cache.expiresAt) > new Date();
+}
+
+/**
+ * GET - Récupérer les matchs européens (avec cache)
  */
 export async function GET() {
   try {
+    // 1. Vérifier le cache d'abord
+    const cache = await readCache();
+    
+    if (cache && isCacheValid(cache)) {
+      console.log('✅ Cache valide, retour des données en cache');
+      return NextResponse.json({
+        success: true,
+        message: `${cache.matches.length} matchs européens (cache)`,
+        matches: cache.matches,
+        stats: cache.stats,
+        quotaUsed: cache.quotaUsed,
+        quotaRemaining: cache.quotaRemaining,
+        lastUpdate: cache.lastUpdate,
+        fromCache: true,
+        cacheExpiresAt: cache.expiresAt,
+      });
+    }
+    
+    console.log('📡 Cache expiré ou inexistant, appel API...');
+    
     const allMatches: Match[] = [];
     let quotaUsed = 0;
     let quotaRemaining = 500;
@@ -179,19 +236,41 @@ export async function GET() {
     for (const m of allMatches) {
       byLeague[m.league] = (byLeague[m.league] || 0) + 1;
     }
-
-    return NextResponse.json({
+    
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + CACHE_TTL);
+    
+    const responseData = {
       success: true,
       message: `${allMatches.length} matchs européens trouvés`,
       matches: allMatches,
       stats: {
         total: allMatches.length,
         byLeague,
-        quotaUsed,
-        quotaRemaining,
       },
-      lastUpdate: new Date().toISOString(),
+      quotaUsed,
+      quotaRemaining,
+      lastUpdate: now.toISOString(),
+      fromCache: false,
+      cacheExpiresAt: expiresAt.toISOString(),
+    };
+    
+    // Sauvegarder dans le cache
+    await writeCache({
+      matches: allMatches,
+      stats: {
+        total: allMatches.length,
+        byLeague,
+      },
+      quotaUsed,
+      quotaRemaining,
+      lastUpdate: now.toISOString(),
+      expiresAt: expiresAt.toISOString(),
     });
+    
+    console.log(`💾 Cache sauvegardé, expire à ${expiresAt.toLocaleTimeString('fr-FR')}`);
+
+    return NextResponse.json(responseData);
 
   } catch (error) {
     console.error('Erreur:', error);
@@ -204,8 +283,18 @@ export async function GET() {
 }
 
 /**
- * POST - Forcer la mise à jour
+ * POST - Forcer la mise à jour (ignore le cache)
+ * Ajouter ?force=true pour forcer le rafraîchissement
  */
-export async function POST() {
+export async function POST(request: Request) {
+  const url = new URL(request.url);
+  const forceRefresh = url.searchParams.get('force') === 'true';
+  
+  // Si force=true, on vide le cache avant d'appeler GET
+  if (forceRefresh) {
+    console.log('🔄 Forçage du rafraîchissement (cache ignoré)');
+    await writeCache({ matches: [], expiresAt: '', lastUpdate: '' });
+  }
+  
   return GET();
 }
