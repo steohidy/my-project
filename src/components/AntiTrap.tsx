@@ -174,11 +174,11 @@ export function AntiTrap() {
                       <div className="text-right shrink-0 bg-muted/50 px-3 py-2 rounded-lg">
                         <div className="text-xs text-muted-foreground mb-1">Cotes</div>
                         <div className="font-mono text-sm font-bold">
-                          <span className="text-orange-500">{match.oddsHome.toFixed(2)}</span>
-                          {match.oddsDraw && (
+                          <span className="text-orange-500">{match.oddsHome?.toFixed(2) || '-'}</span>
+                          {match.oddsDraw != null && typeof match.oddsDraw === 'number' && (
                             <span className="text-muted-foreground mx-1">| {match.oddsDraw.toFixed(2)} |</span>
                           )}
-                          <span className="text-foreground">{match.oddsAway.toFixed(2)}</span>
+                          <span className="text-foreground">{match.oddsAway?.toFixed(2) || '-'}</span>
                         </div>
                       </div>
                     </div>

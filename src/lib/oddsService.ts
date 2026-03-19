@@ -1,19 +1,26 @@
 /**
- * Service d'intégration ESPN + BetExplorer
+ * Service d'intégration des cotes ESPN (DraftKings)
  * 
- * SOURCE PRIMAIRE: 
- * - ESPN API (gratuit) pour les matchs réels
- * - BetExplorer (VRAIES COTES par scraping) pour les cotes NBA + Football
- * - Fallback: Estimation basée sur force des équipes
+ * SOURCE PRIMAIRE: ESPN API (GRATUIT ET ILLIMITÉ)
+ * - Cotes DraftKings officielles
+ * - NBA, NHL, Football (toutes ligues européennes)
+ * - Pas de quota, pas de limite
  * 
- * Ce service remplace The Odds API (quota épuisé)
+ * Ce service remplace The Odds API (quota limité)
  */
 
-import { fetchAllESPNMatches, ESPNMatch } from './espnService';
-import { fetchBetExplorerOdds, getMatchOdds, BetExplorerMatch } from './betExplorerService';
-import { scrapeTodayOdds, findMatchOdds, RealOdds } from './betExplorerScraper';
+import { 
+  fetchAllESPNOdds, 
+  fetchESPNFootballOdds, 
+  fetchESPNNBAOdds,
+  fetchESPNNHLOdds,
+  fetchESPNLiveOdds,
+  getESPNStatus,
+  getESPNOddsStats,
+  ESPNOddMatch 
+} from './espnOddsService';
 
-// Types exportés
+// Types exportés pour compatibilité
 export interface IntegratedMatch {
   id: string;
   homeTeam: string;
@@ -31,6 +38,9 @@ export interface IntegratedMatch {
   clock?: string;
   period?: number;
   sources: string[];
+  hasRealOdds: boolean;
+  bookmaker: string;
+  reliabilityScore: number;
   // Prédictions
   insight: {
     riskPercentage: number;
@@ -40,61 +50,42 @@ export interface IntegratedMatch {
   };
 }
 
-// Cache pour les données
-let cachedMatches: IntegratedMatch[] = [];
-let lastFetchTime = 0;
-const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
-
-// Cache pour les cotes scrapées
-let scrapedOddsCache: RealOdds[] = [];
-let lastScrapeTime = 0;
+// Cache pour les données converties
+let cachedIntegratedMatches: IntegratedMatch[] = [];
+let lastConvertTime = 0;
+const CONVERT_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 /**
- * Convertit le format ESPN en format intégré avec cotes
- * PRIORITÉ: Vraies cotes BetExplorer > Estimation
+ * Calcule les probabilités implicites depuis les cotes
  */
-async function convertESPNToIntegrated(espnMatch: ESPNMatch): Promise<IntegratedMatch> {
-  // 1. Essayer de récupérer les VRAIES cotes depuis BetExplorer Scraper
-  let odds: { oddsHome: number; oddsDraw: number | null; oddsAway: number } | null = null;
-  const sport: 'Foot' | 'Basket' = espnMatch.sport === 'Basket' ? 'Basket' : 'Foot';
-  
-  try {
-    // Chercher dans le cache des cotes scrapées
-    const realOdds = await findMatchOdds(espnMatch.homeTeam, espnMatch.awayTeam, sport);
-    if (realOdds) {
-      odds = {
-        oddsHome: realOdds.oddsHome,
-        oddsDraw: realOdds.oddsDraw,
-        oddsAway: realOdds.oddsAway,
-      };
-      console.log(`📊 Vraies cotes pour ${espnMatch.homeTeam} vs ${espnMatch.awayTeam}: ${odds.oddsHome}/${odds.oddsDraw || '-'}/${odds.oddsAway}`);
-    }
-  } catch (e) {
-    console.log(`⚠️ Pas de cotes réelles pour ${espnMatch.homeTeam} vs ${espnMatch.awayTeam}`);
+function calculateImpliedProbabilities(oddsHome: number, oddsDraw: number | null, oddsAway: number) {
+  if (!oddsHome || !oddsAway || oddsHome <= 1 || oddsAway <= 1) {
+    return { home: 33, draw: 34, away: 33 };
   }
   
-  // 2. Fallback: Estimation basée sur la force des équipes
-  if (!odds) {
-    const fallbackOdds = await getMatchOdds(espnMatch.homeTeam, espnMatch.awayTeam, espnMatch.league);
-    if (fallbackOdds) {
-      odds = fallbackOdds;
-    }
-  }
+  const homeProb = 1 / oddsHome;
+  const awayProb = 1 / oddsAway;
+  const drawProb = oddsDraw && oddsDraw > 1 ? 1 / oddsDraw : 0;
   
-  // Calculer les probabilités implicites
-  const oddsHome = odds?.oddsHome || 2.0;
-  const oddsDraw = odds?.oddsDraw ?? null;
-  const oddsAway = odds?.oddsAway || 2.0;
+  const total = homeProb + awayProb + drawProb;
   
-  const totalImplied = (1/oddsHome) + (1/oddsAway) + (oddsDraw ? 1/oddsDraw : 0);
-  const homeWinProb = Math.round((1/oddsHome) / totalImplied * 100);
-  const awayWinProb = Math.round((1/oddsAway) / totalImplied * 100);
-  const drawProb = oddsDraw ? Math.round((1/oddsDraw) / totalImplied * 100) : 0;
+  return {
+    home: Math.round((homeProb / total) * 100),
+    draw: Math.round((drawProb / total) * 100),
+    away: Math.round((awayProb / total) * 100),
+  };
+}
+
+/**
+ * Convertit un match ESPN en format intégré avec prédictions
+ */
+function convertESPNTToIntegrated(espnMatch: ESPNOddMatch): IntegratedMatch {
+  const probs = calculateImpliedProbabilities(espnMatch.oddsHome, espnMatch.oddsDraw, espnMatch.oddsAway);
   
   // Déterminer le favori
-  const favorite = oddsHome < oddsAway ? 'home' : 'away';
-  const favoriteProb = favorite === 'home' ? homeWinProb : awayWinProb;
-  const favoriteOdds = favorite === 'home' ? oddsHome : oddsAway;
+  const favorite = espnMatch.oddsHome < espnMatch.oddsAway ? 'home' : 'away';
+  const favoriteProb = Math.max(probs.home, probs.away);
+  const favoriteOdds = favorite === 'home' ? espnMatch.oddsHome : espnMatch.oddsAway;
   
   // Calcul du risque basé sur la recommandation
   let recommendationSuccessProb = 50;
@@ -103,32 +94,32 @@ async function convertESPNToIntegrated(espnMatch: ESPNMatch): Promise<Integrated
     recommendationSuccessProb = favoriteProb;
   } else if (favoriteOdds < 2.0 && favoriteProb >= 50) {
     recommendationSuccessProb = favorite === 'home' 
-      ? homeWinProb + drawProb 
-      : awayWinProb + drawProb;
+      ? probs.home + probs.draw 
+      : probs.away + probs.draw;
   } else {
-    recommendationSuccessProb = Math.max(homeWinProb, awayWinProb);
+    recommendationSuccessProb = Math.max(probs.home, probs.away);
   }
   
   const riskPercentage = 100 - recommendationSuccessProb;
   
   // Détection value bet
-  const margin = totalImplied - 1;
+  const margin = (1 / espnMatch.oddsHome) + (1 / espnMatch.oddsAway) + (espnMatch.oddsDraw ? 1 / espnMatch.oddsDraw : 0) - 1;
   const hasValueBet = margin > 0.03;
   
   let valueBetType: string | null = null;
   if (hasValueBet) {
-    if (oddsDraw && oddsDraw > 3.0) {
+    if (espnMatch.oddsDraw && espnMatch.oddsDraw > 3.0) {
       valueBetType = 'draw';
-    } else if (oddsHome < oddsAway) {
+    } else if (espnMatch.oddsHome < espnMatch.oddsAway) {
       valueBetType = 'home';
     } else {
       valueBetType = 'away';
     }
   }
   
-  // Confiance
+  // Confiance basée sur la fiabilité et le risque
   let confidence: 'high' | 'medium' | 'low';
-  if (riskPercentage <= 35) {
+  if (riskPercentage <= 35 && espnMatch.hasRealOdds) {
     confidence = 'high';
   } else if (riskPercentage <= 55) {
     confidence = 'medium';
@@ -140,19 +131,22 @@ async function convertESPNToIntegrated(espnMatch: ESPNMatch): Promise<Integrated
     id: espnMatch.id,
     homeTeam: espnMatch.homeTeam,
     awayTeam: espnMatch.awayTeam,
-    sport: espnMatch.sport === 'Basket' ? 'Basket' : 'Foot',
+    sport: espnMatch.sport === 'NBA' || espnMatch.sport === 'NHL' ? 'Basket' : 'Foot',
     league: espnMatch.league,
     date: espnMatch.date,
-    oddsHome,
-    oddsDraw,
-    oddsAway,
+    oddsHome: espnMatch.oddsHome,
+    oddsDraw: espnMatch.oddsDraw,
+    oddsAway: espnMatch.oddsAway,
     status: espnMatch.status,
     isLive: espnMatch.isLive,
     homeScore: espnMatch.homeScore,
     awayScore: espnMatch.awayScore,
     clock: espnMatch.clock,
     period: espnMatch.period,
-    sources: ['ESPN', 'BetExplorer'],
+    sources: ['ESPN', 'DraftKings'],
+    hasRealOdds: espnMatch.hasRealOdds,
+    bookmaker: espnMatch.bookmaker,
+    reliabilityScore: espnMatch.reliabilityScore,
     insight: {
       riskPercentage,
       valueBetDetected: hasValueBet,
@@ -179,21 +173,21 @@ function isToday(dateString: string): boolean {
 
 /**
  * Fonction principale: Récupère tous les matchs avec cotes
- * Combine ESPN (matchs) + BetExplorer (cotes)
+ * Source: ESPN (DraftKings) - GRATUIT ET ILLIMITÉ
  */
 export async function fetchAllMatchesWithOdds(): Promise<IntegratedMatch[]> {
-  console.log('🔄 Récupération matchs + cotes (ESPN + BetExplorer)...');
+  console.log('🔄 Récupération matchs + cotes (ESPN DraftKings)...');
   
-  // Vérifier le cache
+  // Vérifier le cache de conversion
   const now = Date.now();
-  if (cachedMatches.length > 0 && (now - lastFetchTime) < CACHE_TTL) {
-    console.log('📦 Utilisation du cache');
-    return cachedMatches;
+  if (cachedIntegratedMatches.length > 0 && (now - lastConvertTime) < CONVERT_CACHE_TTL) {
+    console.log('📦 Utilisation du cache converti');
+    return cachedIntegratedMatches;
   }
   
   try {
     // 1. Récupérer les matchs depuis ESPN
-    const espnMatches = await fetchAllESPNMatches();
+    const espnMatches = await fetchAllESPNOdds();
     console.log(`📡 ESPN: ${espnMatches.length} matchs récupérés`);
     
     if (espnMatches.length === 0) {
@@ -201,47 +195,45 @@ export async function fetchAllMatchesWithOdds(): Promise<IntegratedMatch[]> {
       return [];
     }
     
-    // 2. Convertir avec cotes BetExplorer
-    const integratedMatches: IntegratedMatch[] = [];
+    // 2. Convertir avec prédictions
+    const integratedMatches: IntegratedMatch[] = espnMatches.map(convertESPNTToIntegrated);
     
-    for (const espnMatch of espnMatches) {
-      try {
-        const integrated = await convertESPNToIntegrated(espnMatch);
-        integratedMatches.push(integrated);
-      } catch (e) {
-        console.log(`⚠️ Erreur conversion ${espnMatch.homeTeam} vs ${espnMatch.awayTeam}`);
-      }
-    }
+    // 3. Filtrer uniquement les matchs d'aujourd'hui (optionnel)
+    // const todayMatches = integratedMatches.filter(m => isToday(m.date));
+    // Pour l'instant, on garde tous les matchs à venir
     
-    // 3. Filtrer uniquement les matchs d'aujourd'hui
-    const todayMatches = integratedMatches.filter(m => isToday(m.date));
-    console.log(`📅 Matchs du jour: ${todayMatches.length}`);
+    const upcomingMatches = integratedMatches.filter(m => m.status === 'upcoming' || m.isLive);
     
-    // 4. Trier: live d'abord, puis par heure
-    todayMatches.sort((a, b) => {
+    // 4. Trier: live d'abord, puis par fiabilité, puis par heure
+    upcomingMatches.sort((a, b) => {
       // Live en premier
       if (a.isLive && !b.isLive) return -1;
       if (!a.isLive && b.isLive) return 1;
+      // Puis par fiabilité
+      if (a.reliabilityScore !== b.reliabilityScore) {
+        return b.reliabilityScore - a.reliabilityScore;
+      }
       // Puis par date
       return new Date(a.date).getTime() - new Date(b.date).getTime();
     });
     
     // Mettre à jour le cache
-    cachedMatches = todayMatches;
-    lastFetchTime = now;
+    cachedIntegratedMatches = upcomingMatches;
+    lastConvertTime = now;
     
     // Stats
-    const liveCount = todayMatches.filter(m => m.isLive).length;
-    const footCount = todayMatches.filter(m => m.sport === 'Foot').length;
-    const basketCount = todayMatches.filter(m => m.sport === 'Basket').length;
+    const liveCount = upcomingMatches.filter(m => m.isLive).length;
+    const footCount = upcomingMatches.filter(m => m.sport === 'Foot').length;
+    const basketCount = upcomingMatches.filter(m => m.sport === 'Basket').length;
+    const realOddsCount = upcomingMatches.filter(m => m.hasRealOdds).length;
     
-    console.log(`✅ ${todayMatches.length} matchs: ${footCount} Foot + ${basketCount} Basket (${liveCount} en direct)`);
+    console.log(`✅ ${upcomingMatches.length} matchs: ${footCount} Foot + ${basketCount} Basket (${liveCount} en direct, ${realOddsCount} avec cotes réelles)`);
     
-    return todayMatches;
+    return upcomingMatches;
     
   } catch (error) {
     console.error('❌ Erreur fetchAllMatchesWithOdds:', error);
-    return cachedMatches; // Retourner le cache en cas d'erreur
+    return cachedIntegratedMatches; // Retourner le cache en cas d'erreur
   }
 }
 
@@ -273,8 +265,8 @@ export async function fetchLiveMatches(): Promise<IntegratedMatch[]> {
  * Force le rafraîchissement du cache
  */
 export async function forceRefreshMatches(): Promise<IntegratedMatch[]> {
-  cachedMatches = [];
-  lastFetchTime = 0;
+  cachedIntegratedMatches = [];
+  lastConvertTime = 0;
   return fetchAllMatchesWithOdds();
 }
 
@@ -283,11 +275,19 @@ export async function forceRefreshMatches(): Promise<IntegratedMatch[]> {
  */
 export function getCacheInfo() {
   return {
-    hasCache: cachedMatches.length > 0,
-    cacheAge: Date.now() - lastFetchTime,
-    cacheTTL: CACHE_TTL,
-    matchesCount: cachedMatches.length,
+    hasCache: cachedIntegratedMatches.length > 0,
+    cacheAge: Date.now() - lastConvertTime,
+    cacheTTL: CONVERT_CACHE_TTL,
+    matchesCount: cachedIntegratedMatches.length,
+    espnStats: getESPNOddsStats(),
   };
+}
+
+/**
+ * Retourne le statut ESPN
+ */
+export function getOddsStatus() {
+  return getESPNStatus();
 }
 
 // Export par défaut
@@ -298,6 +298,7 @@ const oddsService = {
   fetchLiveMatches,
   forceRefreshMatches,
   getCacheInfo,
+  getOddsStatus,
 };
 
 export default oddsService;

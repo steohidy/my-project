@@ -794,11 +794,11 @@ export function getQuotaInfo() {
  * Génère un résumé des cotes pour l'affichage
  */
 export function formatOddsForDisplay(match: RealMatch): string {
-  const parts = [match.oddsHome.toFixed(2)];
-  if (match.oddsDraw) {
+  const parts = [match.oddsHome?.toFixed(2) || '0.00'];
+  if (match.oddsDraw != null && typeof match.oddsDraw === 'number') {
     parts.push(match.oddsDraw.toFixed(2));
   }
-  parts.push(match.oddsAway.toFixed(2));
+  parts.push(match.oddsAway?.toFixed(2) || '0.00');
   return parts.join(' | ');
 }
 

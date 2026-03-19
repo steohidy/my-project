@@ -1,249 +1,179 @@
 import { NextResponse } from 'next/server';
+import { fetchAllESPNOdds, getESPNOddsStats, ESPNOddMatch } from '@/lib/espnOddsService';
 
-// Configuration
-const ODDS_API_KEY = process.env.THE_ODDS_API_KEY || 'fcf0d3cbc8958a44007b0520751f8431';
-const BASE_URL = 'https://api.the-odds-api.com/v4';
+/**
+ * API pour récupérer les cotes en temps réel
+ * 
+ * CASCADE DE SOURCES:
+ * 1. ESPN (DraftKings) - GRATUIT ET ILLIMITÉ
+ * 2. The Odds API - Fallback si ESPN sans cotes
+ * 3. Estimations - Dernier recours
+ */
 
-// Cache en mémoire global
-declare global {
-  var oddsDataCache: {
-    matches: any[];
-    lastUpdate: string;
-    quotaUsed: number;
-    quotaRemaining: number;
-    month: string;
-    dailyRequests: number;
-    lastRequestDate: string;
-  } | undefined;
-}
-
-const CACHE_DURATION_MS = 2 * 60 * 60 * 1000; // 2 heures
-const DAILY_BUDGET = 15;
-
-function getCurrentMonth(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
-
-function getCurrentDate(): string {
-  return new Date().toISOString().split('T')[0];
-}
-
-function getCache() {
-  if (!global.oddsDataCache) {
-    global.oddsDataCache = {
-      matches: [],
-      lastUpdate: '',
-      quotaUsed: 0,
-      quotaRemaining: 500,
-      month: getCurrentMonth(),
-      dailyRequests: 0,
-      lastRequestDate: '',
-    };
-  }
-  return global.oddsDataCache;
-}
-
-function isCacheValid(): boolean {
-  const cache = getCache();
-  if (!cache.lastUpdate) return false;
-  const lastUpdate = new Date(cache.lastUpdate).getTime();
-  return (Date.now() - lastUpdate) < CACHE_DURATION_MS;
+interface FormattedMatch {
+  id: string;
+  teams: string;
+  homeTeam: string;
+  awayTeam: string;
+  sport: string;
+  league: string;
+  date: string;
+  odds: string;
+  oddsHome: number;
+  oddsDraw: number | null;
+  oddsAway: number;
+  bookmaker: string;
+  hasRealOdds: boolean;
+  oddsSource: 'espn-draftkings' | 'the-odds-api' | 'estimation';
+  reliabilityScore: number;
 }
 
 /**
- * GET - Récupérer les cotes avec gestion intelligente du quota
+ * GET - Récupérer les cotes avec fallback automatique
  */
 export async function GET() {
-  const cache = getCache();
-  const currentMonth = getCurrentMonth();
-  const currentDate = getCurrentDate();
-  
-  // Reset mensuel
-  if (cache.month !== currentMonth) {
-    cache.month = currentMonth;
-    cache.quotaUsed = 0;
-    cache.quotaRemaining = 500;
-    cache.dailyRequests = 0;
-  }
-  
-  // Reset journalier
-  if (cache.lastRequestDate !== currentDate) {
-    cache.dailyRequests = 0;
-  }
-  
-  // Si cache valide, retourner sans appel API
-  if (isCacheValid() && cache.matches.length > 0) {
-    console.log(`✅ Cache valide: ${cache.matches.length} matchs, ${cache.quotaRemaining} requêtes restantes`);
-    return NextResponse.json({
-      success: true,
-      message: `${cache.matches.length} matchs (cache)`,
-      apiStatus: [{ provider: 'the-odds-api', enabled: true }],
-      quotaInfo: {
-        monthlyQuota: 500,
-        used: cache.quotaUsed,
-        remaining: cache.quotaRemaining,
-        dailyUsed: cache.dailyRequests,
-        dailyBudget: DAILY_BUDGET,
-      },
-      stats: {
-        synced: cache.matches.length,
-        active: cache.matches.length,
-      },
-      matches: cache.matches,
-      lastUpdate: cache.lastUpdate,
-      source: 'cache',
-    });
-  }
-  
-  // Vérifier si on peut faire une requête
-  if (cache.quotaRemaining <= 10) {
-    console.log(`⚠️ Quota mensuel bas: ${cache.quotaRemaining} restantes`);
-    return NextResponse.json({
-      success: false,
-      message: `Quota mensuel presque épuisé (${cache.quotaRemaining} restantes)`,
-      apiStatus: [{ provider: 'the-odds-api', enabled: true }],
-      quotaInfo: {
-        monthlyQuota: 500,
-        used: cache.quotaUsed,
-        remaining: cache.quotaRemaining,
-        dailyUsed: cache.dailyRequests,
-        dailyBudget: DAILY_BUDGET,
-      },
-      matches: cache.matches,
-      source: 'cache_limited',
-    });
-  }
-  
-  if (cache.dailyRequests >= DAILY_BUDGET) {
-    console.log(`⚠️ Budget journalier atteint: ${cache.dailyRequests}/${DAILY_BUDGET}`);
-    return NextResponse.json({
-      success: true,
-      message: `Budget journalier atteint - cache utilisé`,
-      apiStatus: [{ provider: 'the-odds-api', enabled: true }],
-      quotaInfo: {
-        monthlyQuota: 500,
-        used: cache.quotaUsed,
-        remaining: cache.quotaRemaining,
-        dailyUsed: cache.dailyRequests,
-        dailyBudget: DAILY_BUDGET,
-      },
-      matches: cache.matches,
-      source: 'cache_daily_limit',
-    });
-  }
-  
-  // Faire l'appel API
-  console.log('🔄 Appel API The Odds API...');
-  
   try {
-    const response = await fetch(
-      `${BASE_URL}/sports/upcoming/odds/?regions=eu&markets=h2h&oddsFormat=decimal&apiKey=${ODDS_API_KEY}`,
-      { next: { revalidate: 0 } }
-    );
+    console.log('📡 API Real-Odds: Récupération (ESPN → Odds API → Estimations)...');
     
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status}`);
+    // Récupérer les cotes avec fallback
+    const matches = await fetchAllESPNOdds();
+    const stats = getESPNOddsStats();
+    
+    // Formater les matchs
+    const formattedMatches: FormattedMatch[] = matches.map(match => ({
+      id: match.id,
+      teams: `${match.homeTeam} vs ${match.awayTeam}`,
+      homeTeam: match.homeTeam,
+      awayTeam: match.awayTeam,
+      sport: match.sport,
+      league: match.league,
+      date: match.date,
+      odds: match.oddsDraw && typeof match.oddsDraw === 'number'
+        ? `${match.oddsHome.toFixed(2)} | ${match.oddsDraw.toFixed(2)} | ${match.oddsAway.toFixed(2)}`
+        : `${match.oddsHome.toFixed(2)} | ${match.oddsAway.toFixed(2)}`,
+      oddsHome: match.oddsHome,
+      oddsDraw: match.oddsDraw,
+      oddsAway: match.oddsAway,
+      bookmaker: match.bookmaker,
+      hasRealOdds: match.hasRealOdds,
+      oddsSource: match.oddsSource,
+      reliabilityScore: match.reliabilityScore,
+    }));
+    
+    // Stats par source
+    const espnCount = matches.filter(m => m.oddsSource === 'espn-draftkings').length;
+    const oddsApiCount = matches.filter(m => m.oddsSource === 'the-odds-api').length;
+    const estimatedCount = matches.filter(m => m.oddsSource === 'estimation').length;
+    
+    // Stats par sport
+    const bySport: Record<string, number> = {};
+    for (const m of matches) {
+      bySport[m.sport] = (bySport[m.sport] || 0) + 1;
     }
     
-    // Lire les headers de quota
-    const quotaUsed = parseInt(response.headers.get('x-requests-used') || '0');
-    const quotaRemaining = parseInt(response.headers.get('x-requests-remaining') || '0');
+    // Stats par bookmaker
+    const byBookmaker: Record<string, number> = {};
+    for (const m of matches) {
+      byBookmaker[m.bookmaker] = (byBookmaker[m.bookmaker] || 0) + 1;
+    }
     
-    console.log(`📊 Quota: ${quotaUsed} utilisées, ${quotaRemaining} restantes`);
+    const liveCount = matches.filter(m => m.isLive).length;
     
-    const data = await response.json();
-    
-    // Parser les matchs
-    const matches = data.map((match: any) => {
-      const bookmaker = match.bookmakers?.[0];
-      const h2hMarket = bookmaker?.markets?.find((m: any) => m.key === 'h2h');
-      const outcomes = h2hMarket?.outcomes || [];
-      
-      let oddsHome = 0;
-      let oddsDraw: number | null = null;
-      let oddsAway = 0;
-      
-      for (const outcome of outcomes) {
-        const name = outcome.name?.toLowerCase() || '';
-        if (name === 'draw' || name === 'x' || name === 'nul') {
-          oddsDraw = outcome.price;
-        } else if (oddsHome === 0) {
-          oddsHome = outcome.price;
-        } else {
-          oddsAway = outcome.price;
-        }
-      }
-      
-      return {
-        id: match.id,
-        teams: `${match.home_team} vs ${match.away_team}`,
-        homeTeam: match.home_team,
-        awayTeam: match.away_team,
-        sport: match.sport_key,
-        league: match.sport_title || '',
-        date: match.commence_time,
-        odds: oddsDraw 
-          ? `${oddsHome.toFixed(2)} | ${oddsDraw.toFixed(2)} | ${oddsAway.toFixed(2)}`
-          : `${oddsHome.toFixed(2)} | ${oddsAway.toFixed(2)}`,
-        oddsHome,
-        oddsDraw,
-        oddsAway,
-        bookmaker: bookmaker?.title || 'Unknown',
-      };
-    }).filter((m: any) => m.oddsHome > 0 && m.oddsAway > 0);
-    
-    // Mettre à jour le cache
-    cache.matches = matches;
-    cache.lastUpdate = new Date().toISOString();
-    cache.quotaUsed = quotaUsed;
-    cache.quotaRemaining = quotaRemaining;
-    cache.dailyRequests++;
-    cache.lastRequestDate = currentDate;
-    
-    global.oddsDataCache = cache;
-    
-    console.log(`✅ ${matches.length} matchs chargés, ${quotaRemaining} requêtes restantes`);
+    console.log(`✅ API Real-Odds: ${matches.length} matchs (ESPN: ${espnCount}, Odds API: ${oddsApiCount}, Estimés: ${estimatedCount})`);
     
     return NextResponse.json({
       success: true,
       message: `${matches.length} matchs synchronisés`,
-      apiStatus: [{ provider: 'the-odds-api', enabled: true }],
+      
+      // Sources avec cascade
+      apiStatus: [
+        { 
+          provider: 'ESPN (DraftKings)', 
+          enabled: true, 
+          type: 'primary',
+          cost: 'GRATUIT',
+          quota: 'ILLIMITÉ',
+          matchesCount: espnCount,
+          reliability: 95,
+        },
+        { 
+          provider: 'The Odds API', 
+          enabled: true,
+          type: 'fallback',
+          cost: '500/mois gratuit',
+          quota: 'LIMITÉ',
+          matchesCount: oddsApiCount,
+          reliability: 90,
+          note: 'Utilisé si ESPN indisponible',
+        },
+        { 
+          provider: 'Estimation', 
+          enabled: true,
+          type: 'last-resort',
+          cost: 'GRATUIT',
+          quota: 'ILLIMITÉ',
+          matchesCount: estimatedCount,
+          reliability: 60,
+          note: 'Utilisé si les deux indisponibles',
+        },
+      ],
+      
+      // Quota info (ESPN est illimité)
       quotaInfo: {
-        monthlyQuota: 500,
-        used: quotaUsed,
-        remaining: quotaRemaining,
-        dailyUsed: cache.dailyRequests,
-        dailyBudget: DAILY_BUDGET,
+        monthlyQuota: Infinity,
+        used: 0,
+        remaining: Infinity,
+        dailyUsed: 0,
+        dailyBudget: Infinity,
+        note: 'ESPN est gratuit et illimité! The Odds API utilisé uniquement en fallback.',
       },
+      
+      // Stats détaillées
       stats: {
+        total: matches.length,
         synced: matches.length,
         active: matches.length,
-        maxPerDay: DAILY_BUDGET,
-        apiCallsUsed: quotaUsed,
+        live: liveCount,
+        bySource: {
+          espnDraftKings: espnCount,
+          theOddsApi: oddsApiCount,
+          estimated: estimatedCount,
+        },
+        bySport,
+        byBookmaker,
+        avgReliability: matches.length > 0 
+          ? Math.round(matches.reduce((sum, m) => sum + m.reliabilityScore, 0) / matches.length)
+          : 0,
       },
-      matches,
-      lastUpdate: cache.lastUpdate,
-      source: 'api',
+      
+      matches: formattedMatches,
+      lastUpdate: stats.lastUpdate || new Date().toISOString(),
+      source: 'ESPN → Odds API → Estimations',
+      
+      // Explication de la cascade
+      cascadeExplanation: {
+        title: 'Système de fallback automatique',
+        steps: [
+          { step: 1, source: 'ESPN (DraftKings)', condition: 'Gratuit et illimité - Toujours essayé en premier' },
+          { step: 2, source: 'The Odds API', condition: 'Si ESPN ne fournit pas de cotes pour ce match' },
+          { step: 3, source: 'Estimation', condition: 'Si aucune API ne fournit de cotes' },
+        ],
+      },
     });
     
   } catch (error) {
-    console.error('❌ Erreur API:', error);
+    console.error('❌ Erreur API Real-Odds:', error);
     
     return NextResponse.json({
       success: false,
-      message: 'Erreur de connexion à l\'API',
-      apiStatus: [{ provider: 'the-odds-api', enabled: true }],
-      quotaInfo: {
-        monthlyQuota: 500,
-        used: cache.quotaUsed,
-        remaining: cache.quotaRemaining,
-        dailyUsed: cache.dailyRequests,
-        dailyBudget: DAILY_BUDGET,
-      },
-      matches: cache.matches,
-      source: 'cache_error',
-    });
+      message: 'Erreur lors de la récupération des cotes',
+      apiStatus: [
+        { provider: 'ESPN (DraftKings)', enabled: false, error: String(error) },
+        { provider: 'The Odds API', enabled: false, error: 'Non testé' },
+      ],
+      matches: [],
+      source: 'error',
+    }, { status: 500 });
   }
 }
 
@@ -251,11 +181,7 @@ export async function GET() {
  * POST - Forcer le rafraîchissement
  */
 export async function POST() {
-  const cache = getCache();
-  
-  // Vider le cache pour forcer le rechargement
-  cache.lastUpdate = '';
-  global.oddsDataCache = cache;
-  
+  const { forceRefreshESPN } = await import('@/lib/espnOddsService');
+  await forceRefreshESPN();
   return GET();
 }

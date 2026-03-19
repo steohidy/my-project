@@ -230,6 +230,12 @@ export default function Home() {
 }
 
 // Types
+// Helper function pour formater les cotes en toute sécurité
+const formatOdds = (odds: number | null | undefined): string => {
+  if (odds == null || typeof odds !== 'number') return '-';
+  return odds.toFixed(2);
+};
+
 export interface Match {
   id: string;
   homeTeam: string;
@@ -1384,9 +1390,9 @@ function NHLMatchCard({ match, index }: { match: Match; index: number }) {
           color: '#fff',
           fontWeight: isHomeFavorite ? 'bold' : 'normal'
         }}>
-          {match.homeTeam.slice(0, 10)}: {match.oddsHome.toFixed(2)}
+          {match.homeTeam.slice(0, 10)}: {formatOdds(match.oddsHome)}
         </span>
-        {match.oddsDraw && (
+        {match.oddsDraw != null && typeof match.oddsDraw === 'number' && (
           <span style={{
             padding: '4px 10px',
             background: '#1a1a1a',
@@ -1394,7 +1400,7 @@ function NHLMatchCard({ match, index }: { match: Match; index: number }) {
             fontSize: '11px',
             color: '#888'
           }}>
-            Nul: {match.oddsDraw.toFixed(2)}
+            Nul: {formatOdds(match.oddsDraw)}
           </span>
         )}
         <span style={{
@@ -1405,7 +1411,7 @@ function NHLMatchCard({ match, index }: { match: Match; index: number }) {
           color: '#fff',
           fontWeight: !isHomeFavorite ? 'bold' : 'normal'
         }}>
-          {match.awayTeam.slice(0, 10)}: {match.oddsAway.toFixed(2)}
+          {match.awayTeam.slice(0, 10)}: {formatOdds(match.oddsAway)}
         </span>
       </div>
       
@@ -3515,7 +3521,7 @@ function NBAMatchCard({ match, index }: { match: Match; index: number }) {
           color: '#fff',
           fontWeight: isHomeFavorite ? 'bold' : 'normal'
         }}>
-          {match.homeTeam.slice(0, 10)}: {match.oddsHome.toFixed(2)}
+          {match.homeTeam.slice(0, 10)}: {formatOdds(match.oddsHome)}
         </span>
         <span style={{ 
           padding: '4px 10px', 
@@ -3525,7 +3531,7 @@ function NBAMatchCard({ match, index }: { match: Match; index: number }) {
           color: '#fff',
           fontWeight: !isHomeFavorite ? 'bold' : 'normal'
         }}>
-          {match.awayTeam.slice(0, 10)}: {match.oddsAway.toFixed(2)}
+          {match.awayTeam.slice(0, 10)}: {formatOdds(match.oddsAway)}
         </span>
       </div>
     </div>
@@ -3737,9 +3743,9 @@ function FootballMatchCard({ match, index }: { match: Match; index: number }) {
         
         {/* Odds */}
         <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
-          <span style={{ padding: '3px 6px', background: favorite === 'home' ? '#f97316' : '#1a1a1a', borderRadius: '4px', fontSize: '10px', color: '#fff' }}>{match.oddsHome.toFixed(2)}</span>
-          {match.oddsDraw && <span style={{ padding: '3px 6px', background: '#1a1a1a', borderRadius: '4px', fontSize: '10px', color: '#888' }}>{match.oddsDraw.toFixed(2)}</span>}
-          <span style={{ padding: '3px 6px', background: favorite === 'away' ? '#f97316' : '#1a1a1a', borderRadius: '4px', fontSize: '10px', color: '#fff' }}>{match.oddsAway.toFixed(2)}</span>
+          <span style={{ padding: '3px 6px', background: favorite === 'home' ? '#f97316' : '#1a1a1a', borderRadius: '4px', fontSize: '10px', color: '#fff' }}>{formatOdds(match.oddsHome)}</span>
+          {match.oddsDraw != null && typeof match.oddsDraw === 'number' && <span style={{ padding: '3px 6px', background: '#1a1a1a', borderRadius: '4px', fontSize: '10px', color: '#888' }}>{formatOdds(match.oddsDraw)}</span>}
+          <span style={{ padding: '3px 6px', background: favorite === 'away' ? '#f97316' : '#1a1a1a', borderRadius: '4px', fontSize: '10px', color: '#fff' }}>{formatOdds(match.oddsAway)}</span>
         </div>
         
         {/* Risk Percentage */}
@@ -4344,9 +4350,9 @@ function AntiTrapSection({ matches }: { matches: Match[] }) {
               }}>
                 <div style={{ fontSize: '11px', color: '#666' }}>Cotes</div>
                 <div style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-                  <span style={{ color: '#f97316' }}>{match.oddsHome.toFixed(2)}</span>
-                  {match.oddsDraw && <span style={{ color: '#666' }}> | {match.oddsDraw.toFixed(2)} | </span>}
-                  <span>{match.oddsAway.toFixed(2)}</span>
+                  <span style={{ color: '#f97316' }}>{formatOdds(match.oddsHome)}</span>
+                  {match.oddsDraw != null && typeof match.oddsDraw === 'number' && <span style={{ color: '#666' }}> | {formatOdds(match.oddsDraw)} | </span>}
+                  <span>{formatOdds(match.oddsAway)}</span>
                 </div>
               </div>
             </div>
@@ -5266,11 +5272,11 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
                 fontWeight: 'bold',
                 color: favorite === 'home' ? '#f97316' : '#888'
               }}>
-                {match.oddsHome.toFixed(2)}
+                {formatOdds(match.oddsHome)}
               </span>
             </div>
             
-            {match.oddsDraw && (
+            {match.oddsDraw != null && typeof match.oddsDraw === 'number' && (
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -5281,7 +5287,7 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
                 marginBottom: '6px'
               }}>
                 <span style={{ color: '#666', fontSize: '14px' }}>Match Nul</span>
-                <span style={{ fontFamily: 'monospace', color: '#666' }}>{match.oddsDraw.toFixed(2)}</span>
+                <span style={{ fontFamily: 'monospace', color: '#666' }}>{formatOdds(match.oddsDraw)}</span>
               </div>
             )}
             
@@ -5301,7 +5307,7 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
                 fontWeight: 'bold',
                 color: favorite === 'away' ? '#f97316' : '#888'
               }}>
-                {match.oddsAway.toFixed(2)}
+                {formatOdds(match.oddsAway)}
               </span>
             </div>
           </div>
@@ -7286,15 +7292,15 @@ function MatchAnalysisSection({ username, matches }: { username: string; matches
             </div>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '8px' }}>
               <span style={{ padding: '4px 10px', background: result.match.oddsHome < result.match.oddsAway ? '#f97316' : '#1a1a1a', borderRadius: '4px', fontSize: '12px', color: '#fff' }}>
-                {result.match.oddsHome.toFixed(2)}
+                {formatOdds(result.match.oddsHome)}
               </span>
-              {result.match.oddsDraw && (
+              {result.match.oddsDraw != null && typeof result.match.oddsDraw === 'number' && (
                 <span style={{ padding: '4px 10px', background: '#1a1a1a', borderRadius: '4px', fontSize: '12px', color: '#888' }}>
-                  {result.match.oddsDraw.toFixed(2)}
+                  {formatOdds(result.match.oddsDraw)}
                 </span>
               )}
               <span style={{ padding: '4px 10px', background: result.match.oddsAway < result.match.oddsHome ? '#f97316' : '#1a1a1a', borderRadius: '4px', fontSize: '12px', color: '#fff' }}>
-                {result.match.oddsAway.toFixed(2)}
+                {formatOdds(result.match.oddsAway)}
               </span>
             </div>
           </div>

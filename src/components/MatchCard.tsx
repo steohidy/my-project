@@ -546,9 +546,9 @@ export function MatchCard({ match, onAnalyze, compact = false }: MatchCardProps)
         <div className="flex items-center justify-center gap-4 mt-2">
           <div className="text-center">
             <p className="text-xs text-muted-foreground">1</p>
-            <p className="font-bold">{match.oddsHome.toFixed(2)}</p>
+            <p className="font-bold">{match.oddsHome?.toFixed(2) || '-'}</p>
           </div>
-          {match.oddsDraw && (
+          {match.oddsDraw != null && typeof match.oddsDraw === 'number' && (
             <div className="text-center">
               <p className="text-xs text-muted-foreground">X</p>
               <p className="font-bold">{match.oddsDraw.toFixed(2)}</p>
@@ -556,7 +556,7 @@ export function MatchCard({ match, onAnalyze, compact = false }: MatchCardProps)
           )}
           <div className="text-center">
             <p className="text-xs text-muted-foreground">2</p>
-            <p className="font-bold">{match.oddsAway.toFixed(2)}</p>
+            <p className="font-bold">{match.oddsAway?.toFixed(2) || '-'}</p>
           </div>
         </div>
       </CardHeader>
