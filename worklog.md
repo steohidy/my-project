@@ -392,12 +392,16 @@ Work Log:
 - Added same visual status tag to NBAMatchCard
 - Updated reasoning array to include status explanation
 - TypeScript compilation successful
+- Removed profit numbers from display per user request
+- Git commit and push to master
 
 Stage Summary:
 - LOW confidence bets are now automatically marked as rejected with visual indicator
 - Users can immediately see which bets to take vs avoid
-- Backtest results shown in sub-label for transparency:
-  * HIGH: "+122.90€ foot, +227.70€ basket"
-  * MEDIUM: "+68.80€ foot, +113.90€ basket"
-  * LOW: "0% win rate historique"
 - Visual design uses gradients, borders, and shadows for clear identification
+- Tags display:
+  * HIGH: "✅ À PRENDRE - Top performance backtest"
+  * MEDIUM: "⚠️ À CONSIDÉRER - Profitable en backtest"
+  * LOW: "🚫 REJETÉ AUTO - 0% win rate backtest"
+- Git commit: 4b004fb
+- Git push: ✅ master -> master
