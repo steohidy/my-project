@@ -103,6 +103,8 @@ export interface UnifiedPrediction {
     reasoning: string[];
     expectedValue: number;
     riskLevel: 'low' | 'medium' | 'high';
+    status: 'take' | 'consider' | 'rejected';
+    statusReason: string;
   };
   
   // Data quality
@@ -454,11 +456,22 @@ export async function getUnifiedPrediction(match: UnifiedPredictionInput): Promi
     
     recommendation: {
       // IMPORTANT: LOW confidence bets are automatically avoided (0% win rate in backtest)
+      // Status automatique basé sur le backtest (HIGH/MEDIUM = profitable, LOW = 0% win rate)
       bet: (isValueBet && confidence !== 'low') ? bestBet : 'avoid',
       kellyStake: confidence === 'low' ? 0 : Math.round(kellyStake * 1000) / 10,
-      reasoning: confidence === 'low' ? [...reasoning, '⚠️ Confiance LOW - Pari automatiquement évité'] : reasoning,
+      reasoning: confidence === 'low' 
+        ? [...reasoning, '🚫 REJETÉ AUTO - Confiance LOW (0% win rate)'] 
+        : confidence === 'medium'
+          ? [...reasoning, '⚠️ À considérer - MEDIUM (profitable en backtest)']
+          : [...reasoning, '✅ À prendre - HIGH (top performance backtest)'],
       expectedValue: Math.round(expectedValue * 10) / 10,
       riskLevel: confidence === 'low' ? 'high' : riskLevel,
+      status: confidence === 'low' ? 'rejected' : confidence === 'medium' ? 'consider' : 'take',
+      statusReason: confidence === 'low' 
+        ? '0% win rate historique'
+        : confidence === 'medium'
+        ? 'Profitable en backtest'
+        : 'Top performance backtest',
     },
     
     dataQuality: {

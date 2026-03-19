@@ -377,3 +377,27 @@ Stage Summary:
 - Classification thresholds:
   * SAFE: Probability >= 60%, Odds <= 2.00, Confidence high/very_high/medium
   * FUN: Probability >= 50%, Odds >= 1.35, Value >= 8%
+
+---
+Task ID: 2
+Agent: main
+Task: Add colored status tags for betting recommendations (HIGH/MEDIUM/LOW confidence)
+
+Work Log:
+- Updated unifiedPredictionService.ts to add `status` and `statusReason` fields to recommendations
+- Added visual status tag component to FootballMatchCard showing:
+  * GREEN "À PRENDRE" for HIGH confidence (best backtest performance)
+  * ORANGE "À CONSIDÉRER" for MEDIUM confidence (profitable in backtest)
+  * RED "REJETÉ AUTO" for LOW confidence (0% win rate in backtest)
+- Added same visual status tag to NBAMatchCard
+- Updated reasoning array to include status explanation
+- TypeScript compilation successful
+
+Stage Summary:
+- LOW confidence bets are now automatically marked as rejected with visual indicator
+- Users can immediately see which bets to take vs avoid
+- Backtest results shown in sub-label for transparency:
+  * HIGH: "+122.90€ foot, +227.70€ basket"
+  * MEDIUM: "+68.80€ foot, +113.90€ basket"
+  * LOW: "0% win rate historique"
+- Visual design uses gradients, borders, and shadows for clear identification

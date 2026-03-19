@@ -3437,6 +3437,84 @@ function NBAMatchCard({ match, index }: { match: Match; index: number }) {
         </div>
       </div>
       
+      {/* TAG DE STATUT AUTOMATIQUE NBA - Basé sur le backtest */}
+      {(() => {
+        const nbaConfidence = nba?.confidence ?? 'medium';
+        const isLow = nbaConfidence === 'low';
+        const isMedium = nbaConfidence === 'medium';
+        const isHigh = nbaConfidence === 'high';
+        
+        // Stats backtest BASKETBALL uniquement
+        const statusConfig = isLow ? {
+          bg: 'linear-gradient(135deg, #ef444420 0%, #dc262620 100%)',
+          border: '2px solid #ef4444',
+          color: '#ef4444',
+          icon: '🚫',
+          label: 'REJETÉ AUTO',
+          subLabel: '0% win rate backtest',
+          shadow: '0 4px 15px rgba(239, 68, 68, 0.2)'
+        } : isMedium ? {
+          bg: 'linear-gradient(135deg, #f9731620 0%, #ea580c20 100%)',
+          border: '2px solid #f97316',
+          color: '#f97316',
+          icon: '⚠️',
+          label: 'À CONSIDÉRER',
+          subLabel: 'Profitable en backtest',
+          shadow: '0 4px 15px rgba(249, 115, 22, 0.15)'
+        } : {
+          bg: 'linear-gradient(135deg, #22c55e20 0%, #16a34a20 100%)',
+          border: '2px solid #22c55e',
+          color: '#22c55e',
+          icon: '✅',
+          label: 'À PRENDRE',
+          subLabel: 'Top performance backtest',
+          shadow: '0 4px 15px rgba(34, 197, 94, 0.2)'
+        };
+        
+        return (
+          <div style={{
+            background: statusConfig.bg,
+            border: statusConfig.border,
+            borderRadius: '8px',
+            padding: '10px 12px',
+            marginBottom: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: statusConfig.shadow
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '20px' }}>{statusConfig.icon}</span>
+              <div>
+                <div style={{ 
+                  color: statusConfig.color, 
+                  fontSize: '14px', 
+                  fontWeight: 'bold',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}>
+                  {statusConfig.label}
+                </div>
+                <div style={{ color: '#888', fontSize: '10px', marginTop: '2px' }}>
+                  {statusConfig.subLabel}
+                </div>
+              </div>
+            </div>
+            <div style={{ 
+              background: statusConfig.color,
+              color: '#fff',
+              padding: '4px 10px',
+              borderRadius: '4px',
+              fontSize: '10px',
+              fontWeight: 'bold',
+              textTransform: 'uppercase'
+            }}>
+              {nbaConfidence.toUpperCase()}
+            </div>
+          </div>
+        );
+      })()}
+      
       {/* GRILLE PRÉDICTIONS NBA */}
       <div style={{
         display: 'grid',
@@ -3813,6 +3891,84 @@ function FootballMatchCard({ match, index }: { match: Match; index: number }) {
           </div>
         </div>
       </div>
+      
+      {/* TAG DE STATUT AUTOMATIQUE FOOTBALL - Basé sur le backtest */}
+      {(() => {
+        const confidence = match.insight?.confidence ?? 'medium';
+        const isLow = confidence === 'low';
+        const isMedium = confidence === 'medium';
+        const isHigh = confidence === 'high' || confidence === 'very_high';
+        
+        // Stats backtest FOOTBALL uniquement
+        const statusConfig = isLow ? {
+          bg: 'linear-gradient(135deg, #ef444420 0%, #dc262620 100%)',
+          border: '2px solid #ef4444',
+          color: '#ef4444',
+          icon: '🚫',
+          label: 'REJETÉ AUTO',
+          subLabel: '0% win rate backtest',
+          shadow: '0 4px 15px rgba(239, 68, 68, 0.2)'
+        } : isMedium ? {
+          bg: 'linear-gradient(135deg, #f9731620 0%, #ea580c20 100%)',
+          border: '2px solid #f97316',
+          color: '#f97316',
+          icon: '⚠️',
+          label: 'À CONSIDÉRER',
+          subLabel: 'Profitable en backtest',
+          shadow: '0 4px 15px rgba(249, 115, 22, 0.15)'
+        } : {
+          bg: 'linear-gradient(135deg, #22c55e20 0%, #16a34a20 100%)',
+          border: '2px solid #22c55e',
+          color: '#22c55e',
+          icon: '✅',
+          label: 'À PRENDRE',
+          subLabel: 'Top performance backtest',
+          shadow: '0 4px 15px rgba(34, 197, 94, 0.2)'
+        };
+        
+        return (
+          <div style={{
+            background: statusConfig.bg,
+            border: statusConfig.border,
+            borderRadius: '8px',
+            padding: '10px 12px',
+            marginBottom: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: statusConfig.shadow
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '20px' }}>{statusConfig.icon}</span>
+              <div>
+                <div style={{ 
+                  color: statusConfig.color, 
+                  fontSize: '14px', 
+                  fontWeight: 'bold',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}>
+                  {statusConfig.label}
+                </div>
+                <div style={{ color: '#888', fontSize: '10px', marginTop: '2px' }}>
+                  {statusConfig.subLabel}
+                </div>
+              </div>
+            </div>
+            <div style={{ 
+              background: statusConfig.color,
+              color: '#fff',
+              padding: '4px 10px',
+              borderRadius: '4px',
+              fontSize: '10px',
+              fontWeight: 'bold',
+              textTransform: 'uppercase'
+            }}>
+              {confidence.toUpperCase()}
+            </div>
+          </div>
+        );
+      })()}
       
       {/* OPTIONS DE PARIS - GRILLE */}
       <div style={{
