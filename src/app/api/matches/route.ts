@@ -250,6 +250,12 @@ export async function GET(request: Request) {
       }
       
       // Build the match object with all required fields
+      // Generate goals prediction from probabilities
+      const goalIntensity = (analysis.probabilities.home + analysis.probabilities.away) / 100;
+      const over25Prob = Math.min(70, Math.max(35, goalIntensity * 60 + 15));
+      const expectedGoals = Math.max(1.5, 2.5 * goalIntensity);
+      const bttsProb = Math.min(65, Math.max(35, goalIntensity * 50 + 10));
+      
       return {
         ...match,
         id: matchId,
@@ -269,6 +275,36 @@ export async function GET(request: Request) {
         // Betting recommendations
         recommendations: analysis.recommendations,
         valueBets: analysis.valueBets,
+        
+        // Goals prediction (Over/Under 2.5, BTTS)
+        goalsPrediction: {
+          total: Math.round(expectedGoals * 10) / 10,
+          over25: Math.round(over25Prob),
+          under25: Math.round(100 - over25Prob),
+          over15: Math.min(85, Math.round(over25Prob + 15)),
+          over35: Math.max(25, Math.round(over25Prob - 25)),
+          over45: Math.max(15, Math.round(over25Prob - 35)),
+          bothTeamsScore: Math.round(bttsProb),
+          prediction: over25Prob >= 55 ? 'Over 2.5' : 'Under 2.5',
+        },
+        
+        // Cards prediction (estimation basée sur l'intensité)
+        cardsPrediction: {
+          total: Math.round(3.5 + goalIntensity * 1.5),
+          over45: Math.round(35 + goalIntensity * 20),
+          under45: Math.round(65 - goalIntensity * 20),
+          redCardRisk: Math.round(10 + (100 - analysis.probabilities.draw) * 0.15),
+          prediction: goalIntensity > 0.6 ? 'Over 4.5 cartons' : 'Under 4.5 cartons',
+        },
+        
+        // Corners prediction
+        cornersPrediction: {
+          total: Math.round(8 + goalIntensity * 2),
+          over85: Math.round(45 + goalIntensity * 15),
+          under85: Math.round(55 - goalIntensity * 15),
+          over95: Math.round(30 + goalIntensity * 15),
+          prediction: goalIntensity > 0.5 ? 'Over 8.5 corners' : 'Under 8.5 corners',
+        },
         
         // ML analysis details
         mlAnalysis: {

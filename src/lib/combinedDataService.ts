@@ -35,17 +35,27 @@ const SPORT_MAPPING: Record<string, string> = {
 export async function getMatchesWithRealOdds(): Promise<any[]> {
   console.log('🔄 Récupération matchs avec cotes réelles...');
   
-  // 1. Charger les cotes depuis The Odds API (gestion quota automatique)
-  await fetchAndCacheOdds();
-  const oddsMatches = getMatchesFromCache();
-  const quotaInfo = getQuotaInfo();
-  
-  console.log(`📊 The Odds API: ${oddsMatches.length} matchs, ${quotaInfo.remaining} requêtes restantes`);
-  
-  // 2. Récupérer les matchs ESPN (avec cotes DraftKings intégrées)
+  // 1. D'abord récupérer les matchs ESPN (avec cotes DraftKings gratuites)
   const espnMatches = await fetchESPNMatches();
-  const espnWithOdds = espnMatches.filter(m => m.hasRealOdds).length;
+  const espnWithOdds = espnMatches.filter((m: any) => m.hasRealOdds).length;
   console.log(`📺 ESPN: ${espnMatches.length} matchs (${espnWithOdds} avec cotes DraftKings)`);
+  
+  // 2. Ne PAS appeler The Odds API si ESPN a déjà des cotes pour la plupart des matchs
+  // Seulement appeler si moins de 50% des matchs ont des cotes ESPN
+  const needOddsApi = espnWithOdds < espnMatches.length * 0.5;
+  
+  let oddsMatches: any[] = [];
+  let quotaInfo = { remaining: 500 };
+  
+  if (needOddsApi) {
+    console.log('📡 ESPN insuffisant, appel The Odds API...');
+    await fetchAndCacheOdds();
+    oddsMatches = getMatchesFromCache();
+    quotaInfo = getQuotaInfo();
+    console.log(`📊 The Odds API: ${oddsMatches.length} matchs, ${quotaInfo.remaining} requêtes restantes`);
+  } else {
+    console.log('✅ ESPN fournit suffisamment de cotes, The Odds API non sollicité (quota économisé!)');
+  }
   
   // 3. Fusionner les données - utiliser ESPN odds comme source principale
   const mergedMatches = espnMatches.map((match: any) => {
