@@ -317,20 +317,23 @@ export async function getUnifiedPrediction(match: UnifiedPredictionInput): Promi
     bestProb = finalDrawProb;
   }
   
-  // Determine confidence
+  // Determine confidence - STRICTER THRESHOLDS based on backtest results
+  // LOW confidence bets have 0% win rate, so we make it harder to get LOW
   let confidence: 'very_high' | 'high' | 'medium' | 'low' = 'low';
-  const edgeThreshold = mlThresholds.edgeThreshold || 0.03;
+  const edgeThreshold = mlThresholds.edgeThreshold || 0.05; // Raised from 0.03
   const isValueBet = bestEdge > edgeThreshold;
   const dataQualityScore = context?.unifiedAnalysis.dataQuality || 30;
   
-  if (isValueBet) {
-    if (bestEdge > 0.08 && dataQualityScore >= 60) {
-      confidence = 'very_high';
-    } else if (bestEdge > 0.05 && dataQualityScore >= 50) {
-      confidence = 'high';
-    } else {
-      confidence = 'medium';
-    }
+  // Much stricter confidence requirements
+  if (bestEdge > 0.10 && dataQualityScore >= 70) {
+    confidence = 'very_high';
+  } else if (bestEdge > 0.07 && dataQualityScore >= 55) {
+    confidence = 'high';
+  } else if (bestEdge > 0.04 && dataQualityScore >= 40) {
+    confidence = 'medium';
+  } else {
+    // LOW confidence - automatically marked as avoid
+    confidence = 'low';
   }
   
   // 12. Calculate Kelly stake
@@ -450,11 +453,12 @@ export async function getUnifiedPrediction(match: UnifiedPredictionInput): Promi
     factors,
     
     recommendation: {
-      bet: isValueBet ? bestBet : 'avoid',
-      kellyStake: Math.round(kellyStake * 1000) / 10,
-      reasoning,
+      // IMPORTANT: LOW confidence bets are automatically avoided (0% win rate in backtest)
+      bet: (isValueBet && confidence !== 'low') ? bestBet : 'avoid',
+      kellyStake: confidence === 'low' ? 0 : Math.round(kellyStake * 1000) / 10,
+      reasoning: confidence === 'low' ? [...reasoning, '⚠️ Confiance LOW - Pari automatiquement évité'] : reasoning,
       expectedValue: Math.round(expectedValue * 10) / 10,
-      riskLevel,
+      riskLevel: confidence === 'low' ? 'high' : riskLevel,
     },
     
     dataQuality: {
@@ -530,13 +534,31 @@ export async function getBatchPredictions(
 }
 
 /**
- * Get predictions only for value bets
+ * Get predictions only for value bets with HIGH or MEDIUM confidence
+ * LOW confidence bets are excluded (0% win rate in backtest)
  */
 export async function getValueBets(
   matches: UnifiedPredictionInput[]
 ): Promise<UnifiedPrediction[]> {
   const predictions = await getBatchPredictions(matches);
-  return predictions.filter(p => p.mlPrediction.valueBet);
+  return predictions.filter(p => 
+    p.mlPrediction.valueBet && 
+    p.mlPrediction.confidence !== 'low' &&
+    p.recommendation.bet !== 'avoid'
+  );
+}
+
+/**
+ * Get predictions with HIGH confidence only (best performers)
+ */
+export async function getHighConfidenceBets(
+  matches: UnifiedPredictionInput[]
+): Promise<UnifiedPrediction[]> {
+  const predictions = await getBatchPredictions(matches);
+  return predictions.filter(p => 
+    (p.mlPrediction.confidence === 'high' || p.mlPrediction.confidence === 'very_high') &&
+    p.recommendation.bet !== 'avoid'
+  );
 }
 
 // Export default

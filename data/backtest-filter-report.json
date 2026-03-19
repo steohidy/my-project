@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-03-19T22:02:44.896Z",
+  "conclusion": {
+    "message": "Les paris LOW confidence doivent être automatiquement ignorés",
+    "impact": "Filtrer LOW confidence: +714.99€ de profit supplémentaire",
+    "recommendation": "Ne proposer que les paris HIGH et MEDIUM confidence"
+  },
+  "before": {
+    "totalBets": 200,
+    "wins": 121,
+    "profit": 305.0866231683358,
+    "roi": 15
+  },
+  "after": {
+    "totalBets": 123,
+    "wins": 119,
+    "profit": 1020.0720876490263,
+    "roi": 83
+  },
+  "improvement": {
+    "additionalProfit": 714.9854644806906,
+    "fewerBets": 77,
+    "betterROI": 68
+  }
+}

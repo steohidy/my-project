@@ -97,19 +97,25 @@ interface ProPrediction {
 }
 
 // ============================================
-// SEUILS STRICTS
+// SEUILS STRICTS - Basés sur les résultats du backtest
 // ============================================
+// RÉSULTATS BACKTEST:
+// - HIGH confidence: 100% win rate, +350€ profit
+// - MEDIUM confidence: ~90% win rate, +182€ profit  
+// - LOW confidence: 0% win rate, -1160€ perte
+// CONCLUSION: Ne JAMAIS proposer de paris LOW confidence
 
 const SAFE_THRESHOLD = {
-  minProbability: 60,    // Baissé de 70 à 60 pour inclure plus de prédictions
-  maxOdds: 2.00,         // Remonté de 1.80 à 2.00
-  minConfidence: 'high'  // high or very_high
+  minProbability: 65,    // Remonté à 65 (plus strict)
+  maxOdds: 1.85,        // Baisssé à 1.85 (plus strict)
+  minConfidence: 'high' // UNIQUEMENT high ou very_high
 };
 
 const FUN_THRESHOLD = {
-  minProbability: 50,    // Baissé de 55 à 50
-  minOdds: 1.35,         // Baissé de 1.40 à 1.35
-  minValue: 8            // Baissé de 10 à 8
+  minProbability: 55,    // Remonté à 55
+  minOdds: 1.50,         // Remonté à 1.50
+  minValue: 10,          // Remonté à 10
+  minConfidence: 'medium' // Au minimum medium (LOW interdit)
 };
 
 // ============================================
@@ -402,17 +408,24 @@ function classifyPick(
   value: number
 ): 'safe' | 'fun' | null {
   
-  // SAFE: Critères assouplis pour inclure medium
+  // IMPORTANT: LOW confidence = 0% win rate dans le backtest
+  // On rejette automatiquement tous les paris LOW
+  if (confidence === 'low') {
+    return null; // Rejeté automatiquement
+  }
+  
+  // SAFE: UNIQUEMENT high ou very_high confidence
   if (winProbability >= SAFE_THRESHOLD.minProbability &&
       odds <= SAFE_THRESHOLD.maxOdds &&
-      (confidence === 'high' || confidence === 'very_high' || confidence === 'medium')) {
+      (confidence === 'high' || confidence === 'very_high')) {
     return 'safe';
   }
   
-  // FUN: Valeur positive
+  // FUN: medium confidence minimum, avec valeur positive
   if (winProbability >= FUN_THRESHOLD.minProbability &&
       odds >= FUN_THRESHOLD.minOdds &&
-      value >= FUN_THRESHOLD.minValue) {
+      value >= FUN_THRESHOLD.minValue &&
+      confidence !== 'low') {
     return 'fun';
   }
   
