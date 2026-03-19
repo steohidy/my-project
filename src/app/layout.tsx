@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Providers } from "@/components/Providers";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,14 +13,17 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#0a0a0a",
+};
+
 export const metadata: Metadata = {
-  title: "Steo Élite - Pronostics Sportifs",
-  description: "Application de pronostics sportifs avec Machine Learning - Football, Basketball, NFL, NHL",
-  keywords: ["Pronostics", "Sports", "Football", "Basketball", "NFL", "NHL", "ML", "Predictions"],
-  authors: [{ name: "Steo Élite Team" }],
-  icons: {
-    icon: "/logo.svg",
-  },
+  title: "Steo Élite Predictor - Pronostics Sportifs Intelligents",
+  description: "Application de pronostics sportifs avec analyses statistiques en temps réel.",
 };
 
 export default function RootLayout({
@@ -28,12 +32,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className="dark" suppressHydrationWarning>
+    <html lang="fr" className="dark">
+      <head>
+        <meta name="mobile-web-app-capable" content="yes" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );
 }
+// Build Wed Mar  4 18:56:05 UTC 2026
