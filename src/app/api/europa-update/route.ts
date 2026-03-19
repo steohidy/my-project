@@ -1,27 +1,14 @@
 import { NextResponse } from 'next/server';
-import { readFile, writeFile } from 'fs/promises';
-import path from 'path';
 
 /**
- * API pour mettre à jour manuellement les matchs européens
- * - Europa League
- * - Conference League
+ * API pour récupérer les matchs européens
  * - Champions League
+ * - Europa League  
+ * - Conference League
  * 
- * AVEC CACHE: TTL 30 minutes pour économiser le quota API
+ * SOURCE: ESPN API (GRATUIT ET ILLIMITÉ)
+ * Plus de problème de quota !
  */
-
-const ODDS_API_KEY = process.env.THE_ODDS_API_KEY || 'fcf0d3cbc8958a44007b0520751f8431';
-const BASE_URL = 'https://api.the-odds-api.com/v4';
-const CACHE_FILE = path.join(process.cwd(), 'data', 'europa-cache.json');
-const CACHE_TTL = 30 * 60 * 1000; // 30 minutes en millisecondes
-
-// Sports européens à surveiller
-const EUROPEAN_SPORTS = [
-  { key: 'soccer_uefa_champions_league', name: 'Champions League' },
-  { key: 'soccer_uefa_europa_league', name: 'Europa League' },
-  { key: 'soccer_uefa_conference_league', name: 'Conference League' },
-];
 
 interface Match {
   id: string;
@@ -35,6 +22,10 @@ interface Match {
   oddsAway: number;
   bookmaker: string;
   hasRealOdds: boolean;
+  homeScore?: number;
+  awayScore?: number;
+  status: 'upcoming' | 'live' | 'finished';
+  isLive?: boolean;
   predictions?: {
     result: { home: number; draw: number; away: number };
     goals: { expected: number; over25: number; recommendation: string };
@@ -42,6 +33,46 @@ interface Match {
     confidence: string;
   };
 }
+
+interface ESPNEvent {
+  id: string;
+  date: string;
+  name: string;
+  status: {
+    type: {
+      state: string;
+      name: string;
+      completed: boolean;
+    };
+    period?: number;
+    displayClock?: string;
+  };
+  competitions: Array<{
+    competitors: Array<{
+      homeAway: string;
+      score: string;
+      team: {
+        id: string;
+        displayName: string;
+        abbreviation: string;
+      };
+    }>;
+    odds?: Array<{
+      provider: string;
+      details: string;
+      awayTeamOdds?: { moneyLine: number };
+      homeTeamOdds?: { moneyLine: number };
+      drawOdds?: { moneyLine: number };
+    }>;
+  }>;
+}
+
+// Compétitions européennes sur ESPN
+const EUROPEAN_LEAGUES = [
+  { key: 'uefa.champions', name: 'Champions League' },
+  { key: 'uefa.europa', name: 'Europa League' },
+  { key: 'uefa.europa.conf', name: 'Conference League' },
+];
 
 /**
  * Calculer les probabilités implicites depuis les cotes
@@ -65,7 +96,40 @@ function calculateImpliedProbabilities(oddsHome: number, oddsDraw: number | null
 }
 
 /**
- * Calculer les prédictions avec la nouvelle méthode
+ * Estimer les cotes depuis les probabilités implicites
+ * (utilisé si ESPN ne fournit pas de cotes)
+ */
+function estimateOddsFromTeams(homeTeam: string, awayTeam: string, league: string): { home: number; draw: number; away: number } {
+  // Estimation basique basée sur le niveau des équipes
+  // Dans un vrai système, on utiliserait un classement ou un historique
+  
+  const favoriteTeams = [
+    // Champions League favorites
+    'Real Madrid', 'Manchester City', 'Bayern Munich', 'Paris Saint-Germain', 'Barcelona',
+    'Liverpool', 'Chelsea', 'Arsenal', 'Inter Milan', 'AC Milan', 'Borussia Dortmund',
+    'Atletico Madrid', 'Juventus', 'Napoli', 'RB Leipzig',
+    // Europa League favorites
+    'Roma', 'Lazio', 'Bayer Leverkusen', 'West Ham', 'Brighton', 'Atalanta',
+    // Conference League favorites
+    'Fiorentina', 'Villarreal', 'AZ Alkmaar',
+  ];
+  
+  const homeIsFavorite = favoriteTeams.some(t => homeTeam.toLowerCase().includes(t.toLowerCase()));
+  const awayIsFavorite = favoriteTeams.some(t => awayTeam.toLowerCase().includes(t.toLowerCase()));
+  
+  if (homeIsFavorite && !awayIsFavorite) {
+    return { home: 1.65, draw: 3.60, away: 5.00 };
+  } else if (!homeIsFavorite && awayIsFavorite) {
+    return { home: 4.50, draw: 3.60, away: 1.75 };
+  } else if (homeIsFavorite && awayIsFavorite) {
+    return { home: 2.30, draw: 3.30, away: 3.00 };
+  } else {
+    return { home: 2.50, draw: 3.30, away: 2.80 };
+  }
+}
+
+/**
+ * Calculer les prédictions
  */
 function calculatePredictions(match: Match) {
   const probs = calculateImpliedProbabilities(match.oddsHome, match.oddsDraw, match.oddsAway);
@@ -97,180 +161,112 @@ function calculatePredictions(match: Match) {
 }
 
 /**
- * Lire le cache
- */
-async function readCache() {
-  try {
-    const data = await readFile(CACHE_FILE, 'utf-8');
-    return JSON.parse(data);
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Écrire le cache
- */
-async function writeCache(data: any) {
-  try {
-    await writeFile(CACHE_FILE, JSON.stringify(data, null, 2));
-  } catch (error) {
-    console.error('Erreur écriture cache:', error);
-  }
-}
-
-/**
- * Vérifier si le cache est encore valide
- */
-function isCacheValid(cache: any): boolean {
-  if (!cache || !cache.expiresAt) return false;
-  return new Date(cache.expiresAt) > new Date();
-}
-
-/**
- * GET - Récupérer les matchs européens (avec cache)
+ * GET - Récupérer les matchs européens depuis ESPN (GRATUIT)
  */
 export async function GET() {
   try {
-    // 1. Vérifier le cache d'abord
-    const cache = await readCache();
-    
-    if (cache && isCacheValid(cache)) {
-      console.log('✅ Cache valide, retour des données en cache');
-      return NextResponse.json({
-        success: true,
-        message: `${cache.matches.length} matchs européens (cache)`,
-        matches: cache.matches,
-        stats: cache.stats,
-        quotaUsed: cache.quotaUsed,
-        quotaRemaining: cache.quotaRemaining,
-        lastUpdate: cache.lastUpdate,
-        fromCache: true,
-        cacheExpiresAt: cache.expiresAt,
-      });
-    }
-    
-    console.log('📡 Cache expiré ou inexistant, appel API...');
+    console.log('📡 Récupération matchs européens depuis ESPN (GRATUIT)...');
     
     const allMatches: Match[] = [];
-    let quotaUsed = 0;
-    let quotaRemaining = 500;
 
-    // Récupérer les cotes pour chaque compétition européenne
-    for (const sport of EUROPEAN_SPORTS) {
+    for (const league of EUROPEAN_LEAGUES) {
       try {
-        console.log(`📡 Récupération ${sport.name}...`);
+        console.log(`  📌 ${league.name}...`);
         
         const response = await fetch(
-          `${BASE_URL}/sports/${sport.key}/odds/?regions=eu&markets=h2h&oddsFormat=decimal&apiKey=${ODDS_API_KEY}`,
-          { next: { revalidate: 0 } }
+          `https://site.api.espn.com/apis/site/v2/sports/soccer/${league.key}/scoreboard`,
+          { next: { revalidate: 300 } } // Cache 5 minutes
         );
-        
+
         if (!response.ok) {
-          console.log(`⚠️ ${sport.name}: ${response.status}`);
+          console.log(`  ⚠️ ${league.name}: ${response.status}`);
           continue;
         }
-        
-        // Lire les headers de quota
-        quotaUsed = parseInt(response.headers.get('x-requests-used') || '0');
-        quotaRemaining = parseInt(response.headers.get('x-requests-remaining') || '0');
-        
+
         const data = await response.json();
-        
-        for (const match of data) {
-          const bookmaker = match.bookmakers?.[0];
-          const h2hMarket = bookmaker?.markets?.find((m: any) => m.key === 'h2h');
-          const outcomes = h2hMarket?.outcomes || [];
+        const events: ESPNEvent[] = data.events || [];
+
+        for (const event of events) {
+          const competition = event.competitions?.[0];
+          const homeCompetitor = competition?.competitors?.find(c => c.homeAway === 'home');
+          const awayCompetitor = competition?.competitors?.find(c => c.homeAway === 'away');
+
+          if (!homeCompetitor || !awayCompetitor) continue;
+
+          const homeTeam = homeCompetitor.team?.displayName || 'Unknown';
+          const awayTeam = awayCompetitor.team?.displayName || 'Unknown';
           
-          if (outcomes.length < 2) continue;
+          // Récupérer les cotes depuis ESPN si disponibles
+          const odds = competition?.odds?.[0];
+          let oddsHome = odds?.homeTeamOdds?.moneyLine ? (odds.homeTeamOdds.moneyLine / 100) + 1 : 0;
+          let oddsAway = odds?.awayTeamOdds?.moneyLine ? (odds.awayTeamOdds.moneyLine / 100) + 1 : 0;
+          let oddsDraw = odds?.drawOdds?.moneyLine ? (odds.drawOdds.moneyLine / 100) + 1 : null;
           
-          let oddsHome = 0;
-          let oddsDraw: number | null = null;
-          let oddsAway = 0;
-          
-          for (const outcome of outcomes) {
-            const name = outcome.name?.toLowerCase() || '';
-            if (name === 'draw' || name === 'x' || name === 'nul') {
-              oddsDraw = outcome.price;
-            } else if (oddsHome === 0) {
-              oddsHome = outcome.price;
-            } else {
-              oddsAway = outcome.price;
-            }
+          // Si pas de cotes, estimer
+          if (!oddsHome || !oddsAway) {
+            const estimated = estimateOddsFromTeams(homeTeam, awayTeam, league.name);
+            oddsHome = estimated.home;
+            oddsDraw = estimated.draw;
+            oddsAway = estimated.away;
           }
           
-          if (oddsHome > 0 && oddsAway > 0) {
-            const matchData: Match = {
-              id: match.id,
-              homeTeam: match.home_team,
-              awayTeam: match.away_team,
-              sport: 'Foot',
-              league: sport.name,
-              date: match.commence_time,
-              oddsHome,
-              oddsDraw,
-              oddsAway,
-              bookmaker: bookmaker?.title || 'Unknown',
-              hasRealOdds: true,
-            };
-            
-            // Calculer les prédictions avec la nouvelle méthode
-            matchData.predictions = calculatePredictions(matchData);
-            
-            allMatches.push(matchData);
-          }
+          const isLive = event.status?.type?.state === 'in';
+          const isFinished = event.status?.type?.completed;
+
+          const matchData: Match = {
+            id: `espn_${league.key}_${event.id}`,
+            homeTeam,
+            awayTeam,
+            sport: 'Foot',
+            league: league.name,
+            date: event.date,
+            oddsHome,
+            oddsDraw,
+            oddsAway,
+            bookmaker: odds?.provider || 'ESPN',
+            hasRealOdds: !!odds,
+            homeScore: homeCompetitor.score ? parseInt(homeCompetitor.score) : undefined,
+            awayScore: awayCompetitor.score ? parseInt(awayCompetitor.score) : undefined,
+            status: isLive ? 'live' : isFinished ? 'finished' : 'upcoming',
+            isLive,
+          };
+
+          // Calculer les prédictions
+          matchData.predictions = calculatePredictions(matchData);
+
+          allMatches.push(matchData);
         }
-        
-        console.log(`✅ ${sport.name}: ${data.length} matchs`);
-        
+
+        console.log(`  ✅ ${league.name}: ${events.length} matchs`);
+
       } catch (error) {
-        console.error(`❌ Erreur ${sport.name}:`, error);
+        console.error(`  ❌ Erreur ${league.name}:`, error);
       }
     }
 
     // Trier par date
     allMatches.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    // Stats
+    // Stats par ligue
     const byLeague: Record<string, number> = {};
     for (const m of allMatches) {
       byLeague[m.league] = (byLeague[m.league] || 0) + 1;
     }
-    
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + CACHE_TTL);
-    
-    const responseData = {
-      success: true,
-      message: `${allMatches.length} matchs européens trouvés`,
-      matches: allMatches,
-      stats: {
-        total: allMatches.length,
-        byLeague,
-      },
-      quotaUsed,
-      quotaRemaining,
-      lastUpdate: now.toISOString(),
-      fromCache: false,
-      cacheExpiresAt: expiresAt.toISOString(),
-    };
-    
-    // Sauvegarder dans le cache
-    await writeCache({
-      matches: allMatches,
-      stats: {
-        total: allMatches.length,
-        byLeague,
-      },
-      quotaUsed,
-      quotaRemaining,
-      lastUpdate: now.toISOString(),
-      expiresAt: expiresAt.toISOString(),
-    });
-    
-    console.log(`💾 Cache sauvegardé, expire à ${expiresAt.toLocaleTimeString('fr-FR')}`);
 
-    return NextResponse.json(responseData);
+    console.log(`✅ Total: ${allMatches.length} matchs européens (ESPN - GRATUIT)`);
+
+    return NextResponse.json({
+      success: true,
+      message: `${allMatches.length} matchs européens (ESPN - Gratuit & Illimité)`,
+      matches: allMatches,
+      stats: {
+        total: allMatches.length,
+        byLeague,
+        source: 'ESPN (Gratuit)',
+        quotaCost: 0,
+      },
+      lastUpdate: new Date().toISOString(),
+    });
 
   } catch (error) {
     console.error('Erreur:', error);
@@ -283,18 +279,8 @@ export async function GET() {
 }
 
 /**
- * POST - Forcer la mise à jour (ignore le cache)
- * Ajouter ?force=true pour forcer le rafraîchissement
+ * POST - Rafraîchir les données
  */
-export async function POST(request: Request) {
-  const url = new URL(request.url);
-  const forceRefresh = url.searchParams.get('force') === 'true';
-  
-  // Si force=true, on vide le cache avant d'appeler GET
-  if (forceRefresh) {
-    console.log('🔄 Forçage du rafraîchissement (cache ignoré)');
-    await writeCache({ matches: [], expiresAt: '', lastUpdate: '' });
-  }
-  
+export async function POST() {
   return GET();
 }

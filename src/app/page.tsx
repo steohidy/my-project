@@ -1578,7 +1578,6 @@ function ApiStatusSection() {
   const [loadingEuropa, setLoadingEuropa] = useState(false);
   const [refreshingApi, setRefreshingApi] = useState(false);
   const [message, setMessage] = useState('');
-  const [cacheInfo, setCacheInfo] = useState<{ fromCache: boolean; expiresAt: string } | null>(null);
 
   // Charger le statut API
   const loadApiStatus = async () => {
@@ -1611,23 +1610,16 @@ function ApiStatusSection() {
     }
   };
 
-  // Mettre à jour les matchs européens (avec cache)
-  const refreshEuropaMatches = async (forceRefresh: boolean = false) => {
+  // Mettre à jour les matchs européens (ESPN - Gratuit)
+  const refreshEuropaMatches = async () => {
     setLoadingEuropa(true);
     try {
-      const url = forceRefresh ? '/api/europa-update?force=true' : '/api/europa-update';
-      const res = await fetch(url);
+      const res = await fetch('/api/europa-update');
       const data = await res.json();
       if (data.success) {
         setEuropaMatches(data.matches);
-        setCacheInfo({
-          fromCache: data.fromCache || false,
-          expiresAt: data.cacheExpiresAt || ''
-        });
-        const cacheMsg = data.fromCache 
-          ? ` (cache - expire dans ${Math.round((new Date(data.cacheExpiresAt).getTime() - Date.now()) / 60000)} min)`
-          : ' (API fraîche)';
-        setMessage(`✅ ${data.matches.length} matchs européens${cacheMsg}`);
+        const sourceMsg = data.stats?.source ? ` (${data.stats.source})` : '';
+        setMessage(`✅ ${data.matches.length} matchs européens${sourceMsg}`);
         setTimeout(() => setMessage(''), 5000);
       } else {
         setMessage('❌ Erreur lors de la récupération');
@@ -1671,20 +1663,20 @@ function ApiStatusSection() {
         </div>
       )}
 
-      {/* Section The Odds API */}
+      {/* Section The Odds API - SECONDARY (quota limité) */}
       <div style={{ 
         background: 'linear-gradient(135deg, #0d1f0d 0%, #1a1a1a 100%)', 
         borderRadius: '10px', 
         padding: '14px', 
         marginBottom: '12px',
-        border: '1px solid #22c55e30'
+        border: '1px solid #f9731630'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '18px' }}>🔗</span>
+            <span style={{ fontSize: '18px' }}>⚠️</span>
             <div>
-              <h3 style={{ margin: 0, fontSize: '14px', color: '#22c55e', fontWeight: 'bold' }}>The Odds API</h3>
-              <span style={{ fontSize: '10px', color: '#888' }}>Cotes réelles des bookmakers</span>
+              <h3 style={{ margin: 0, fontSize: '14px', color: '#f97316', fontWeight: 'bold' }}>The Odds API (Limité)</h3>
+              <span style={{ fontSize: '10px', color: '#888' }}>500 crédits/mois - Utilisé uniquement si ESPN ne couvre pas</span>
             </div>
           </div>
           <div style={{ display: 'flex', gap: '6px' }}>
@@ -1701,7 +1693,7 @@ function ApiStatusSection() {
                 fontSize: '11px'
               }}
             >
-              {refreshingApi || loading ? '⏳' : '🔄'} Rafraîchir
+              {refreshingApi || loading ? '⏳' : '🔄'} Vérifier
             </button>
           </div>
         </div>
@@ -1717,14 +1709,14 @@ function ApiStatusSection() {
                 <div style={{ fontSize: '9px', color: '#888' }}>Statut</div>
               </div>
               <div style={{ background: '#0a0a0a', borderRadius: '6px', padding: '10px', textAlign: 'center' }}>
-                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#22c55e' }}>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: (apiStatus.quotaInfo?.remaining || 0) > 100 ? '#22c55e' : '#f97316' }}>
                   {apiStatus.quotaInfo?.remaining || 0}
                 </div>
-                <div style={{ fontSize: '9px', color: '#888' }}>Quota Restant</div>
+                <div style={{ fontSize: '9px', color: '#888' }}>Crédits Restants</div>
               </div>
               <div style={{ background: '#0a0a0a', borderRadius: '6px', padding: '10px', textAlign: 'center' }}>
                 <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#f97316' }}>
-                  {apiStatus.quotaInfo?.dailyUsed || 0}/{apiStatus.quotaInfo?.dailyBudget || 15}
+                  {apiStatus.quotaInfo?.dailyUsed || 0}
                 </div>
                 <div style={{ fontSize: '9px', color: '#888' }}>Req Aujourd'hui</div>
               </div>
@@ -1735,10 +1727,18 @@ function ApiStatusSection() {
                 <div style={{ fontSize: '9px', color: '#888' }}>Matchs</div>
               </div>
             </div>
-            <div style={{ marginTop: '10px', padding: '8px', background: '#0a0a0a', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
-              <span style={{ color: '#888' }}>Source: <span style={{ color: apiStatus.source === 'api' ? '#22c55e' : '#f97316' }}>{apiStatus.source || 'unknown'}</span></span>
-              <span style={{ color: '#888' }}>{apiStatus.message}</span>
-            </div>
+            {(apiStatus.quotaInfo?.remaining || 0) < 100 && (
+              <div style={{ 
+                marginTop: '8px', 
+                padding: '8px', 
+                background: '#f9731620', 
+                borderRadius: '6px', 
+                fontSize: '10px', 
+                color: '#f97316' 
+              }}>
+                ⚠️ Quota faible - Économisez les requêtes ! Utilisez ESPN pour les matchs européens.
+              </div>
+            )}
           </>
         )}
 
@@ -1749,7 +1749,7 @@ function ApiStatusSection() {
         )}
       </div>
 
-      {/* Section Europa League & Conference League */}
+      {/* Section Compétitions Européennes (ESPN - Gratuit) */}
       <div style={{ 
         background: 'linear-gradient(135deg, #1a0d1f 0%, #1a1a1a 100%)', 
         borderRadius: '10px', 
@@ -1762,71 +1762,28 @@ function ApiStatusSection() {
             <span style={{ fontSize: '18px' }}>🏆</span>
             <div>
               <h3 style={{ margin: 0, fontSize: '14px', color: '#a855f7', fontWeight: 'bold' }}>Compétitions Européennes</h3>
-              <span style={{ fontSize: '10px', color: '#888' }}>
-                Europa League • Conference League • Champions League
-                {cacheInfo?.fromCache && (
-                  <span style={{ color: '#22c55e', marginLeft: '6px' }}>
-                    📦 Cache actif
-                  </span>
-                )}
+              <span style={{ fontSize: '10px', color: '#22c55e' }}>
+                📺 ESPN (GRATUIT) • CL + EL + Conference
               </span>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {cacheInfo?.fromCache && (
-              <button
-                onClick={() => refreshEuropaMatches(true)}
-                disabled={loadingEuropa}
-                title="Forcer le rafraîchissement (consomme 3 requêtes API)"
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: '6px',
-                  border: '1px solid #f97316',
-                  background: 'transparent',
-                  color: '#f97316',
-                  cursor: loadingEuropa ? 'wait' : 'pointer',
-                  fontSize: '10px'
-                }}
-              >
-                🔄 Forcer
-              </button>
-            )}
-            <button
-              onClick={() => refreshEuropaMatches(false)}
-              disabled={loadingEuropa}
-              style={{
-                padding: '8px 14px',
-                borderRadius: '6px',
-                border: '1px solid #a855f7',
-                background: loadingEuropa ? '#333' : '#a855f7',
-                color: '#fff',
-                cursor: loadingEuropa ? 'wait' : 'pointer',
-                fontSize: '11px',
-                fontWeight: 'bold'
-              }}
-            >
-              {loadingEuropa ? '⏳ Chargement...' : '🔄 Charger Matchs CE'}
-            </button>
-          </div>
+          <button
+            onClick={refreshEuropaMatches}
+            disabled={loadingEuropa}
+            style={{
+              padding: '8px 14px',
+              borderRadius: '6px',
+              border: '1px solid #a855f7',
+              background: loadingEuropa ? '#333' : '#a855f7',
+              color: '#fff',
+              cursor: loadingEuropa ? 'wait' : 'pointer',
+              fontSize: '11px',
+              fontWeight: 'bold'
+            }}
+          >
+            {loadingEuropa ? '⏳ Chargement...' : '🔄 Charger Matchs'}
+          </button>
         </div>
-
-        {/* Indicateur cache */}
-        {cacheInfo && (
-          <div style={{ 
-            marginBottom: '8px', 
-            padding: '4px 8px', 
-            background: cacheInfo.fromCache ? '#22c55e15' : '#3b82f615', 
-            borderRadius: '4px',
-            fontSize: '9px',
-            color: cacheInfo.fromCache ? '#22c55e' : '#3b82f6'
-          }}>
-            {cacheInfo.fromCache ? (
-              <>📦 Données en cache (expire à {new Date(cacheInfo.expiresAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })})</>
-            ) : (
-              <>📡 Données fraîches de l'API</>
-            )}
-          </div>
-        )}
 
         {/* Matchs européens */}
         {europaMatches.length > 0 && (
@@ -1844,14 +1801,24 @@ function ApiStatusSection() {
                 <div>
                   <span style={{ color: '#a855f7', fontWeight: 'bold' }}>[{match.league}]</span>{' '}
                   <span style={{ color: '#fff' }}>{match.homeTeam} vs {match.awayTeam}</span>
+                  {match.isLive && (
+                    <span style={{ 
+                      background: '#ef4444', 
+                      color: '#fff', 
+                      padding: '1px 4px', 
+                      borderRadius: '2px', 
+                      fontSize: '8px',
+                      marginLeft: '4px'
+                    }}>LIVE</span>
+                  )}
                 </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <span style={{ color: '#22c55e' }}>{match.oddsHome?.toFixed(2)}</span>
                   <span style={{ color: '#888' }}>{match.oddsDraw?.toFixed(2) || '-'}</span>
                   <span style={{ color: '#ef4444' }}>{match.oddsAway?.toFixed(2)}</span>
-                  {(match.predictions?.confidence === 'high' || match.insight?.confidence === 'high' || match.insight?.confidence === 'very_high') && (
+                  {match.predictions?.confidence === 'high' && (
                     <span 
-                      title="Probabilité de succès ≥ 70% - Recommandé pour les paris sûrs"
+                      title="Probabilité ≥ 60% - Recommandé pour les paris sûrs"
                       style={{ background: '#22c55e', color: '#000', padding: '2px 4px', borderRadius: '3px', fontSize: '8px', fontWeight: 'bold', cursor: 'help' }}>
                       HAUTE CONFIANCE
                     </span>
@@ -2891,7 +2858,11 @@ function AppDashboard({ onLogout, userInfo }: { onLogout: () => void; userInfo: 
         <NavButton icon="🛡️" label="Trap" active={activeSection === 'antitrap'} onClick={() => setActiveSection('antitrap')} color="#ef4444" />
         <NavButton icon="📊" label="Stats" active={activeSection === 'results'} onClick={() => setActiveSection('results')} color="#eab308" />
         <NavButton icon="💰" label="Bank" active={activeSection === 'bankroll'} onClick={() => setActiveSection('bankroll')} color="#22c55e" />
-        <NavButton icon="📡" label="API" active={activeSection === 'apistatus'} onClick={() => setActiveSection('apistatus')} color="#22c55e" />
+        
+        {/* API Status - Visible uniquement pour les admins */}
+        {userInfo?.role === 'admin' && (
+          <NavButton icon="📡" label="API" active={activeSection === 'apistatus'} onClick={() => setActiveSection('apistatus')} color="#22c55e" />
+        )}
         
         {/* Pronostiqueur Pro - Visible uniquement pour les admins */}
         {userInfo?.role === 'admin' && (
@@ -6101,7 +6072,7 @@ function AdminPanel() {
     }
   };
 
-  // Mettre à jour les matchs européens (Europa League, Conference League)
+  // Mettre à jour les matchs européens (ESPN - Gratuit)
   const refreshEuropaMatches = async () => {
     setLoadingEuropa(true);
     try {
@@ -6109,7 +6080,8 @@ function AdminPanel() {
       const data = await res.json();
       if (data.success) {
         setEuropaMatches(data.matches);
-        setMessage(`✅ ${data.matches.length} matchs européens (Europa + Conference League)`);
+        const sourceMsg = data.stats?.source ? ` (${data.stats.source})` : '';
+        setMessage(`✅ ${data.matches.length} matchs européens${sourceMsg}`);
         setTimeout(() => setMessage(''), 5000);
       } else {
         setMessage('❌ Erreur lors de la récupération');
