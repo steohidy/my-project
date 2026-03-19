@@ -405,3 +405,54 @@ Stage Summary:
   * LOW: "🚫 REJETÉ AUTO - 0% win rate backtest"
 - Git commit: 4b004fb
 - Git push: ✅ master -> master
+
+---
+Task ID: 3
+Agent: main
+Task: Fix basketball betting options showing football options
+
+Work Log:
+- Identified issue: MatchCardCompact was using FootballMatchCard for basket matches without nbaPredictions
+- Changed condition from `match.sport === 'Basket' && match.nbaPredictions` to `match.sport === 'Basket' || match.sport === 'Basketball'`
+- Added fallback calculations in NBAMatchCard for when nbaPredictions is missing:
+  * homeProbFromOdds, awayProbFromOdds - probability from odds
+  * spreadLine, spreadFavorite, spreadConfidence - spread fallback
+  * totalPointsPredicted, totalPointsOverProb, totalPointsRec - total points fallback
+  * topScorerPlayer, topScorerTeam, topScorerPoints - top scorer fallback
+  * keyMatchup - key matchup fallback
+  * confidence, confidenceColor - confidence fallback
+- Updated grille display to use fallback variables
+- TypeScript compilation successful
+
+Stage Summary:
+- Basketball matches now correctly show NBA-specific options:
+  * 📊 SPREAD (handicap)
+  * 📈 TOTAL POINTS (over/under)
+  * 🏀 TOP SCOREUR
+  * ⚔️ DUEL CLÉ
+- Football options (1/X/2, Over 2.5 buts, BTTS) no longer appear in basket section
+- Fallbacks calculated from odds when nbaPredictions unavailable
+- Git commit: afcefe8
+- Git push: ✅ master -> master
+
+---
+Task ID: 4
+Agent: main
+Task: Verify and save basketball betting options fix
+
+Work Log:
+- Verified code is already correct from previous session
+- MatchCardCompact correctly routes to NBAMatchCard for 'Basket' or 'Basketball' sports
+- NBAMatchCard displays basketball-specific options:
+  * 📊 SPREAD (handicap line)
+  * 📈 TOTAL POINTS (over/under)
+  * 🏀 TOP SCOREUR
+  * ⚔️ DUEL CLÉ
+- combinedDataService.ts correctly sets sport: 'Basket' for NBA matches
+- TypeScript check passed with no errors
+- No code changes needed - fix already in place
+
+Stage Summary:
+- Basketball options are correctly separated from football options
+- No build needed due to resource constraints
+- Code verified correct and saved
