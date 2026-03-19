@@ -181,22 +181,32 @@ export async function getMatchesWithRealOdds(): Promise<any[]> {
       }
     }
     
-    // Filtrer pour ne garder que les matchs d'aujourd'hui et en cours
+    // Filtrer pour ne garder que les matchs d'aujourd'hui, à venir et en cours
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const todayEnd = new Date();
     todayEnd.setHours(23, 59, 59, 999);
     
+    // Also include matches from the next 24 hours
+    const tomorrowEnd = new Date();
+    tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
+    tomorrowEnd.setHours(23, 59, 59, 999);
+    
     const filteredMatches = allMatches.filter(match => {
       const matchDate = new Date(match.date);
       // Garder les matchs d'aujourd'hui (live ou à venir)
       if (matchDate >= todayStart && matchDate <= todayEnd) return true;
+      // Garder les matchs à venir dans les prochaines 24h
+      if (matchDate > todayEnd && matchDate <= tomorrowEnd) return true;
       // Garder les matchs en cours (même s'ils ont commencé hier)
       if (match.isLive) return true;
       return false;
     });
     
-    espnCache = filteredMatches;
+    // If no matches found, return all matches (fallback)
+    const finalMatches = filteredMatches.length > 0 ? filteredMatches : allMatches;
+    
+    espnCache = finalMatches;
     espnCacheTime = now;
     espnCacheDate = today;
     
@@ -206,7 +216,7 @@ export async function getMatchesWithRealOdds(): Promise<any[]> {
     console.error('Erreur ESPN:', error);
   }
   
-  return allMatches;
+  return espnCache;
 }
 
 /**

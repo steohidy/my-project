@@ -151,29 +151,34 @@ async function loadTennisRankings(): Promise<Map<string, { rank: number; name: s
   return rankingsMap;
 }
 
-// NOUVEAU: Charger les matchs live depuis l'API
+// NOUVEAU: Charger les matchs live directement depuis le service de données
 async function loadLiveMatches(): Promise<any[]> {
   try {
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : 'http://localhost:3000';
+    // Import dynamique pour éviter les problèmes de circularité
+    const { getMatchesWithRealOdds } = await import('@/lib/combinedDataService');
     
-    const response = await fetch(`${baseUrl}/api/matches`, {
-      cache: 'no-store'
-    });
-    const data = await response.json();
+    const allMatches = await getMatchesWithRealOdds();
     
-    // Filtrer pour les matchs d'aujourd'hui et en cours
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Filtrer pour les matchs d'aujourd'hui, à venir et en cours
+    const now = new Date();
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const tomorrowEnd = new Date();
+    tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
+    tomorrowEnd.setHours(23, 59, 59, 999);
     
-    const todayMatches = (data.matches || []).filter((m: any) => {
+    const todayMatches = allMatches.filter((m: any) => {
       const matchDate = new Date(m.date);
-      matchDate.setHours(0, 0, 0, 0);
-      return matchDate.getTime() === today.getTime() || m.isLive;
+      // Matchs d'aujourd'hui
+      if (matchDate >= todayStart && matchDate <= tomorrowEnd) return true;
+      // Matchs en cours
+      if (m.isLive) return true;
+      // Matchs à venir (status upcoming)
+      if (m.status === 'upcoming') return true;
+      return false;
     });
     
-    console.log(`📡 Live matches: ${todayMatches.length} matchs aujourd'hui/en cours`);
+    console.log(`📡 Live matches: ${todayMatches.length} matchs aujourd'hui/en cours (${allMatches.length} total)`);
     return todayMatches;
   } catch (e) {
     console.error('Erreur chargement live matches:', e);
@@ -406,8 +411,40 @@ async function generatePicks(): Promise<BasePick[]> {
   console.log(`📊 Données: ${tennisPredictions.length} tennis, ${expertAdvices.length} expert, ${tennisRankings.size} classements, ${liveMatches.length} live matches`);
   
   // ==========================================
-  // NOUVEAU: TRAITER LES MATCHS LIVE (FOOTBALL + BASKET)
+  // NOUVEAU: TRAITER LES MATCHS LIVE (FOOTBALL + BASKET) AVEC ML
   // ==========================================
+  
+  // Essayer d'utiliser le service unifié pour les prédictions ML
+  let unifiedPredictions: Map<string, any> = new Map();
+  try {
+    const { getBatchPredictions } = await import('@/lib/unifiedPredictionService');
+    
+    // Préparer les matchs pour le service unifié
+    const matchInputs = liveMatches
+      .filter(m => m.status !== 'finished' && !m.isFinished)
+      .map(m => ({
+        id: m.id,
+        homeTeam: m.homeTeam,
+        awayTeam: m.awayTeam,
+        sport: m.sport === 'Basket' ? 'NBA' as const : m.sport === 'Hockey' ? 'NHL' as const : 'Foot' as const,
+        league: m.league || 'Unknown',
+        oddsHome: m.oddsHome || 2.0,
+        oddsDraw: m.oddsDraw || 3.3,
+        oddsAway: m.oddsAway || 2.0,
+      }));
+    
+    if (matchInputs.length > 0) {
+      console.log(`🧠 Calcul prédictions ML pour ${matchInputs.length} matchs...`);
+      const predictions = await getBatchPredictions(matchInputs);
+      
+      for (const pred of predictions) {
+        unifiedPredictions.set(pred.matchId, pred);
+      }
+      console.log(`✅ ${predictions.length} prédictions ML calculées`);
+    }
+  } catch (e) {
+    console.log('⚠️ Service ML non disponible, utilisation du fallback');
+  }
   
   for (const match of liveMatches) {
     // Ignorer les matchs terminés
@@ -415,70 +452,105 @@ async function generatePicks(): Promise<BasePick[]> {
     
     const sport = match.sport === 'Basket' ? 'basketball' : 'football';
     
-    // Calculer les probabilités depuis les cotes
-    const oddsHome = match.oddsHome || 2.0;
-    const oddsAway = match.oddsAway || 2.0;
-    const oddsDraw = match.oddsDraw || 3.3;
+    // Vérifier si on a une prédiction ML unifiée
+    const unifiedPred = unifiedPredictions.get(match.id);
     
-    const totalImplied = (1/oddsHome) + (1/oddsAway) + (1/oddsDraw);
-    const homeProb = Math.round((1/oddsHome) / totalImplied * 100);
-    const awayProb = Math.round((1/oddsAway) / totalImplied * 100);
-    const drawProb = Math.round((1/oddsDraw) / totalImplied * 100);
-    
-    // Déterminer le favori
-    const favorite = oddsHome < oddsAway ? 'home' : 'away';
-    const favoriteOdds = favorite === 'home' ? oddsHome : oddsAway;
-    const favoriteProb = favorite === 'home' ? homeProb : awayProb;
-    const favoriteTeam = favorite === 'home' ? match.homeTeam : match.awayTeam;
-    
-    // Calculer la confiance
-    let confidence: 'very_high' | 'high' | 'medium' | 'low';
-    if (favoriteProb >= 70 && favoriteOdds < 1.5) {
-      confidence = 'very_high';
-    } else if (favoriteProb >= 60 && favoriteOdds < 1.8) {
-      confidence = 'high';
-    } else if (favoriteProb >= 50) {
-      confidence = 'medium';
-    } else {
-      confidence = 'low';
-    }
-    
-    // Double chance probability
-    const doubleChanceProb = favorite === 'home' ? homeProb + drawProb : awayProb + drawProb;
-    
-    // Choisir le meilleur pari
     let betType = '';
     let betLabel = '';
     let winProbability = 0;
     let selectedOdds = 0;
+    let confidence: 'very_high' | 'high' | 'medium' | 'low' = 'low';
     let reasoning: string[] = [];
     
-    if (favoriteOdds < 1.5 && favoriteProb >= 65) {
-      // Victoire sèche recommandée
-      betType = favorite;
-      betLabel = `Victoire ${favoriteTeam}`;
-      winProbability = favoriteProb;
-      selectedOdds = favoriteOdds;
-      reasoning.push(`Favori solide: ${favoriteProb}% (${favoriteOdds})`);
-    } else if (favoriteOdds < 2.0 && doubleChanceProb >= 70) {
-      // Double chance recommandée
-      betType = favorite === 'home' ? '1X' : 'X2';
-      betLabel = `${favoriteTeam} ou Nul`;
-      winProbability = doubleChanceProb;
-      selectedOdds = favorite === 'home' ? 
-        Math.round((1 / ((homeProb + drawProb) / 100)) * 100) / 100 :
-        Math.round((1 / ((awayProb + drawProb) / 100)) * 100) / 100;
-      reasoning.push(`Double chance sûre: ${doubleChanceProb}%`);
-    } else if (favoriteProb >= 55) {
-      // Pari modéré sur le favori
-      betType = favorite;
-      betLabel = `Victoire ${favoriteTeam}`;
-      winProbability = favoriteProb;
-      selectedOdds = favoriteOdds;
-      reasoning.push(`Favori modéré: ${favoriteProb}% (${favoriteOdds})`);
+    if (unifiedPred) {
+      // Utiliser la prédiction ML unifiée
+      const ml = unifiedPred.mlPrediction;
+      const rec = unifiedPred.recommendation;
+      
+      if (rec.bet === 'avoid') continue;
+      
+      // Récupérer les valeurs depuis la prédiction ML
+      if (rec.bet === 'home') {
+        betType = 'home';
+        betLabel = `Victoire ${match.homeTeam}`;
+        selectedOdds = unifiedPred.odds.home;
+        winProbability = ml.homeProb;
+      } else if (rec.bet === 'away') {
+        betType = 'away';
+        betLabel = `Victoire ${match.awayTeam}`;
+        selectedOdds = unifiedPred.odds.away;
+        winProbability = ml.awayProb;
+      } else if (rec.bet === 'draw') {
+        betType = 'draw';
+        betLabel = 'Match Nul';
+        selectedOdds = unifiedPred.odds.draw || 3.3;
+        winProbability = ml.drawProb;
+      }
+      
+      confidence = ml.confidence;
+      reasoning = rec.reasoning;
+      reasoning.push('🧠 Prédiction ML unifiée');
+      
+      if (unifiedPred.dataQuality?.hasRealOdds) {
+        reasoning.push('📊 Cotes ESPN DraftKings');
+      }
+      
     } else {
-      // Match serré - sauter
-      continue;
+      // Fallback: Calcul basique depuis les cotes
+      const oddsHome = match.oddsHome || 2.0;
+      const oddsAway = match.oddsAway || 2.0;
+      const oddsDraw = match.oddsDraw || 3.3;
+      
+      const totalImplied = (1/oddsHome) + (1/oddsAway) + (1/oddsDraw);
+      const homeProb = Math.round((1/oddsHome) / totalImplied * 100);
+      const awayProb = Math.round((1/oddsAway) / totalImplied * 100);
+      const drawProb = Math.round((1/oddsDraw) / totalImplied * 100);
+      
+      // Déterminer le favori
+      const favorite = oddsHome < oddsAway ? 'home' : 'away';
+      const favoriteOdds = favorite === 'home' ? oddsHome : oddsAway;
+      const favoriteProb = favorite === 'home' ? homeProb : awayProb;
+      const favoriteTeam = favorite === 'home' ? match.homeTeam : match.awayTeam;
+      
+      // Double chance probability
+      const doubleChanceProb = favorite === 'home' ? homeProb + drawProb : awayProb + drawProb;
+      
+      // Calculer la confiance
+      if (favoriteProb >= 70 && favoriteOdds < 1.5) {
+        confidence = 'very_high';
+      } else if (favoriteProb >= 60 && favoriteOdds < 1.8) {
+        confidence = 'high';
+      } else if (favoriteProb >= 50) {
+        confidence = 'medium';
+      } else {
+        confidence = 'low';
+      }
+      
+      if (favoriteOdds < 1.5 && favoriteProb >= 65) {
+        betType = favorite;
+        betLabel = `Victoire ${favoriteTeam}`;
+        winProbability = favoriteProb;
+        selectedOdds = favoriteOdds;
+        reasoning.push(`Favori solide: ${favoriteProb}% (${favoriteOdds})`);
+      } else if (favoriteOdds < 2.0 && doubleChanceProb >= 70) {
+        betType = favorite === 'home' ? '1X' : 'X2';
+        betLabel = `${favoriteTeam} ou Nul`;
+        winProbability = doubleChanceProb;
+        selectedOdds = favorite === 'home' ? 
+          Math.round((1 / ((homeProb + drawProb) / 100)) * 100) / 100 :
+          Math.round((1 / ((awayProb + drawProb) / 100)) * 100) / 100;
+        reasoning.push(`Double chance sûre: ${doubleChanceProb}%`);
+      } else if (favoriteProb >= 55) {
+        betType = favorite;
+        betLabel = `Victoire ${favoriteTeam}`;
+        winProbability = favoriteProb;
+        selectedOdds = favoriteOdds;
+        reasoning.push(`Favori modéré: ${favoriteProb}% (${favoriteOdds})`);
+      } else {
+        continue;
+      }
+      
+      reasoning.push(match.hasRealOdds ? 'Cotes ESPN DraftKings' : 'Cotes estimées');
     }
     
     // Calculer la valeur
@@ -495,8 +567,6 @@ async function generatePicks(): Promise<BasePick[]> {
       (Math.max(0, value) * 0.3)
     );
     
-    // Ajouter le data source
-    reasoning.push(match.hasRealOdds ? 'Cotes ESPN DraftKings' : 'Cotes estimées');
     if (match.isLive) {
       reasoning.push('🔥 Match en cours');
     }

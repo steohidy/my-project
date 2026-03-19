@@ -355,3 +355,25 @@ Stage Summary:
   * Draw No Bet (DNB)
 - All percentages display correctly
 - Visual highlighting for recommended options
+
+---
+Task ID: 1
+Agent: main
+Task: Fix API tab (old matches displayed, silent analysis) and Pro tab (high/moderate confidence predictions)
+
+Work Log:
+- Fixed combinedDataService.ts to include matches from today + next 24h + live matches
+- Fixed pronostiqueur-pro route to use direct data import instead of API call
+- Integrated unified prediction service (ML) for basketball predictions
+- Added fallback prediction logic when ML service unavailable
+- Updated classification to include 'medium' confidence in SAFE picks
+- Build successful with npm run build
+
+Stage Summary:
+- API tab now shows today's matches, upcoming matches (24h), and live matches
+- Pro tab uses unified ML prediction service for both football and basketball
+- Basketball predictions now use: ESPN real odds + ML thresholds + context adjustment
+- Confidence levels: very_high, high, medium all included in SAFE classification
+- Classification thresholds:
+  * SAFE: Probability >= 60%, Odds <= 2.00, Confidence high/very_high/medium
+  * FUN: Probability >= 50%, Odds >= 1.35, Value >= 8%
