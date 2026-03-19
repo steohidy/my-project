@@ -156,6 +156,71 @@ function matchPredictionWithResult(
 }
 
 /**
+ * Vérifier les résultats NBA spécifiquement
+ */
+async function verifyNBAResults(): Promise<{
+  verified: number;
+  updated: number;
+  errors: string[];
+}> {
+  const errors: string[] = [];
+  let verified = 0;
+  let updated = 0;
+
+  try {
+    // Récupérer les pronostics NBA en attente
+    const pending = PredictionStore.getPending().filter(p => 
+      p.sport === 'Basket' || p.sport === 'Basketball' || p.sport === 'NBA'
+    );
+    
+    if (pending.length === 0) {
+      console.log('📋 Aucun pronostic NBA en attente');
+      return { verified: 0, updated: 0, errors: [] };
+    }
+
+    console.log(`📋 ${pending.length} pronostics NBA en attente à vérifier`);
+
+    // Récupérer les résultats NBA
+    const nbaResults = await fetchNBAResults();
+    
+    console.log(`✅ ${nbaResults.length} résultats NBA récupérés`);
+
+    // Pour chaque pronostic, chercher le résultat correspondant
+    for (const prediction of pending) {
+      verified++;
+      
+      const result = nbaResults.find(r => matchPredictionWithResult(prediction, r));
+      
+      if (result) {
+        // Déterminer si le pronostic est correct
+        const predictedResult = prediction.predictedResult;
+        
+        const success = PredictionStore.complete(prediction.matchId, {
+          homeScore: result.homeScore,
+          awayScore: result.awayScore,
+          actualResult: result.actualResult,
+          resultMatch: predictedResult === result.actualResult,
+          goalsMatch: undefined
+        });
+
+        if (success) {
+          updated++;
+          console.log(`✅ NBA: ${prediction.homeTeam} vs ${prediction.awayTeam}: ${predictedResult === result.actualResult ? 'GAGNÉ' : 'PERDU'} (${result.homeScore}-${result.awayScore})`);
+        }
+      } else {
+        console.log(`⏳ NBA: ${prediction.homeTeam} vs ${prediction.awayTeam}: résultat non trouvé`);
+      }
+    }
+
+  } catch (error: any) {
+    errors.push(error.message);
+    console.error('Erreur vérification NBA:', error);
+  }
+
+  return { verified, updated, errors };
+}
+
+/**
  * Vérifier les pronostics et mettre à jour les résultats
  */
 async function verifyAndUpdatePredictions(): Promise<{
@@ -319,12 +384,42 @@ export async function GET(request: NextRequest) {
 
     switch (action) {
       case 'precalc':
-        // 6h GMT: Pré-calcul des pronostics
+        // 5h30 UTC: Pré-calcul des pronostics du jour
         result = await runPrecalc();
         break;
         
+      case 'verify-evening':
+        // 00h00 UTC: Vérifier résultats football soir
+        const eveningResult = await verifyAndUpdatePredictions();
+        result = {
+          verified: eveningResult.verified,
+          updated: eveningResult.updated,
+          errors: eveningResult.errors
+        };
+        break;
+        
+      case 'verify-morning':
+        // 04h00 UTC: Vérifier résultats football matin
+        const morningResult = await verifyAndUpdatePredictions();
+        result = {
+          verified: morningResult.verified,
+          updated: morningResult.updated,
+          errors: morningResult.errors
+        };
+        break;
+        
+      case 'verify-night':
+        // 05h00 UTC: Vérifier résultats NBA nuit
+        const nightResult = await verifyNBAResults();
+        result = {
+          verified: nightResult.verified,
+          updated: nightResult.updated,
+          errors: nightResult.errors
+        };
+        break;
+        
       case 'verify':
-        // 7h GMT: Vérification des résultats + ML training
+        // Action manuelle: Vérification complète + ML training
         const verifyResult = await verifyAndUpdatePredictions();
         const mlResult = await trainMLModel();
         const cleaned = PredictionStore.cleanup();
@@ -339,7 +434,7 @@ export async function GET(request: NextRequest) {
         
       default:
         return NextResponse.json(
-          { error: 'Action non reconnue', validActions: ['precalc', 'verify'] },
+          { error: 'Action non reconnue', validActions: ['precalc', 'verify', 'verify-evening', 'verify-morning', 'verify-night'] },
           { status: 400 }
         );
     }
@@ -382,6 +477,33 @@ export async function POST(request: NextRequest) {
         result = await runPrecalc();
         break;
         
+      case 'verify-evening':
+        const eveningResult = await verifyAndUpdatePredictions();
+        result = {
+          verified: eveningResult.verified,
+          updated: eveningResult.updated,
+          errors: eveningResult.errors
+        };
+        break;
+        
+      case 'verify-morning':
+        const morningResult = await verifyAndUpdatePredictions();
+        result = {
+          verified: morningResult.verified,
+          updated: morningResult.updated,
+          errors: morningResult.errors
+        };
+        break;
+        
+      case 'verify-night':
+        const nightResult = await verifyNBAResults();
+        result = {
+          verified: nightResult.verified,
+          updated: nightResult.updated,
+          errors: nightResult.errors
+        };
+        break;
+        
       case 'verify':
         const verifyResult = await verifyAndUpdatePredictions();
         const mlResult = await trainMLModel();
@@ -397,7 +519,7 @@ export async function POST(request: NextRequest) {
         
       default:
         return NextResponse.json(
-          { error: 'Action non reconnue', validActions: ['precalc', 'verify'] },
+          { error: 'Action non reconnue', validActions: ['precalc', 'verify', 'verify-evening', 'verify-morning', 'verify-night'] },
           { status: 400 }
         );
     }
