@@ -58,11 +58,15 @@ interface ESPNEvent {
       };
     }>;
     odds?: Array<{
-      provider: string;
-      details: string;
-      awayTeamOdds?: { moneyLine: number };
+      provider: { name: string };
       homeTeamOdds?: { moneyLine: number };
+      awayTeamOdds?: { moneyLine: number };
       drawOdds?: { moneyLine: number };
+      moneyline?: {
+        home?: { close?: { odds: number }; open?: { odds: number } };
+        away?: { close?: { odds: number }; open?: { odds: number } };
+        draw?: { close?: { odds: number }; open?: { odds: number } };
+      };
     }>;
   }>;
 }
@@ -73,6 +77,25 @@ const EUROPEAN_LEAGUES = [
   { key: 'uefa.europa', name: 'Europa League' },
   { key: 'uefa.europa.conf', name: 'Conference League' },
 ];
+
+/**
+ * Convertit les cotes américaines en décimales
+ */
+function americanToDecimal(americanOdds: string | number | undefined): number {
+  if (!americanOdds) return 0;
+  
+  const odds = typeof americanOdds === 'string' 
+    ? parseFloat(americanOdds.replace('+', '')) 
+    : americanOdds;
+  
+  if (isNaN(odds) || odds === 0) return 0;
+  
+  if (odds > 0) {
+    return Math.round((1 + odds / 100) * 100) / 100;
+  } else {
+    return Math.round((1 + 100 / Math.abs(odds)) * 100) / 100;
+  }
+}
 
 /**
  * Calculer les probabilités implicites depuis les cotes
@@ -96,22 +119,38 @@ function calculateImpliedProbabilities(oddsHome: number, oddsDraw: number | null
 }
 
 /**
- * Estimer les cotes depuis les probabilités implicites
- * (utilisé si ESPN ne fournit pas de cotes)
+ * Extrait les cotes ESPN (DraftKings)
  */
-function estimateOddsFromTeams(homeTeam: string, awayTeam: string, league: string): { home: number; draw: number; away: number } {
-  // Estimation basique basée sur le niveau des équipes
-  // Dans un vrai système, on utiliserait un classement ou un historique
+function extractEspnOdds(competition: any): { home: number; draw: number | null; away: number; provider: string } {
+  const odds = competition?.odds?.[0];
   
+  if (!odds) {
+    return { home: 0, draw: null, away: 0, provider: 'None' };
+  }
+  
+  const provider = odds.provider?.name || 'DraftKings';
+  
+  // Format ESPN pour les cotes
+  let homeOdds = odds.homeTeamOdds?.moneyLine || odds.moneyline?.home?.close?.odds || 0;
+  let awayOdds = odds.awayTeamOdds?.moneyLine || odds.moneyline?.away?.close?.odds || 0;
+  let drawOdds = odds.drawOdds || odds.moneyline?.draw?.close?.odds || null;
+  
+  // Convertir en décimal si nécessaire
+  homeOdds = americanToDecimal(homeOdds);
+  awayOdds = americanToDecimal(awayOdds);
+  drawOdds = drawOdds ? americanToDecimal(drawOdds) : null;
+  
+  return { home: homeOdds, draw: drawOdds, away: awayOdds, provider };
+}
+
+/**
+ * Estimer les cotes si ESPN n'en fournit pas
+ */
+function estimateOdds(homeTeam: string, awayTeam: string): { home: number; draw: number; away: number } {
   const favoriteTeams = [
-    // Champions League favorites
     'Real Madrid', 'Manchester City', 'Bayern Munich', 'Paris Saint-Germain', 'Barcelona',
     'Liverpool', 'Chelsea', 'Arsenal', 'Inter Milan', 'AC Milan', 'Borussia Dortmund',
-    'Atletico Madrid', 'Juventus', 'Napoli', 'RB Leipzig',
-    // Europa League favorites
-    'Roma', 'Lazio', 'Bayer Leverkusen', 'West Ham', 'Brighton', 'Atalanta',
-    // Conference League favorites
-    'Fiorentina', 'Villarreal', 'AZ Alkmaar',
+    'Atletico Madrid', 'Juventus', 'Napoli', 'Roma', 'Lazio', 'Bayer Leverkusen', 'Atalanta',
   ];
   
   const homeIsFavorite = favoriteTeams.some(t => homeTeam.toLowerCase().includes(t.toLowerCase()));
@@ -123,9 +162,8 @@ function estimateOddsFromTeams(homeTeam: string, awayTeam: string, league: strin
     return { home: 4.50, draw: 3.60, away: 1.75 };
   } else if (homeIsFavorite && awayIsFavorite) {
     return { home: 2.30, draw: 3.30, away: 3.00 };
-  } else {
-    return { home: 2.50, draw: 3.30, away: 2.80 };
   }
+  return { home: 2.50, draw: 3.30, away: 2.80 };
 }
 
 /**
@@ -134,10 +172,8 @@ function estimateOddsFromTeams(homeTeam: string, awayTeam: string, league: strin
 function calculatePredictions(match: Match) {
   const probs = calculateImpliedProbabilities(match.oddsHome, match.oddsDraw, match.oddsAway);
   
-  // Expected goals basé sur les probabilités
   const expectedGoals = (probs.home / 100) * 2.2 + (probs.away / 100) * 0.9 + (probs.draw / 100) * 1.2;
   
-  // Value bet detection
   const favorite = probs.home > probs.away ? 'home' : 'away';
   const favoriteProb = Math.max(probs.home, probs.away);
   const favoriteOdds = favorite === 'home' ? match.oddsHome : match.oddsAway;
@@ -149,7 +185,7 @@ function calculatePredictions(match: Match) {
     goals: {
       expected: expectedGoals,
       over25: expectedGoals > 2.5 ? 55 : 45,
-      recommendation: expectedGoals > 2.5 ? `Over 2.5 (${expectedGoals.toFixed(1)} buts attendus)` : `Under 2.5`,
+      recommendation: expectedGoals > 2.5 ? `Over 2.5 (${expectedGoals.toFixed(1)} buts)` : `Under 2.5`,
     },
     valueBet: {
       detected: edge > 5,
@@ -165,7 +201,7 @@ function calculatePredictions(match: Match) {
  */
 export async function GET() {
   try {
-    console.log('📡 Récupération matchs européens depuis ESPN (GRATUIT)...');
+    console.log('📡 Récupération matchs européens depuis ESPN (GRATUIT ET ILLIMITÉ)...');
     
     const allMatches: Match[] = [];
 
@@ -175,7 +211,7 @@ export async function GET() {
         
         const response = await fetch(
           `https://site.api.espn.com/apis/site/v2/sports/soccer/${league.key}/scoreboard`,
-          { next: { revalidate: 300 } } // Cache 5 minutes
+          { next: { revalidate: 300 } }
         );
 
         if (!response.ok) {
@@ -196,15 +232,16 @@ export async function GET() {
           const homeTeam = homeCompetitor.team?.displayName || 'Unknown';
           const awayTeam = awayCompetitor.team?.displayName || 'Unknown';
           
-          // Récupérer les cotes depuis ESPN si disponibles
-          const odds = competition?.odds?.[0];
-          let oddsHome = odds?.homeTeamOdds?.moneyLine ? (odds.homeTeamOdds.moneyLine / 100) + 1 : 0;
-          let oddsAway = odds?.awayTeamOdds?.moneyLine ? (odds.awayTeamOdds.moneyLine / 100) + 1 : 0;
-          let oddsDraw = odds?.drawOdds?.moneyLine ? (odds.drawOdds.moneyLine / 100) + 1 : null;
+          // Récupérer les cotes ESPN (DraftKings)
+          const espnOdds = extractEspnOdds(competition);
+          
+          let oddsHome = espnOdds.home;
+          let oddsAway = espnOdds.away;
+          let oddsDraw = espnOdds.draw;
           
           // Si pas de cotes, estimer
           if (!oddsHome || !oddsAway) {
-            const estimated = estimateOddsFromTeams(homeTeam, awayTeam, league.name);
+            const estimated = estimateOdds(homeTeam, awayTeam);
             oddsHome = estimated.home;
             oddsDraw = estimated.draw;
             oddsAway = estimated.away;
@@ -223,15 +260,14 @@ export async function GET() {
             oddsHome,
             oddsDraw,
             oddsAway,
-            bookmaker: odds?.provider || 'ESPN',
-            hasRealOdds: !!odds,
+            bookmaker: espnOdds.provider || 'ESPN',
+            hasRealOdds: espnOdds.home > 0,
             homeScore: homeCompetitor.score ? parseInt(homeCompetitor.score) : undefined,
             awayScore: awayCompetitor.score ? parseInt(awayCompetitor.score) : undefined,
             status: isLive ? 'live' : isFinished ? 'finished' : 'upcoming',
             isLive,
           };
 
-          // Calculer les prédictions
           matchData.predictions = calculatePredictions(matchData);
 
           allMatches.push(matchData);
@@ -244,16 +280,15 @@ export async function GET() {
       }
     }
 
-    // Trier par date
     allMatches.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    // Stats par ligue
     const byLeague: Record<string, number> = {};
     for (const m of allMatches) {
       byLeague[m.league] = (byLeague[m.league] || 0) + 1;
     }
 
-    console.log(`✅ Total: ${allMatches.length} matchs européens (ESPN - GRATUIT)`);
+    const matchesWithOdds = allMatches.filter(m => m.hasRealOdds).length;
+    console.log(`✅ Total: ${allMatches.length} matchs européens (${matchesWithOdds} avec cotes ESPN) - GRATUIT`);
 
     return NextResponse.json({
       success: true,
@@ -262,8 +297,9 @@ export async function GET() {
       stats: {
         total: allMatches.length,
         byLeague,
-        source: 'ESPN (Gratuit)',
-        quotaCost: 0,
+        source: 'ESPN (DraftKings)',
+        matchesWithOdds,
+        quotaCost: 0, // Toujours gratuit !
       },
       lastUpdate: new Date().toISOString(),
     });

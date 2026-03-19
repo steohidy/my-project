@@ -319,7 +319,7 @@ export async function GET(request: Request) {
         dataQuality: {
           overall: analysis.dataQuality,
           overallScore: analysis.dataQuality === 'real' ? 85 : 40,
-          sources: analysis.dataQuality === 'real' ? ['The Odds API', 'ESPN'] : ['ESPN'],
+          sources: analysis.dataQuality === 'real' ? ['ESPN (DraftKings)'] : ['ESPN'],
           hasRealData: analysis.dataQuality === 'real',
         },
       };
