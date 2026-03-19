@@ -196,3 +196,120 @@ git push -u origin master
 - Trading: ✅ Désactivé (redirection)
 - Git commit: ✅ Effectué
 - Git push: ⏳ Remote à configurer
+
+---
+## Session du 2025-01-20 - Fix oddsDraw.toFixed Bug & ML Integration
+
+### Problèmes corrigés
+
+1. **Bug critique `oddsDraw.toFixed is not a function`**
+   - Le bug se produisait quand `oddsDraw` était `null` mais `.toFixed()` était appelé
+   - **Vérification**: Les fichiers mentionnés avaient déjà des vérifications partielles
+   - Les checks `match.oddsDraw != null && typeof match.oddsDraw === 'number'` étaient en place
+
+2. **Amélioration ML - Création d'un service de prédiction unifié**
+
+### Nouveaux fichiers créés
+
+#### `src/lib/formatUtils.ts` - Utilitaires de formatage sécurisé
+```typescript
+// Fonctions de formatage qui préviennent les erreurs toFixed sur null/undefined
+export function formatOdds(odds: number | null | undefined): string
+export function formatPercent(value: number | null | undefined): string  
+export function formatNumber(value: number | null | undefined, decimals?: number): string
+export function formatProbability(prob: number | null | undefined): string
+export function formatOddsDisplay(home, draw, away): string
+export function isValidNumber(value: unknown): boolean
+export function safeNumber(value: unknown, fallback?: number): number
+```
+
+#### `src/lib/unifiedPredictionService.ts` - Service de prédiction unifié V3
+
+**Architecture du service:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│              UNIFIED PREDICTION SERVICE V3                   │
+├─────────────────────────────────────────────────────────────┤
+│  INPUT: Match data (teams, sport, league, odds)             │
+│                                                              │
+│  1. ESPN Odds (DraftKings) ──► Real odds with fallback      │
+│  2. ML Thresholds ──────────► Adaptive edge/confidence      │
+│  3. Match Context ──────────► Form, H2H, xG, injuries       │
+│  4. Dixon-Coles ────────────► Statistical probabilities     │
+│                                                              │
+│  OUTPUT: UnifiedPrediction                                   │
+│  ├── odds: { home, draw, away, source }                     │
+│  ├── dixonColes: { probs, expectedGoals, over25, btts }     │
+│  ├── mlPrediction: { probs, confidence, edge, valueBet }    │
+│  ├── factors: { form, h2h, injuries, xg, weather }          │
+│  └── recommendation: { bet, kellyStake, reasoning }         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Fonction principale:**
+```typescript
+export async function getUnifiedPrediction(match: UnifiedPredictionInput): Promise<UnifiedPrediction>
+
+// Batch predictions
+export async function getBatchPredictions(matches: UnifiedPredictionInput[]): Promise<UnifiedPrediction[]>
+
+// Value bets only
+export async function getValueBets(matches: UnifiedPredictionInput[]): Promise<UnifiedPrediction[]>
+```
+
+**Combinaison des probabilités (Football):**
+- 35% probabilités du marché (cotes)
+- 35% modèle Dixon-Coles
+- 15% ajustement contextuel
+- 15% ajustement ML
+
+### Fichiers modifiés
+
+#### `src/lib/expertAdvisor.ts` - Intégration V3
+- Mise à jour du header vers "V3"
+- Ajout des imports pour unifiedPredictionService et formatUtils
+- Nouvelle fonction `generateUnifiedExpertAdvice()`:
+  - Utilise le service unifié complet
+  - Intègre Dixon-Coles dans le raisonnement
+  - Ajoute les infos de source des cotes
+- Nouvelle fonction `getDailyValueBets()`:
+  - Récupère les meilleurs value bets du jour
+  - Tri par edge décroissant
+
+### Qualité du code
+```
+npm run lint
+✖ 9 problems (0 errors, 9 warnings)
+```
+- 0 erreurs
+- 9 warnings pré-existantes (anonymous default exports)
+
+### Architecture ML complète
+
+```
+Système de prédiction:
+├── Sources de données
+│   ├── ESPN/DraftKings ──────► Cotes temps réel (GRATUIT)
+│   ├── The Odds API ─────────► Fallback cotes (500/mois)
+│   ├── FBref ────────────────► Forme, xG, H2H (Football)
+│   ├── Transfermarkt ────────► Blessures (Football)
+│   └── NBA Official ─────────► Blessures (Basketball)
+│
+├── Modèles
+│   ├── Dixon-Coles ──────────► Probabilités football
+│   ├── Adaptive ML ──────────► Seuils dynamiques
+│   └── Kelly Criterion ──────► Mises optimales
+│
+└── Services
+    ├── matchContextService ──► Contexte unifié
+    ├── espnOddsService ──────► Cotes cascade
+    ├── unifiedPredictionService ► Prédiction complète
+    └── expertAdvisor ────────► Conseils experts
+```
+
+### État
+- Bug toFixed: ✅ Vérifié - checks déjà en place
+- formatUtils.ts: ✅ Créé
+- unifiedPredictionService.ts: ✅ Créé  
+- expertAdvisor.ts: ✅ Mis à jour V3
+- npm run lint: ✅ 0 errors

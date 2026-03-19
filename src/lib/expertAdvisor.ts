@@ -1,5 +1,5 @@
 /**
- * Expert Advisor Service - Conseiller Pronostics Intelligent V2
+ * Expert Advisor Service - Conseiller Pronostics Intelligent V3
  * 
  * ARCHITECTURE UNIFIÉE:
  * =====================
@@ -9,6 +9,12 @@
  * - NBA Official: Blessures NBA
  * - Web Search: News récentes
  * 
+ * INTÉGRATION UNIFIED PREDICTION SERVICE (V3):
+ * - ESPN/DraftKings odds avec cascade de fallback
+ * - Dixon-Coles statistical model pour le football
+ * - Seuils ML adaptatifs dynamiques
+ * - Combinaison multi-sources pour prédictions améliorées
+ * 
  * PHILOSOPHIE:
  * - "Les bookmakers ne se trompent pas souvent, mais quand ils le font, c'est un value bet"
  * - Analyse froide basée sur les données, pas les émotions
@@ -17,9 +23,9 @@
  * 
  * ALGORITHME:
  * 1. Récupérer contexte unifié (toutes sources)
- * 2. Calculer probabilités ajustées (cotes + contexte)
- * 3. Détecter value bets (edge > 3%)
- * 4. Calculer mise Kelly optimale
+ * 2. Calculer probabilités ajustées (cotes + contexte + Dixon-Coles + ML)
+ * 3. Détecter value bets (edge > seuil ML adaptatif)
+ * 4. Calculer mise Kelly optimale avec poids adaptatifs
  * 5. Générer avertissements et raisonnement
  */
 
@@ -37,6 +43,12 @@ import {
   getAdaptiveThresholds,
   MLThresholds,
 } from './adaptiveThresholdsML';
+import {
+  getUnifiedPrediction as getUnifiedPredictionFromService,
+  UnifiedPrediction,
+  UnifiedPredictionInput,
+} from './unifiedPredictionService';
+import { formatOdds, formatNumber, formatPercent } from './formatUtils';
 
 // ============================================
 // TYPES
@@ -595,11 +607,179 @@ export async function generateExpertAdvice(match: {
 }
 
 // ============================================
+// UNIFIED PREDICTION INTEGRATION (V3)
+// ============================================
+
+/**
+ * Génère un conseil expert en utilisant le Unified Prediction Service
+ * Cette fonction utilise toutes les intégrations: ESPN, Dixon-Coles, ML, Context
+ * 
+ * @param match Les informations du match
+ * @returns Conseil expert enrichi avec prédictions unifiées
+ */
+export async function generateUnifiedExpertAdvice(match: {
+  id: string;
+  homeTeam: string;
+  awayTeam: string;
+  sport: string;
+  league: string;
+  oddsHome: number;
+  oddsDraw: number | null;
+  oddsAway: number;
+  matchDate?: string;
+}): Promise<ExpertAdvice & { unifiedPrediction?: UnifiedPrediction }> {
+  console.log(`🎯 Expert Advisor V3 (Unified): ${match.homeTeam} vs ${match.awayTeam}`);
+  const startTime = Date.now();
+  
+  // Normaliser le sport
+  const normalizedSport: 'Foot' | 'NBA' | 'NHL' | 'NFL' = 
+    match.sport.toLowerCase().includes('basket') || match.sport.toLowerCase().includes('nba') ? 'NBA' :
+    match.sport.toLowerCase().includes('hockey') || match.sport.toLowerCase().includes('nhl') ? 'NHL' :
+    match.sport.toLowerCase().includes('football us') || match.sport.toLowerCase().includes('nfl') ? 'NFL' :
+    'Foot';
+  
+  // 1. Obtenir la prédiction unifiée (ESPN + Dixon-Coles + ML + Context)
+  const unifiedPrediction = await getUnifiedPredictionFromService({
+    id: match.id,
+    homeTeam: match.homeTeam,
+    awayTeam: match.awayTeam,
+    sport: normalizedSport,
+    league: match.league,
+    oddsHome: match.oddsHome,
+    oddsDraw: match.oddsDraw,
+    oddsAway: match.oddsAway,
+  });
+  
+  // 2. Obtenir aussi le conseil standard pour compatibilité
+  const baseAdvice = await generateExpertAdvice(match, { trackPrediction: false });
+  
+  // 3. Enrichir avec les données unifiées
+  const enhancedReasoning = [...baseAdvice.recommendation.reasoning];
+  
+  // Ajouter les infos Dixon-Coles si disponibles
+  if (unifiedPrediction.dixonColes) {
+    const dc = unifiedPrediction.dixonColes;
+    enhancedReasoning.unshift(
+      `⚽ Dixon-Coles: ${match.homeTeam} ${formatNumber(dc.homeProb, 1)}% - Draw ${formatNumber(dc.drawProb, 1)}% - ${match.awayTeam} ${formatNumber(dc.awayProb, 1)}%`
+    );
+    enhancedReasoning.splice(2, 0, 
+      `📊 Buts attendus: ${formatNumber(dc.expectedGoals.total, 1)} (Over 2.5: ${formatPercent(dc.over25)})`
+    );
+  }
+  
+  // Ajouter l'info sur la source des cotes
+  enhancedReasoning.push(
+    `📡 Cotes: ${unifiedPrediction.odds.bookmaker} (${unifiedPrediction.odds.source})`
+  );
+  
+  // 4. Construire le conseil enrichi
+  const processingTime = Date.now() - startTime;
+  
+  // Determine estimated probability based on bet type
+  let estimatedProb = baseAdvice.oddsAnalysis.estimatedProbability;
+  if (baseAdvice.recommendation.bet === 'home') {
+    estimatedProb = unifiedPrediction.mlPrediction.homeProb;
+  } else if (baseAdvice.recommendation.bet === 'away') {
+    estimatedProb = unifiedPrediction.mlPrediction.awayProb;
+  } else if (baseAdvice.recommendation.bet === 'draw') {
+    estimatedProb = unifiedPrediction.mlPrediction.drawProb;
+  }
+  
+  return {
+    ...baseAdvice,
+    
+    // Override avec les données unifiées
+    recommendation: {
+      ...baseAdvice.recommendation,
+      reasoning: enhancedReasoning,
+      expectedValue: unifiedPrediction.recommendation.expectedValue,
+      kellyStake: unifiedPrediction.recommendation.kellyStake,
+    },
+    
+    oddsAnalysis: {
+      ...baseAdvice.oddsAnalysis,
+      estimatedProbability: estimatedProb,
+      edge: unifiedPrediction.mlPrediction.edge,
+      isValueBet: unifiedPrediction.mlPrediction.valueBet,
+    },
+    
+    // Ajouter les nouvelles infos ML
+    mlInfo: {
+      edgeThreshold: unifiedPrediction.dataQuality.score > 50 ? 0.03 : 0.05,
+      modelAccuracy: unifiedPrediction.dataQuality.score,
+      adaptiveWeights: {
+        form: unifiedPrediction.factors.form.home / 100,
+        xg: (unifiedPrediction.factors.xg.home || 0) / 100,
+        injuries: unifiedPrediction.factors.injuries.homeImpact,
+      },
+    },
+    
+    // Ajouter la prédiction unifiée complète
+    unifiedPrediction,
+    
+    processingTimeMs: processingTime,
+  };
+}
+
+/**
+ * Obtient les meilleurs value bets du jour en utilisant le service unifié
+ */
+export async function getDailyValueBets(matches: UnifiedPredictionInput[]): Promise<
+  Array<{
+    match: { homeTeam: string; awayTeam: string; league: string };
+    prediction: UnifiedPrediction;
+    advice: ExpertAdvice;
+  }>
+> {
+  console.log(`🎯 Calcul des value bets du jour pour ${matches.length} matchs...`);
+  
+  const results = await Promise.all(
+    matches.map(async (match) => {
+      const prediction = await getUnifiedPredictionFromService(match);
+      
+      // Seulement les value bets
+      if (!prediction.mlPrediction.valueBet) return null;
+      
+      const advice = await generateExpertAdvice({
+        id: match.id,
+        homeTeam: match.homeTeam,
+        awayTeam: match.awayTeam,
+        sport: match.sport,
+        league: match.league,
+        oddsHome: match.oddsHome,
+        oddsDraw: match.oddsDraw,
+        oddsAway: match.oddsAway,
+      }, { trackPrediction: false });
+      
+      return {
+        match: {
+          homeTeam: match.homeTeam,
+          awayTeam: match.awayTeam,
+          league: match.league,
+        },
+        prediction,
+        advice,
+      };
+    })
+  );
+  
+  const valueBets = results.filter((r): r is NonNullable<typeof r> => r !== null);
+  
+  // Trier par edge décroissant
+  valueBets.sort((a, b) => b.prediction.mlPrediction.edge - a.prediction.mlPrediction.edge);
+  
+  console.log(`✅ ${valueBets.length} value bets trouvés`);
+  return valueBets;
+}
+
+// ============================================
 // EXPORTS
 // ============================================
 
 const ExpertAdvisorService = {
   generateExpertAdvice,
+  generateUnifiedExpertAdvice,
+  getDailyValueBets,
   calculateKellyCriterion,
   estimatePublicPercentage,
 };
